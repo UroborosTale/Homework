@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Мини-казино: слоты, рулетка, блэкджек и другие игры</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header>
+  <h1>🎰 Мини-казино</h1>
+  <div class="balance">Баланс: <span id="balance">50000</span> ₽ (виртуальные)
+    <button class="btn" id="reset" style="padding:4px 10px;font-size:13px">Сброс</button></div>
+</header>
+<nav id="tabs">
+  <button data-tab="slots" class="active">🍒 Слоты</button>
+  <button data-tab="olympus">⚡ Олимп</button>
+  <button data-tab="egypt">📖 Египет</button>
+  <button data-tab="roulette">🎡 Рулетка</button>
+  <button data-tab="blackjack">🃏 Блэкджек</button>
+  <button data-tab="baccarat">🎴 Баккара</button>
+  <button data-tab="sicbo">🎲 Кости</button>
+  <button data-tab="crash">🚀 Ракета</button>
+  <button data-tab="plinko">🔻 Плинко</button>
+</nav>
+<main>
+
+<!-- СЛОТЫ -->
+<section id="slots" class="active">
+  <div class="fsbanner" id="fsBanner"></div>
+  <div class="slotframe">
+    <div class="grid5" id="slotGrid"></div>
+    <svg class="linesvg" id="lineSvg" viewBox="0 0 560 340" preserveAspectRatio="none"></svg>
+  </div>
+  <div class="msg" id="slotMsg">Сделайте ставку и крутите!</div>
+  <div class="controls">
+    <label>Линий: <select id="slotLines"></select></label>
+    <label>Ставка на линию: <select id="slotBet"></select></label>
+    <span>Всего: <b id="slotTotal">10</b> ₽</span>
+  </div>
+  <div class="controls">
+    <button class="btn primary" id="spin">КРУТИТЬ</button>
+    <button class="btn" id="auto">Авто: выкл</button>
+    <button class="btn" id="gambleBtn" style="display:none">🎲 Риск</button>
+    <button class="btn" id="collectBtn" style="display:none">Забрать</button>
+  </div>
+  <div id="gamblePanel" class="gamble" style="display:none">
+    <div>Угадайте цвет карты и удвойте выигрыш: <b id="gAmt"></b> ₽ (шаг <span id="gStep">0</span>/5)</div>
+    <div class="controls">
+      <button class="btn" id="gRed" style="background:#c62828">♥ Красная</button>
+      <button class="btn" id="gBlack" style="background:#111">♠ Чёрная</button>
+      <button class="btn" id="gTake">Забрать</button>
+    </div>
+  </div>
+  <div id="chestPanel" class="gamble" style="display:none">
+    <div>💰 БОНУС! Откройте 3 сундука (осталось <b id="chestLeft">3</b>)</div>
+    <div class="chests" id="chests"></div>
+  </div>
+  <details class="paytable"><summary>Таблица выплат и правила</summary>
+    <div id="payTable"></div>
+    <p>👑 Дикий заменяет все символы, кроме 🎁 и 💰 (барабаны 2–4).<br>
+       Линии платят слева направо от 1-го барабана, от 3 символов подряд.<br>
+       🎁 3+ где угодно — приз ×2/×10/×50 от общей ставки и 10/15/20 бесплатных вращений с множителем ×<span id="fsm"></span> (ретриггер +10).<br>
+       💰 3+ где угодно — бонус-игра «Сундуки»: откройте 3 из 9 сундуков, призы ×0.5–×5 от общей ставки.<br>
+       После выигрыша можно рискнуть: до 5 удвоений подряд.</p>
+  </details>
+</section>
+
+<!-- ОЛИМП -->
+<section id="olympus">
+  <div class="olywrap">
+    <div class="olytop">
+      <div class="olybadge" id="olyFs" style="display:none"></div>
+      <div class="olybadge orbbadge">🔮 Множитель: <b id="olyMult">×0</b></div>
+      <div class="olybadge">Выигрыш спина: <b id="olyWin">0</b> ₽</div>
+    </div>
+    <div class="olygrid" id="olyGrid"></div>
+  </div>
+  <div class="msg" id="olyMsg">Выигрыш — 8+ одинаковых символов в любом месте поля</div>
+  <div class="controls">
+    <label>Ставка: <select id="olyBet"></select></label>
+    <label class="ante"><input type="checkbox" id="olyAnte"> Ante ×1.25 (шанс ⚡ выше)</label>
+    <span>Цена: <b id="olyCost">0</b> ₽</span>
+  </div>
+  <div class="controls">
+    <button class="btn primary" id="olySpin">КРУТИТЬ ⚡</button>
+    <button class="btn" id="olyAuto">Авто: выкл</button>
+    <button class="btn" id="olyTurbo">Турбо: выкл</button>
+    <button class="btn" id="olyBuy">Купить бонус (×100)</button>
+  </div>
+  <details class="paytable"><summary>Таблица выплат и правила</summary>
+    <div id="olyPay"></div>
+    <p>⚡ Выигрыш платится за 8+ одинаковых символов в любом месте (не по линиям). Выигравшие символы исчезают, остальные падают, сверху добавляются новые (тумбл) — цепочка идёт, пока есть выигрыши.<br>
+       🔮 Шары множителей (×2 … ×500) складываются; в конце цепочки общий множитель применяется к выигрышу спина. Шары исчезают после каждого шага цепочки.<br>
+       ⚡ 4+ скаттера — приз ×3/×5/×100 от ставки и 15 бесплатных вращений. Во фриспинах множители накапливаются и не сбрасываются до конца бонуса; 3+ ⚡ — ещё +5 вращений.<br>
+       Ante увеличивает цену на 25% и шанс скаттеров. «Купить бонус» — 100× ставки, сразу 4 скаттера.</p>
+  </details>
+</section>
+
+<!-- ЕГИПЕТ -->
+<section id="egypt">
+  <div class="fsbanner" id="egFs"></div>
+  <div class="slotframe egframe">
+    <div class="grid5" id="egGrid"></div>
+    <svg class="linesvg" id="egSvg" viewBox="0 0 560 340" preserveAspectRatio="none"></svg>
+  </div>
+  <div class="msg" id="egMsg">Соберите 3 книги 📖 — и в путь за сокровищами!</div>
+  <div class="controls">
+    <label>Линий: <select id="egLines"></select></label>
+    <label>Ставка на линию: <select id="egBet"></select></label>
+    <span>Всего: <b id="egTotal">10</b> ₽</span>
+  </div>
+  <div class="controls">
+    <button class="btn primary" id="egSpin">КРУТИТЬ</button>
+    <button class="btn" id="egAuto">Авто: выкл</button>
+  </div>
+  <details class="paytable"><summary>Таблица выплат и правила</summary>
+    <div id="egPay"></div>
+    <p>📖 Книга — дикий (заменяет все символы) и скаттер одновременно. 3+ книги где угодно: приз ×2/×20/×200 от общей ставки и 10 фриспинов.<br>
+       Перед фриспинами случайно выбирается <b>расширяющийся символ</b>: если он выпал на 2+ барабанах (низкие A/K/Q/J — на 3+), эти барабаны целиком заполняются им и он платит по всем линиям. 3 книги во фриспинах — ещё +10.</p>
+  </details>
+</section>
+
+<!-- БАККАРА -->
+<section id="baccarat">
+  <div class="table">
+    <div class="hand-label">Банкир: <b id="bcBs"></b></div><div class="hand" id="bcB"></div>
+    <div class="hand-label">Игрок: <b id="bcPs"></b></div><div class="hand" id="bcP"></div>
+  </div>
+  <div class="msg" id="bcMsg">Выберите, на кого ставите, и раздайте карты</div>
+  <div class="controls" id="bcSides">
+    <button class="btn active" data-side="player">Игрок 1:1</button>
+    <button class="btn" data-side="banker">Банкир 0.95:1</button>
+    <button class="btn" data-side="tie">Ничья 8:1</button>
+  </div>
+  <div class="controls">
+    <label>Ставка: <input type="number" id="bcBet" value="100" min="1" step="1"></label>
+    <button class="btn primary" id="bcDeal">РАЗДАТЬ</button>
+  </div>
+  <div class="paytable">Побеждает рука, ближе к 9 (десятки и картинки = 0, туз = 1). При ничьей ставки на Игрока и Банкира возвращаются. Комиссия банкира 5%. Колода — 8 колод.</div>
+</section>
+
+<!-- КОСТИ -->
+<section id="sicbo">
+  <div class="dice"><span id="sbD0">⚀</span><span id="sbD1">⚁</span><span id="sbD2">⚂</span></div>
+  <div class="sbsum" id="sbSum"></div>
+  <div class="msg" id="sbMsg">Выберите фишку и кликайте по полю, чтобы делать ставки</div>
+  <div class="chips" id="sbChips">
+    <button class="chip" data-v="1">1</button><button class="chip sel" data-v="5">5</button>
+    <button class="chip" data-v="25">25</button><button class="chip" data-v="100">100</button><button class="chip" data-v="500">500</button>
+  </div>
+  <div class="sbgrid sb3" id="sbMain"></div>
+  <div class="sbgrid sb6" id="sbSingles"></div>
+  <div class="sbgrid sb7" id="sbTotals"></div>
+  <div class="sbgrid sb6" id="sbTriples"></div>
+  <div class="controls">
+    <span>Ставок: <b id="sbTotalBet">0</b> ₽</span>
+    <button class="btn" id="sbClear">Очистить</button>
+    <button class="btn primary" id="sbRoll">БРОСИТЬ 🎲</button>
+  </div>
+  <div class="paytable">Малое/Большое проигрывают при тройке. Число: 1:1 за один такой кубик, 2:1 за два, 3:1 за три (ставка возвращается). Сумма и тройки — по коэффициентам на поле.</div>
+</section>
+
+<!-- РАКЕТА -->
+<section id="crash">
+  <canvas id="crCanvas" width="640" height="320"></canvas>
+  <div class="msg" id="crMsg">Сделайте ставку и вовремя заберите выигрыш</div>
+  <div class="controls">
+    <label>Ставка: <input type="number" id="crBet" value="100" min="1" step="1"></label>
+    <label>Авто-вывод на ×: <input type="number" id="crAuto" value="0" min="0" step="0.1" title="0 — выключено"></label>
+    <button class="btn primary" id="crBtn">ИГРАТЬ 🚀</button>
+  </div>
+  <div class="history" id="crHist"></div>
+  <div class="paytable">Множитель растёт каждую секунду. Нажмите «ЗАБРАТЬ» до того, как ракета улетит, — иначе ставка сгорает. Авто-вывод сработает сам на выбранном множителе. RTP ≈ 96%.</div>
+</section>
+
+<!-- ПЛИНКО -->
+<section id="plinko">
+  <canvas id="plCanvas" width="600" height="520"></canvas>
+  <div class="msg" id="plMsg">Бросайте шарики — чем дальше от центра корзина, тем выше множитель</div>
+  <div class="controls">
+    <label>Ставка: <input type="number" id="plBet" value="50" min="1" step="1"></label>
+    <label>Ряды: <select id="plRows"><option>8</option><option selected>12</option><option>16</option></select></label>
+    <label>Риск: <select id="plRisk"><option value="low">Низкий</option><option value="mid" selected>Средний</option><option value="high">Высокий</option></select></label>
+    <button class="btn primary" id="plDrop">БРОСИТЬ ●</button>
+  </div>
+  <div class="history" id="plHist"></div>
+  <div class="paytable">Шарик случайно отскакивает влево/вправо на каждом ряду. Множители подобраны под RTP ≈ 96%; можно бросать несколько шариков подряд.</div>
+</section>
+
+<!-- РУЛЕТКА -->
+<section id="roulette">
+  <div class="roulette-top">
+    <div class="wheel-wrap"><div class="pointer"></div><canvas id="wheel" width="520" height="520"></canvas></div>
+    <div class="result-ball" id="ball">–</div>
+  </div>
+  <div class="msg" id="rouMsg">Выберите фишку и кликайте по полю, чтобы делать ставки</div>
+  <div class="chips" id="chips">
+    <button class="chip" data-v="1">1</button><button class="chip sel" data-v="5">5</button>
+    <button class="chip" data-v="25">25</button><button class="chip" data-v="100">100</button>
+    <button class="chip" data-v="500">500</button>
+  </div>
+  <div class="board" id="board"></div>
+  <div class="outside" id="dozens"></div>
+  <div class="outside six" id="simple"></div>
+  <div class="controls">
+    <span>Ставок: <b id="totalBet">0</b> ₽</span>
+    <button class="btn" id="clearBets">Очистить</button>
+    <button class="btn primary" id="rouSpin">КРУТИТЬ</button>
+  </div>
+  <div class="history" id="history"></div>
+  <div class="paytable">Число — 35:1 · Дюжина — 2:1 · Красное/Чёрное, Чёт/Нечет, 1–18/19–36 — 1:1 (европейская, один ноль)</div>
+</section>
+
+<!-- БЛЭКДЖЕК -->
+<section id="blackjack">
+  <div class="table">
+    <div class="hand-label">Дилер: <b id="dScore"></b></div>
+    <div class="hand" id="dHand"></div>
+    <div class="hand-label">Вы: <b id="pScore"></b></div>
+    <div class="hand" id="pHand"></div>
+  </div>
+  <div class="msg" id="bjMsg">Сделайте ставку и раздайте карты</div>
+  <div class="controls" id="bjBetRow">
+    <label>Ставка: <input type="number" id="bjBet" value="10" min="1" step="1"></label>
+    <button class="btn primary" id="deal">РАЗДАТЬ</button>
+  </div>
+  <div class="controls" id="bjActions" style="display:none">
+    <button class="btn primary" id="hit">Взять</button>
+    <button class="btn" id="stand">Стоп</button>
+    <button class="btn" id="double">Удвоить</button>
+  </div>
+  <div class="paytable">Блэкджек — 3:2 · Победа — 1:1 · Дилер берёт до 17 и останавливается на 17</div>
+</section>
+
+</main>
+<footer>Игра на виртуальные деньги, только для развлечения.</footer>
+
+<script src="js/core.js"></script>
+<script src="js/slots.js"></script>
+<script src="js/olympus.js"></script>
+<script src="js/egypt.js"></script>
+<script src="js/roulette.js"></script>
+<script src="js/blackjack.js"></script>
+<script src="js/baccarat.js"></script>
+<script src="js/sicbo.js"></script>
+<script src="js/crash.js"></script>
+<script src="js/plinko.js"></script>
+</body>
+</html>
