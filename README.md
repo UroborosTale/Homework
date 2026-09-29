@@ -18,4 +18,4 @@
 Общий код (баланс, вкладки, карты) — `js/core.js`, стили — `css/style.css`.
 
 ## Публикация на GitHub Pages
-Репозиторий → Settings → Pages → Source: **GitHub Actions**. После слияния в `main` workflow `.github/workflows/pages.yml` опубликует сайт.
+Репозиторий → Settings → Pages → Source: **GitHub Actions**. После слияния в `master` (или `main`) workflow `.github/workflows/pages.yml` опубликует сайт.
