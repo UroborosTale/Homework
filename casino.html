@@ -40,12 +40,24 @@
   .chip[data-v="100"] { background: #1a1a1a; } .chip[data-v="500"] { background: #6a1b9a; }
 
   /* Слоты */
-  .reels { display: flex; justify-content: center; gap: 12px; margin: 20px 0; }
-  .reel { width: 110px; height: 120px; background: #fff; border-radius: 12px; display: flex; align-items: center;
-    justify-content: center; font-size: 68px; border: 4px solid var(--gold); box-shadow: inset 0 0 14px #0006; }
-  .reel.spinning { animation: blur .12s infinite; }
-  @keyframes blur { 50% { filter: blur(2px); transform: translateY(4px); } }
-  .paytable { text-align: center; color: var(--muted); font-size: 14px; margin-top: 14px; line-height: 1.6; }
+  .slotframe { position: relative; width: 560px; max-width: 100%; margin: 10px auto; padding: 10px; background: linear-gradient(#5a3d0a, #2a1c04);
+    border: 4px solid var(--gold); border-radius: 16px; box-shadow: 0 0 24px #f5c54255; }
+  .grid5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+  .rcol { display: grid; grid-template-rows: repeat(3, 1fr); gap: 6px; }
+  .sc { aspect-ratio: 1; background: #fffbe8; border-radius: 10px; display: flex; align-items: center; justify-content: center;
+    font-size: clamp(30px, 8vw, 52px); box-shadow: inset 0 0 10px #0004; transition: .2s; }
+  .rcol.spinning .sc { animation: blur .12s infinite; filter: blur(1.5px); }
+  .sc.hit { background: #fff3a0; box-shadow: 0 0 14px 3px var(--gold); transform: scale(1.06); z-index: 1; }
+  .linesvg { position: absolute; inset: 10px; width: calc(100% - 20px); height: calc(100% - 20px); pointer-events: none; }
+  .fsbanner { display: none; text-align: center; background: linear-gradient(90deg, #7b1fa2, #e91e63); border-radius: 10px;
+    padding: 8px; font-weight: 800; font-size: 18px; margin-bottom: 6px; }
+  .gamble { text-align: center; background: #0006; border: 1px solid var(--gold); border-radius: 10px; padding: 12px; margin-top: 12px; }
+  .chests { display: grid; grid-template-columns: repeat(3, 80px); gap: 10px; justify-content: center; margin-top: 10px; }
+  .chest { height: 70px; font-size: 34px; border-radius: 10px; border: 2px solid var(--gold); background: #5a3d0a; cursor: pointer; color: #fff; font-weight: 800; }
+  .chest.open { background: #1b5e20; cursor: default; font-size: 18px; }
+  .paytable table { margin: 8px auto; border-collapse: collapse; }
+  .paytable td, .paytable th { padding: 3px 12px; border-bottom: 1px solid #ffffff22; }
+  .paytable summary { cursor: pointer; color: var(--gold); }
 
   /* Рулетка */
   .roulette-top { display: flex; gap: 24px; justify-content: center; align-items: center; flex-wrap: wrap; }
@@ -98,18 +110,43 @@
 
 <!-- СЛОТЫ -->
 <section id="slots" class="active">
-  <div class="reels">
-    <div class="reel" id="r0">🍒</div><div class="reel" id="r1">🍋</div><div class="reel" id="r2">🔔</div>
+  <div class="fsbanner" id="fsBanner"></div>
+  <div class="slotframe">
+    <div class="grid5" id="slotGrid"></div>
+    <svg class="linesvg" id="lineSvg" viewBox="0 0 560 340" preserveAspectRatio="none"></svg>
   </div>
   <div class="msg" id="slotMsg">Сделайте ставку и крутите!</div>
   <div class="controls">
-    <label>Ставка: <input type="number" id="slotBet" value="10" min="1" step="1"></label>
+    <label>Линий: <select id="slotLines"></select></label>
+    <label>Ставка на линию: <select id="slotBet"></select></label>
+    <span>Всего: <b id="slotTotal">10</b> ₽</span>
+  </div>
+  <div class="controls">
     <button class="btn primary" id="spin">КРУТИТЬ</button>
+    <button class="btn" id="auto">Авто: выкл</button>
+    <button class="btn" id="gambleBtn" style="display:none">🎲 Риск</button>
+    <button class="btn" id="collectBtn" style="display:none">Забрать</button>
   </div>
-  <div class="paytable">
-    3×7️⃣ — ×50 · 3×💎 — ×25 · 3×🔔 — ×15 · 3×🍇 — ×10 · 3×🍋 — ×6 · 3×🍒 — ×4<br>
-    Любые 2 одинаковых — ×1.5 · 🍒 на любом месте — возврат ставки
+  <div id="gamblePanel" class="gamble" style="display:none">
+    <div>Угадайте цвет карты и удвойте выигрыш: <b id="gAmt"></b> ₽ (шаг <span id="gStep">0</span>/5)</div>
+    <div class="controls">
+      <button class="btn" id="gRed" style="background:#c62828">♥ Красная</button>
+      <button class="btn" id="gBlack" style="background:#111">♠ Чёрная</button>
+      <button class="btn" id="gTake">Забрать</button>
+    </div>
   </div>
+  <div id="chestPanel" class="gamble" style="display:none">
+    <div>💰 БОНУС! Откройте 3 сундука (осталось <b id="chestLeft">3</b>)</div>
+    <div class="chests" id="chests"></div>
+  </div>
+  <details class="paytable"><summary>Таблица выплат и правила</summary>
+    <div id="payTable"></div>
+    <p>👑 Дикий заменяет все символы, кроме 🎁 и 💰 (барабаны 2–4).<br>
+       Линии платят слева направо от 1-го барабана, от 3 символов подряд.<br>
+       🎁 3+ где угодно — приз ×2/×10/×50 от общей ставки и 10/15/20 бесплатных вращений с множителем ×<span id="fsm"></span> (ретриггер +10).<br>
+       💰 3+ где угодно — бонус-игра «Сундуки»: откройте 3 из 9 сундуков, призы ×0.5–×5 от общей ставки.<br>
+       После выигрыша можно рискнуть: до 5 удвоений подряд.</p>
+  </details>
 </section>
 
 <!-- РУЛЕТКА -->
@@ -161,6 +198,83 @@
 <footer>Игра на виртуальные деньги, только для развлечения.</footer>
 
 <script>
+const SlotEngine = (() => {
+  const SYMS = {
+    C: { e: '🍒', pay: [3, 10, 30] },   L: { e: '🍋', pay: [3, 12, 40] },
+    O: { e: '🍊', pay: [5, 15, 50] },   G: { e: '🍇', pay: [6, 20, 60] },
+    B: { e: '🔔', pay: [10, 30, 100] },  S: { e: '⭐', pay: [15, 50, 200] },
+    D: { e: '💎', pay: [25, 80, 400] }, 7: { e: '7️⃣', pay: [50, 200, 1000] },
+    W: { e: '👑' }, F: { e: '🎁' }, $: { e: '💰' },
+  };
+  const LINES = [
+    [1,1,1,1,1], [0,0,0,0,0], [2,2,2,2,2], [0,1,2,1,0], [2,1,0,1,2],
+    [0,0,1,2,2], [2,2,1,0,0], [1,0,0,0,1], [1,2,2,2,1], [0,1,1,1,0],
+  ];
+  const BASE = { C: 30, L: 26, O: 22, G: 16, B: 10, S: 6, D: 4, 7: 2, F: 4 };
+  const MID = { W: 17, $: 5 };
+  const REELS = [0, 1, 2, 3, 4].map(i => ({ ...BASE, ...(i >= 1 && i <= 3 ? MID : {}) }));
+  const SCATTER_PAY = { 3: 2, 4: 10, 5: 50 };     // × общая ставка
+  const FREE_SPINS = { 3: 10, 4: 15, 5: 20 };
+  const FS_MULT = 3, RETRIGGER = 10;
+  const CHESTS = [0.5, 0.5, 1, 1, 1, 2, 2, 3, 5]; // × общая ставка, открываются 3 из 9
+
+  const rnd = n => Math.floor(Math.random() * n);
+  function pick(w) {
+    let t = 0; for (const k in w) t += w[k];
+    let r = Math.random() * t;
+    for (const k in w) { if ((r -= w[k]) < 0) return k; }
+  }
+  const spinGrid = () => REELS.map(w => [pick(w), pick(w), pick(w)]);   // grid[reel][row]
+
+  function evaluate(grid, lines, lineBet) {
+    const wins = []; let lineWin = 0;
+    for (let li = 0; li < lines; li++) {
+      const syms = LINES[li].map((row, r) => grid[r][row]);
+      let sym = null, n = 0;
+      for (const s of syms) {
+        if (s === 'W') { n++; continue; }
+        if (s === 'F' || s === '$') break;
+        if (sym === null) sym = s;
+        if (s === sym) n++; else break;
+      }
+      if (n < 3) continue;
+      if (sym === null) sym = '7';
+      const win = SYMS[sym].pay[n - 3] * lineBet;
+      lineWin += win;
+      wins.push({ line: li, sym, count: n, win, cells: LINES[li].slice(0, n).map((row, r) => [r, row]) });
+    }
+    const cnt = ch => grid.reduce((a, col) => a + col.filter(s => s === ch).length, 0);
+    const cellsOf = ch => grid.flatMap((col, r) => col.map((s, row) => s === ch ? [r, row] : null).filter(Boolean));
+    const f = cnt('F'), b = cnt('$');
+    return {
+      wins, lineWin, scatters: f, scatterCells: f >= 3 ? cellsOf('F') : [],
+      scatterWin: f >= 3 ? SCATTER_PAY[Math.min(f, 5)] * lineBet * lines : 0,
+      freeSpins: f >= 3 ? FREE_SPINS[Math.min(f, 5)] : 0,
+      bonus: b >= 3, bonusCells: b >= 3 ? cellsOf('$') : [],
+    };
+  }
+  const shuffledChests = () => CHESTS.map(v => [Math.random(), v]).sort((a, b) => a[0] - b[0]).map(x => x[1]);
+
+  // симуляция полной игры (для проверки RTP)
+  function simulate(lineBet, lines, n) {
+    const total = lineBet * lines; let bet = 0, won = 0, trig = 0, bonus = 0;
+    for (let i = 0; i < n; i++) {
+      bet += total;
+      let fs = 0, first = true;
+      while (first || fs > 0) {
+        const mult = first ? 1 : FS_MULT; if (!first) fs--; first = false;
+        const r = evaluate(spinGrid(), lines, lineBet);
+        won += r.lineWin * mult + r.scatterWin;
+        if (r.freeSpins) { fs += (mult > 1 ? RETRIGGER : r.freeSpins); trig++; }
+        if (r.bonus) { bonus++; won += shuffledChests().slice(0, 3).reduce((a, b) => a + b, 0) * total; }
+      }
+    }
+    return { rtp: won / bet, freeSpinTrig: trig / n, bonus: bonus / n };
+  }
+  return { SYMS, LINES, REELS, FS_MULT, RETRIGGER, spinGrid, evaluate, shuffledChests, simulate };
+})();
+</script>
+<script>
 (() => {
   const $ = id => document.getElementById(id);
   const START = 1000;
@@ -190,36 +304,166 @@
     document.querySelectorAll('section').forEach(s => s.classList.toggle('active', s.id === t));
   };
 
-  /* ================= СЛОТЫ ================= */
-  const SYM = [
-    { s: '🍒', w: 30, x: 4 }, { s: '🍋', w: 25, x: 6 }, { s: '🍇', w: 20, x: 10 },
-    { s: '🔔', w: 12, x: 15 }, { s: '💎', w: 8, x: 25 }, { s: '7️⃣', w: 5, x: 50 },
-  ];
-  const totalW = SYM.reduce((a, b) => a + b.w, 0);
-  function pickSym() { let r = rnd(totalW); for (const y of SYM) { if ((r -= y.w) < 0) return y; } }
-  let slotBusy = false;
-  $('spin').onclick = async () => {
-    if (slotBusy) return;
-    const bet = readBet($('slotBet'), $('slotMsg')); if (!bet) return;
-    slotBusy = true; $('spin').disabled = true;
-    setBalance(balance - bet); msg($('slotMsg'), 'Крутим…');
-    const result = [pickSym(), pickSym(), pickSym()];
-    const reels = [0, 1, 2].map(i => $('r' + i));
-    reels.forEach(r => r.classList.add('spinning'));
-    for (let i = 0; i < 3; i++) {
-      const stop = Date.now() + 700 + i * 500;
-      while (Date.now() < stop) { reels[i].textContent = SYM[rnd(SYM.length)].s; await sleep(70); }
-      reels[i].classList.remove('spinning'); reels[i].textContent = result[i].s;
+  /* ================= СЛОТЫ (5×3, 10 линий, дикий, фриспины, бонус, риск) ================= */
+  const SE = SlotEngine, SYM = SE.SYMS;
+  const slotGrid = $('slotGrid'), svg = $('lineSvg');
+  const cells = [];                                          // cells[reel][row]
+  for (let r = 0; r < 5; r++) {
+    const col = document.createElement('div'); col.className = 'rcol'; cells[r] = [];
+    for (let w = 0; w < 3; w++) { const d = document.createElement('div'); d.className = 'sc'; col.appendChild(d); cells[r][w] = d; }
+    slotGrid.appendChild(col);
+  }
+  const showGrid = g => g.forEach((col, r) => col.forEach((k, w) => cells[r][w].textContent = SYM[k].e));
+  showGrid(SE.spinGrid());
+  for (let i = 1; i <= 10; i++) $('slotLines').add(new Option(i, i));
+  $('slotLines').value = 10;
+  [1, 2, 5, 10, 25, 50].forEach(v => $('slotBet').add(new Option(v, v)));
+  const LINE_COLORS = ['#ff5252','#40c4ff','#69f0ae','#ffd740','#e040fb','#ff6e40','#18ffff','#b2ff59','#ff4081','#7c4dff'];
+  $('fsm').textContent = SE.FS_MULT;
+  $('payTable').innerHTML = '<table><tr><th></th><th>×3</th><th>×4</th><th>×5</th></tr>' +
+    Object.values(SYM).filter(s => s.pay).reverse().map(s => `<tr><td>${s.e}</td>${s.pay.map(p => `<td>×${p}</td>`).join('')}</tr>`).join('') +
+    '</table><small>множители от ставки на линию</small>';
+
+  const slotTotal = () => +$('slotLines').value * +$('slotBet').value;
+  const updTotal = () => $('slotTotal').textContent = slotTotal();
+  $('slotLines').onchange = $('slotBet').onchange = updTotal; updTotal();
+
+  let slotBusy = false, autoOn = false, freeSpins = 0, fsWin = 0, cycleId = 0, gamble = null;
+  const fmt = v => Math.round(v * 100) / 100;
+
+  function clearWins() {
+    cycleId++; svg.innerHTML = '';
+    cells.flat().forEach(c => c.classList.remove('hit'));
+  }
+  function drawLine(li, n) {
+    const W = 560, H = 340, cw = W / 5, rh = H / 3;
+    const pts = SE.LINES[li].slice(0, n).map((row, r) => `${(r + .5) * cw},${(row + .5) * rh}`).join(' ');
+    svg.innerHTML = `<polyline points="${pts}" fill="none" stroke="${LINE_COLORS[li]}" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" opacity=".85"/>`;
+  }
+  async function cycleWins(res) {            // по очереди подсвечиваем выигрышные линии
+    const id = ++cycleId; if (!res.wins.length) return;
+    while (id === cycleId) {
+      for (const w of res.wins) {
+        if (id !== cycleId) return;
+        cells.flat().forEach(c => c.classList.remove('hit'));
+        w.cells.forEach(([r, row]) => cells[r][row].classList.add('hit')); drawLine(w.line, w.count);
+        await sleep(1100);
+      }
     }
-    const [a, b, c] = result;
-    let payout = 0, text = '';
-    if (a === b && b === c) { payout = bet * a.x; text = `ДЖЕКПОТ ${a.s}${a.s}${a.s}! ×${a.x}`; }
-    else if (a === b || b === c || a === c) { payout = bet * 1.5; text = 'Пара! ×1.5'; }
-    else if (result.some(y => y.s === '🍒')) { payout = bet; text = '🍒 — ставка возвращена'; }
-    if (payout) { setBalance(balance + payout); msg($('slotMsg'), `${text} Выигрыш: ${payout} ₽`, 'win'); }
-    else msg($('slotMsg'), 'Не повезло, попробуйте ещё', 'lose');
-    slotBusy = false; $('spin').disabled = false;
+  }
+  function updFsBanner() {
+    const b = $('fsBanner');
+    b.style.display = freeSpins > 0 || fsWin > 0 ? 'block' : 'none';
+    b.textContent = `🎁 БЕСПЛАТНЫЕ ВРАЩЕНИЯ: осталось ${freeSpins} · множитель ×${SE.FS_MULT} · выиграно ${fmt(fsWin)} ₽`;
+  }
+  async function animateSpin(grid) {
+    const cols = document.querySelectorAll('.rcol'), keys = Object.keys(SYM);
+    cols.forEach(c => c.classList.add('spinning'));
+    for (let r = 0; r < 5; r++) {
+      const stop = Date.now() + 500 + r * 350;
+      while (Date.now() < stop) {
+        for (let all = r; all < 5; all++) cells[all].forEach(c => c.textContent = SYM[keys[rnd(keys.length)]].e);
+        await sleep(70);
+      }
+      cols[r].classList.remove('spinning');
+      grid[r].forEach((k, w) => cells[r][w].textContent = SYM[k].e);
+    }
+  }
+
+  async function doSpin() {
+    if (slotBusy) return;
+    const isFree = freeSpins > 0, lines = +$('slotLines').value, lineBet = +$('slotBet').value, total = slotTotal();
+    if (gamble) takeGamble();
+    if (!isFree) { if (total > balance) { autoOn = false; $('auto').textContent = 'Авто: выкл'; return msg($('slotMsg'), 'Недостаточно средств', 'lose'); } setBalance(balance - total); }
+    else freeSpins--;
+    slotBusy = true; $('spin').disabled = true; $('slotLines').disabled = $('slotBet').disabled = true;
+    clearWins(); updFsBanner(); msg($('slotMsg'), isFree ? 'Бесплатное вращение…' : 'Крутим…');
+    const grid = SE.spinGrid();
+    await animateSpin(grid);
+    const res = SE.evaluate(grid, lines, lineBet), mult = isFree ? SE.FS_MULT : 1;
+    let win = res.lineWin * mult + res.scatterWin, text = [];
+    if (res.wins.length) text.push(`Линий: ${res.wins.length}`);
+    if (mult > 1 && res.lineWin) text.push(`×${mult}`);
+    if (res.scatterWin) { text.push(`🎁 ×${res.scatters}: +${res.scatterWin}`); res.scatterCells.forEach(([r, w]) => cells[r][w].classList.add('hit')); }
+    if (res.freeSpins) {
+      const add = isFree ? SE.RETRIGGER : res.freeSpins; freeSpins += add;
+      text.push(`+${add} бесплатных вращений!`);
+    }
+    if (win) { setBalance(balance + win); if (isFree) fsWin += win; }
+    updFsBanner();
+    msg($('slotMsg'), win ? `${text.join(' · ')} — выигрыш ${fmt(win)} ₽` : (text.join(' · ') || 'Не повезло, крутите ещё'), win ? 'win' : 'lose');
+    cycleWins(res);
+    if (res.bonus) { res.bonusCells.forEach(([r, w]) => cells[r][w].classList.add('hit')); await sleep(900); await chestBonus(total); }
+    if (isFree && freeSpins === 0) {
+      msg($('slotMsg'), `Бесплатные вращения окончены! Итого выиграно: ${fmt(fsWin)} ₽`, 'win'); fsWin = 0; await sleep(1500); updFsBanner();
+    }
+    slotBusy = false; $('spin').disabled = false; $('slotLines').disabled = $('slotBet').disabled = false;
+    if (win && !isFree && !res.bonus) offerGamble(win);
+    else if (!isFree) hideGambleBtns();
+    if (freeSpins > 0) { await sleep(900); doSpin(); }
+    else if (autoOn && !gamble) { await sleep(900); if (autoOn) doSpin(); }
+  }
+  $('spin').onclick = () => { autoOn = false; $('auto').textContent = 'Авто: выкл'; doSpin(); };
+  $('auto').onclick = () => {
+    autoOn = !autoOn; $('auto').textContent = 'Авто: ' + (autoOn ? 'вкл' : 'выкл');
+    if (autoOn && !slotBusy) doSpin();
   };
+
+  /* --- Риск-игра --- */
+  function hideGambleBtns() { $('gambleBtn').style.display = $('collectBtn').style.display = 'none'; }
+  let lastWin = 0;
+  function offerGamble(win) {
+    lastWin = win; $('gambleBtn').style.display = $('collectBtn').style.display = 'inline-block';
+    if (autoOn) { hideGambleBtns(); }
+  }
+  $('collectBtn').onclick = hideGambleBtns;
+  $('gambleBtn').onclick = () => {
+    if (slotBusy || !lastWin) return;
+    setBalance(balance - lastWin);                       // выигрыш ставится на кон
+    gamble = { amt: lastWin, step: 0 }; hideGambleBtns();
+    $('gamblePanel').style.display = 'block'; drawGamble(); $('spin').disabled = true;
+  };
+  function drawGamble() { $('gAmt').textContent = fmt(gamble.amt); $('gStep').textContent = gamble.step; }
+  function takeGamble() {
+    if (!gamble) return;
+    setBalance(balance + gamble.amt); msg($('slotMsg'), `Забрано ${fmt(gamble.amt)} ₽`, 'win');
+    gamble = null; $('gamblePanel').style.display = 'none'; $('spin').disabled = false; lastWin = 0;
+  }
+  function guess(color) {
+    if (!gamble) return;
+    const card = Math.random() < .5 ? 'red' : 'black';
+    if (card === color) {
+      gamble.amt *= 2; gamble.step++;
+      msg($('slotMsg'), `Угадали! Карта ${card === 'red' ? '♥ красная' : '♠ чёрная'}. Выигрыш ${fmt(gamble.amt)} ₽`, 'win');
+      if (gamble.step >= 5) return takeGamble();
+      drawGamble();
+    } else {
+      msg($('slotMsg'), `Не угадали: ${card === 'red' ? '♥ красная' : '♠ чёрная'}. Выигрыш потерян.`, 'lose');
+      gamble = null; lastWin = 0; $('gamblePanel').style.display = 'none'; $('spin').disabled = false;
+    }
+  }
+  $('gRed').onclick = () => guess('red'); $('gBlack').onclick = () => guess('black');
+  $('gTake').onclick = takeGamble;
+
+  /* --- Бонус «Сундуки» --- */
+  function chestBonus(total) {
+    return new Promise(resolve => {
+      const prizes = SE.shuffledChests(); let left = 3, sum = 0;
+      const box = $('chests'); box.innerHTML = ''; $('chestLeft').textContent = left; $('chestPanel').style.display = 'block';
+      prizes.forEach(p => {
+        const b = document.createElement('button'); b.className = 'chest'; b.textContent = '🧰';
+        b.onclick = () => {
+          if (b.classList.contains('open') || left === 0) return;
+          left--; b.classList.add('open'); b.textContent = '×' + p; sum += p * total; $('chestLeft').textContent = left;
+          if (left === 0) setTimeout(() => {
+            setBalance(balance + sum); $('chestPanel').style.display = 'none';
+            msg($('slotMsg'), `💰 Бонус: выигрыш ${fmt(sum)} ₽!`, 'win'); resolve();
+          }, 1200);
+        };
+        box.appendChild(b);
+      });
+    });
+  }
 
   /* ================= РУЛЕТКА ================= */
   const ORDER = [0,32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26];
