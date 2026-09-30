@@ -1,0 +1,186 @@
+// Sweet Bonanza-style: платит везде (8+), тумбл, бомбы-множители только во фриспинах
+const SweetEngine = (() => {
+  const COLS = 6, ROWS = 5, MIN = 8;
+  const SYMS = {
+    lolly:  { e: '🍭', pay: [10, 25, 50] },
+    candy:  { e: '🍬', pay: [2.5, 10, 25] },
+    cake:   { e: '🧁', pay: [2, 5, 15] },
+    donut:  { e: '🍩', pay: [1.5, 2, 12] },
+    apple:  { e: '🍎', pay: [1, 1.5, 10] },
+    peach:  { e: '🍑', pay: [0.8, 1.2, 8] },
+    grape:  { e: '🍇', pay: [0.5, 1, 5] },
+    melon:  { e: '🍉', pay: [0.4, 0.9, 4] },
+    banana: { e: '🍌', pay: [0.25, 0.75, 2] },
+    scatter:{ e: '🎂' },
+    orb:    { e: '💣' },
+  };
+  const W = { lolly: 4, candy: 5, cake: 6, donut: 7, apple: 9, peach: 10, grape: 11, melon: 12, banana: 13 };
+  const PAY_SCALE = 1.7, SCATTER_W = 2.2, ORB_W = 5.5;
+  for (const k in SYMS) if (SYMS[k].pay) SYMS[k].pay = SYMS[k].pay.map(p => Math.round(p * PAY_SCALE * 100) / 100);
+  const ORB_VALS = [[2,30],[3,20],[4,15],[5,10],[6,8],[8,5],[10,4],[12,3],[15,2],[20,1.5],[25,1],[50,.5],[100,.2],[250,.05],[500,.02]];
+  const SCATTER_PAY = { 4: 3, 5: 5, 6: 100 };
+  const START_FS = 10, RETRIGGER = 5, BUY_COST = 75, ANTE = 1.25;
+
+  const wpick = arr => { let t = 0; for (const [, w] of arr) t += w; let r = Math.random() * t; for (const [v, w] of arr) if ((r -= w) < 0) return v; return arr[0][0]; };
+  const symList = Object.entries(W);
+  const orbVal = () => wpick(ORB_VALS);
+  function randCell(opts) {
+    const total = symList.reduce((a, [, w]) => a + w, 0);
+    const sw = opts.scatter ? SCATTER_W * (opts.ante ? 1.15 : 1) : 0;
+    const ow = opts.orb ? ORB_W : 0;
+    let r = Math.random() * (total + sw + ow);
+    if (r < sw) return { s: 'scatter' };
+    r -= sw; if (r < ow) return { s: 'orb', v: orbVal() };
+    r -= ow; for (const [k, w] of symList) if ((r -= w) < 0) return { s: k };
+    return { s: 'banana' };
+  }
+  const newGrid = opts => Array.from({ length: COLS }, () => Array.from({ length: ROWS }, () => randCell(opts)));
+
+  function clusters(grid, bet) {
+    const cnt = {}, cells = {};
+    grid.forEach((col, c) => col.forEach((x, r) => { if (SYMS[x.s].pay) { cnt[x.s] = (cnt[x.s] || 0) + 1; (cells[x.s] = cells[x.s] || []).push([c, r]); } }));
+    return Object.keys(cnt).filter(k => cnt[k] >= MIN).map(k => {
+      const n = cnt[k], tier = n >= 12 ? 2 : n >= 10 ? 1 : 0;
+      return { sym: k, count: n, cells: cells[k], win: SYMS[k].pay[tier] * bet };
+    });
+  }
+  function tumble(grid, cl, orb) {                       // убираем выигравшие символы и все шары, остальные падают вниз
+    const dead = new Set(cl.flatMap(c => c.cells.map(([a, b]) => a + ',' + b)));
+    return grid.map((col, c) => {
+      const keep = col.filter((x, r) => !dead.has(c + ',' + r) && x.s !== 'orb');
+      const fresh = Array.from({ length: ROWS - keep.length }, () => randCell({ scatter: false, orb }));
+      return fresh.concat(keep);
+    });
+  }
+  const orbsIn = g => g.flat().filter(x => x.s === 'orb').reduce((a, x) => a + x.v, 0);
+  const scatters = g => g.flat().filter(x => x.s === 'scatter').length;
+
+  // Одно вращение: цепочка тумблов. carry — накопленный множитель фриспинов (или 0 в базовой игре)
+  function spin(bet, { ante = false, free = false, carry = 0, forceScatters = 0 } = {}) {
+    let grid = newGrid({ scatter: true, ante, orb: free });
+    if (forceScatters) {                          // покупка бонуса: гарантированно 4 скаттера
+      const pos = []; while (pos.length < forceScatters) { const p = [Math.floor(Math.random() * COLS), Math.floor(Math.random() * ROWS)]; if (!pos.some(q => q[0] === p[0] && q[1] === p[1])) pos.push(p); }
+      pos.forEach(([c, r]) => grid[c][r] = { s: 'scatter' });
+    }
+    const grids = [grid], steps = []; let base = 0, orbSum = orbsIn(grid);
+    for (;;) {
+      const cl = clusters(grid, bet);
+      steps.push(cl);
+      if (!cl.length) break;
+      base += cl.reduce((a, c) => a + c.win, 0);
+      grid = tumble(grid, cl, free); grids.push(grid); orbSum += orbsIn(grid);
+    }
+    const sc = scatters(grids[0]);
+    const mult = free ? orbSum : 0;
+    const lineWin = base > 0 ? base * (mult > 0 ? mult : 1) : 0;
+    const scWin = sc >= 4 ? SCATTER_PAY[Math.min(sc, 6)] * bet : 0;
+    return { grids, steps, base, orbSum, mult, lineWin, scatters: sc, scWin, total: lineWin + scWin,
+             fs: sc >= 4 ? (free ? RETRIGGER : START_FS) : (free && sc === 3 ? RETRIGGER : 0), newCarry: 0 };
+  }
+  function simulate(n, { ante = false, buy = false } = {}) {
+    let cost = 0, won = 0, fsTrig = 0, max = 0;
+    for (let i = 0; i < n; i++) {
+      const bet = 1; cost += buy ? BUY_COST * bet : bet * (ante ? ANTE : 1);
+      let r = buy ? spin(bet, { ante: false, forceScatters: 4 }) : spin(bet, { ante });
+      let tot = r.total, fs = r.fs, carry = 0; if (fs) fsTrig++;
+      while (fs > 0) { fs--; r = spin(bet, { free: true, carry, ante: false }); carry = r.newCarry; tot += r.total; fs += r.fs; }
+      won += tot; if (tot > max) max = tot;
+    }
+    return { rtp: +(won / cost).toFixed(4), fsRate: fsTrig / n, max };
+  }
+  return { COLS, ROWS, SYMS, START_FS, RETRIGGER, BUY_COST, ANTE, spin, simulate };
+})();
+
+(() => {
+  const { $, rnd, sleep, msg, fmt, setBalance, readBet } = Casino;
+  /* ================= SWEET BONANZA (6×5, платит везде, тумбл, бомбы множителей во фриспинах) ================= */
+  const OL = SweetEngine, oCells = [];
+  const oGrid = $('swGrid');
+  for (let c = 0; c < OL.COLS; c++) {
+    const col = document.createElement('div'); col.className = 'olycol'; oCells[c] = [];
+    for (let r = 0; r < OL.ROWS; r++) { const d = document.createElement('div'); d.className = 'oc'; col.appendChild(d); oCells[c][r] = d; }
+    oGrid.appendChild(col);
+  }
+  function oRender(g, drop) {
+    g.forEach((col, c) => col.forEach((x, r) => {
+      const el = oCells[c][r];
+      el.className = 'oc' + (x.s === 'orb' ? ' orb' : x.s === 'scatter' ? ' scatter' : '') + (drop ? ' drop' : '');
+      el.style.setProperty('--d', (c * 0.05 + (OL.ROWS - r) * 0.03) + 's');
+      el.textContent = x.s === 'orb' ? '×' + x.v : OL.SYMS[x.s].e;
+    }));
+  }
+  oRender(OL.spin(1).grids[0], false);
+  [10, 20, 50, 100, 200, 500, 1000, 2500].forEach(v => $('swBet').add(new Option(v, v)));
+  $('swPay').innerHTML = '<table><tr><th></th><th>8–9</th><th>10–11</th><th>12+</th></tr>' +
+    Object.values(OL.SYMS).filter(s => s.pay).map(s => `<tr><td>${s.e}</td>${s.pay.map(p => `<td>×${p}</td>`).join('')}</tr>`).join('') +
+    '</table><small>множители от ставки</small>';
+  const oCost = () => +$('swBet').value * ($('swAnte').checked ? OL.ANTE : 1);
+  const updOCost = () => { $('swCost').textContent = oCost(); $('swBuy').textContent = `Купить бонус (${OL.BUY_COST * $('swBet').value} ₽)`; };
+  $('swBet').onchange = $('swAnte').onchange = updOCost; updOCost();
+
+  let oBusy = false, oAuto = false, oTurbo = false;
+  const od = ms => sleep(oTurbo ? ms / 3 : ms);
+  const orbSumOf = g => g.flat().filter(x => x.s === 'orb').reduce((a, x) => a + x.v, 0);
+  const setOControls = off => { $('swSpin').disabled = $('swBuy').disabled = $('swBet').disabled = $('swAnte').disabled = off; };
+
+  async function playSpin(r, bet, carry) {         // проигрывает анимацию одного спина, возвращает ничего
+    let acc = 0, shown = carry + orbSumOf(r.grids[0]);
+    $('swWin').textContent = 0; $('swMult').textContent = '×' + shown;
+    oRender(r.grids[0], true); await od(800);
+    for (let i = 0; i < r.steps.length; i++) {
+      const cl = r.steps[i]; if (!cl.length) break;
+      cl.forEach(c => c.cells.forEach(([a, b]) => oCells[a][b].classList.add('hit')));
+      r.grids[i].forEach((col, a) => col.forEach((x, b) => { if (x.s === 'orb') oCells[a][b].classList.add('hit'); }));
+      acc += cl.reduce((s, c) => s + c.win, 0); $('swWin').textContent = fmt(acc);
+      await od(900);
+      cl.forEach(c => c.cells.forEach(([a, b]) => oCells[a][b].classList.add('pop')));
+      r.grids[i].forEach((col, a) => col.forEach((x, b) => { if (x.s === 'orb') oCells[a][b].classList.add('pop'); }));
+      await od(400);
+      oRender(r.grids[i + 1], true);
+      shown += orbSumOf(r.grids[i + 1]); $('swMult').textContent = '×' + shown;
+      await od(700);
+    }
+    if (r.base > 0 && r.mult > 0) {
+      $('swWin').textContent = fmt(r.lineWin);
+      msg($('swMsg'), `${fmt(r.base)} ₽ × ${r.mult} = ${fmt(r.lineWin)} ₽`, 'win'); await od(900);
+    }
+  }
+
+  async function oSpinOnce(bet, opts) {              // одно вращение + начисление
+    const r = OL.spin(bet, opts);
+    await playSpin(r, bet, opts.carry || 0);
+    if (r.total > 0) setBalance(Casino.balance + r.total);
+    if (r.scWin) msg($('swMsg'), `⚡ ×${r.scatters}: +${fmt(r.scWin)} ₽`, 'win');
+    else if (!r.total) msg($('swMsg'), 'Без выигрыша', 'lose');
+    else msg($('swMsg'), `Выигрыш: ${fmt(r.total)} ₽`, 'win');
+    return r;
+  }
+  async function oRound(buy) {
+    if (oBusy) return; const bet = +$('swBet').value, ante = $('swAnte').checked;
+    const cost = buy ? OL.BUY_COST * bet : oCost();
+    if (cost > Casino.balance) { oAuto = false; $('swAuto').textContent = 'Авто: выкл'; return msg($('swMsg'), 'Недостаточно средств', 'lose'); }
+    oBusy = true; setOControls(true); setBalance(Casino.balance - cost);
+    $('swFs').style.display = 'none';
+    let r = await oSpinOnce(bet, buy ? { forceScatters: 4 } : { ante });
+    let total = r.total;
+    if (r.fs) {
+      let left = r.fs, carry = 0, n = 0; msg($('swMsg'), `⚡ ${left} бесплатных вращений!`, 'win'); await od(1600);
+      $('swFs').style.display = 'block';
+      while (left > 0) {
+        left--; n++; $('swFs').textContent = `⚡ Фриспины: осталось ${left} · выиграно ${fmt(total)} ₽`;
+        r = await oSpinOnce(bet, { free: true, carry }); carry = r.newCarry; total += r.total;
+        if (r.fs) { left += r.fs; msg($('swMsg'), `+${r.fs} фриспинов!`, 'win'); await od(1200); }
+        $('swFs').textContent = `⚡ Фриспины: осталось ${left} · выиграно ${fmt(total)} ₽`; await od(600);
+      }
+      msg($('swMsg'), `Бонус окончен: ${n} вращений, итого ${fmt(total)} ₽ (×${fmt(total / bet)})`, total ? 'win' : 'lose');
+    }
+    oBusy = false; setOControls(false);
+    if (oAuto) { await sleep(600); if (oAuto) oRound(false); }
+  }
+  $('swSpin').onclick = () => { oAuto = false; $('swAuto').textContent = 'Авто: выкл'; oRound(false); };
+  $('swBuy').onclick = () => { if (!oBusy && confirm(`Купить бонус за ${OL.BUY_COST * $('swBet').value} ₽?`)) oRound(true); };
+  $('swAuto').onclick = () => { oAuto = !oAuto; $('swAuto').textContent = 'Авто: ' + (oAuto ? 'вкл' : 'выкл'); if (oAuto && !oBusy) oRound(false); };
+  $('swTurbo').onclick = () => { oTurbo = !oTurbo; $('swTurbo').textContent = 'Турбо: ' + (oTurbo ? 'вкл' : 'выкл'); };
+
+
+})();
