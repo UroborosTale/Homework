@@ -95,7 +95,7 @@ const EgyptEngine = (() => {
   $('egLines').onchange = $('egBet').onchange = upd; upd();
 
   let busy = false, auto = false, cycle = 0, freeLeft = 0, fsSum = 0, expandSym = null;
-  const clear = () => { cycle++; svg.innerHTML = ''; cells.flat().forEach(c => c.classList.remove('hit')); };
+  const clear = () => { cycle++; svg.style.transition = 'opacity .22s'; svg.style.opacity = 0; setTimeout(() => { svg.innerHTML = ''; svg.style.opacity = 1; }, 230); cells.flat().forEach(c => c.classList.remove('hit')); };
   function drawLine(li, n) {
     const W = 560, H = 340, cw = W / 5, rh = H / 3;
     svg.innerHTML = `<polyline points="${EE.LINES[li].slice(0, n).map((row, r) => `${(r + .5) * cw},${(row + .5) * rh}`).join(' ')}" fill="none" stroke="${COLORS[li]}" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" opacity=".85"/>`;
@@ -120,14 +120,16 @@ const EgyptEngine = (() => {
       commit: () => g[r].forEach((k, w) => put(r, w, k)),
     })));
   }
+  const lock = () => { $('egSpin').disabled = true; $('egLines').disabled = $('egBet').disabled = true; };
+  const unlock = () => { $('egSpin').disabled = false; $('egLines').disabled = $('egBet').disabled = false; };
   async function doSpin() {
     if (busy) return; const free = freeLeft > 0, lines = +$('egLines').value, lineBet = +$('egBet').value, tot = total();
     if (!free) {
-      if (tot > Casino.balance) { auto = false; $('egAuto').textContent = 'Авто: выкл'; return msg($('egMsg'), 'Недостаточно средств', 'lose'); }
+      if (tot > Casino.balance) { auto = false; $('egAuto').textContent = 'Авто: выкл'; unlock(); return msg($('egMsg'), 'Недостаточно средств', 'lose'); }
       setBalance(Casino.balance - tot);
     } else { freeLeft--; }
-    busy = true; $('egSpin').disabled = true; $('egLines').disabled = $('egBet').disabled = true;
-    clear(); banner(); msg($('egMsg'), free ? 'Бесплатное вращение…' : 'Крутим…');
+    busy = true; lock();
+    clear(); banner(); if (!auto) msg($('egMsg'), free ? 'Бесплатное вращение…' : 'Крутим…');
     const r = EE.spin(lines, lineBet, free ? expandSym : null);
     await animate(r.grid);
     let text = [];
@@ -148,10 +150,10 @@ const EgyptEngine = (() => {
     msg($('egMsg'), r.total ? `${text.join(' · ')} — выигрыш ${fmt(r.total)} ₽` : (text.join(' · ') || 'Не повезло, крутите ещё'), r.total ? 'win' : 'lose');
     cycleWins(r.wins);
     if (free && freeLeft === 0) { await sleep(1200); msg($('egMsg'), `Бонус окончен! Итого во фриспинах: ${fmt(fsSum)} ₽`, 'win'); fsSum = 0; banner(); }
-    busy = false; $('egSpin').disabled = false; $('egLines').disabled = $('egBet').disabled = false;
+    busy = false; if (!auto) unlock();
     if (freeLeft > 0) { await sleep(started ? 2200 : 1300); doSpin(); }
-    else if (auto) { await sleep(900); if (auto) doSpin(); }
+    else if (auto) { await sleep(r.total ? 1500 : 450); if (auto) doSpin(); }
   }
   $('egSpin').onclick = () => { auto = false; $('egAuto').textContent = 'Авто: выкл'; doSpin(); };
-  $('egAuto').onclick = () => { auto = !auto; $('egAuto').textContent = 'Авто: ' + (auto ? 'вкл' : 'выкл'); if (auto && !busy) doSpin(); };
+  $('egAuto').onclick = () => { auto = !auto; $('egAuto').textContent = 'Авто: ' + (auto ? 'вкл' : 'выкл'); if (auto && !busy) doSpin(); else if (!auto && !busy) unlock(); };
 })();

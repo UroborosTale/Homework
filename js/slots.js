@@ -105,7 +105,7 @@ const SlotEngine = (() => {
   let slotBusy = false, autoOn = false, freeSpins = 0, fsWin = 0, cycleId = 0, gamble = null;
 
   function clearWins() {
-    cycleId++; svg.innerHTML = '';
+    cycleId++; svg.style.transition = 'opacity .22s'; svg.style.opacity = 0; setTimeout(() => { svg.innerHTML = ''; svg.style.opacity = 1; }, 230);
     cells.flat().forEach(c => c.classList.remove('hit'));
   }
   function drawLine(li, n) {
@@ -138,14 +138,17 @@ const SlotEngine = (() => {
     })));
   }
 
+  // В авто-режиме кнопки не «мигают» между спинами: блокировка снимается только при остановке
+  const lock = () => { $('spin').disabled = true; $('slotLines').disabled = $('slotBet').disabled = true; };
+  const unlock = () => { if (!gamble) $('spin').disabled = false; $('slotLines').disabled = $('slotBet').disabled = false; };
   async function doSpin() {
     if (slotBusy) return;
     const isFree = freeSpins > 0, lines = +$('slotLines').value, lineBet = +$('slotBet').value, total = slotTotal();
     if (gamble) takeGamble();
-    if (!isFree) { if (total > Casino.balance) { autoOn = false; $('auto').textContent = 'Авто: выкл'; return msg($('slotMsg'), 'Недостаточно средств', 'lose'); } setBalance(Casino.balance - total); }
+    if (!isFree) { if (total > Casino.balance) { autoOn = false; $('auto').textContent = 'Авто: выкл'; unlock(); return msg($('slotMsg'), 'Недостаточно средств', 'lose'); } setBalance(Casino.balance - total); }
     else freeSpins--;
-    slotBusy = true; $('spin').disabled = true; $('slotLines').disabled = $('slotBet').disabled = true;
-    clearWins(); updFsBanner(); msg($('slotMsg'), isFree ? 'Бесплатное вращение…' : 'Крутим…');
+    slotBusy = true; lock();
+    clearWins(); updFsBanner(); if (!autoOn) msg($('slotMsg'), isFree ? 'Бесплатное вращение…' : 'Крутим…');
     const grid = SE.spinGrid();
     await animateSpin(grid);
     const res = SE.evaluate(grid, lines, lineBet), mult = isFree ? SE.FS_MULT : 1;
@@ -165,16 +168,16 @@ const SlotEngine = (() => {
     if (isFree && freeSpins === 0) {
       msg($('slotMsg'), `Бесплатные вращения окончены! Итого выиграно: ${fmt(fsWin)} ₽`, 'win'); fsWin = 0; await sleep(1500); updFsBanner();
     }
-    slotBusy = false; $('spin').disabled = false; $('slotLines').disabled = $('slotBet').disabled = false;
+    slotBusy = false; if (!autoOn) unlock();
     if (win && !isFree && !res.bonus) offerGamble(win);
     else if (!isFree) hideGambleBtns();
     if (freeSpins > 0) { await sleep(900); doSpin(); }
-    else if (autoOn && !gamble) { await sleep(900); if (autoOn) doSpin(); }
+    else if (autoOn && !gamble) { await sleep(win ? 1500 : 450); if (autoOn) doSpin(); }
   }
   $('spin').onclick = () => { autoOn = false; $('auto').textContent = 'Авто: выкл'; doSpin(); };
   $('auto').onclick = () => {
     autoOn = !autoOn; $('auto').textContent = 'Авто: ' + (autoOn ? 'вкл' : 'выкл');
-    if (autoOn && !slotBusy) doSpin();
+    if (autoOn && !slotBusy) doSpin(); else if (!autoOn && !slotBusy) unlock();
   };
 
   /* --- Риск-игра --- */
