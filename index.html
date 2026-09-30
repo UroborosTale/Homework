@@ -13,24 +13,23 @@
     <button class="btn" id="reset" style="padding:4px 10px;font-size:13px">Сброс</button></div>
 </header>
 <nav id="tabs">
-  <button data-tab="slots" class="active">🍒 Слоты</button>
-  <button data-tab="olympus">⚡ Олимп</button>
-  <button data-tab="sweet">🍬 Sweet</button>
-  <button data-tab="egypt">📖 Египет</button>
-  <button data-tab="bigbass">🎣 Big Bass</button>
-  <button data-tab="doghouse">🐕 Dog House</button>
-  <button data-tab="roulette">🎡 Рулетка</button>
-  <button data-tab="blackjack">🃏 Блэкджек</button>
-  <button data-tab="baccarat">🎴 Баккара</button>
-  <button data-tab="sicbo">🎲 Кости</button>
-  <button data-tab="crash">🚀 Ракета</button>
-  <button data-tab="plinko">🔻 Плинко</button>
-  <button data-tab="mines">💣 Мины</button>
+  <button data-tab="catalog">🏠 Каталог игр</button>
+  <span id="curGame"></span>
 </nav>
 <main>
 
+<!-- КАТАЛОГ -->
+<section id="catalog" class="active">
+  <div class="catbar">
+    <input type="search" id="catSearch" placeholder="🔍 Поиск игры…" autocomplete="off">
+    <div class="catchips" id="catChips"></div>
+  </div>
+  <div id="catRecent"></div>
+  <div id="catList"></div>
+</section>
+
 <!-- СЛОТЫ -->
-<section id="slots" class="active">
+<section id="slots" data-logo="ФРУКТЫ">
   <div class="fsbanner" id="fsBanner"></div>
   <div class="slotframe">
     <div class="grid5" id="slotGrid"></div>
@@ -71,7 +70,7 @@
 </section>
 
 <!-- ОЛИМП -->
-<section id="olympus">
+<section id="olympus" data-logo="ОЛИМП">
   <div class="olywrap">
     <div class="olytop">
       <div class="olybadge" id="olyFs" style="display:none"></div>
@@ -102,7 +101,7 @@
 </section>
 
 <!-- SWEET -->
-<section id="sweet">
+<section id="sweet" data-logo="SWEET">
   <div class="olywrap">
     <div class="olytop">
       <div class="olybadge" id="swFs" style="display:none"></div>
@@ -134,7 +133,7 @@
 
 
 <!-- ЕГИПЕТ -->
-<section id="egypt">
+<section id="egypt" data-logo="ЕГИПЕТ">
   <div class="fsbanner" id="egFs"></div>
   <div class="slotframe egframe">
     <div class="grid5" id="egGrid"></div>
@@ -225,7 +224,7 @@
 </section>
 
 <!-- BIG BASS -->
-<section id="bigbass">
+<section id="bigbass" data-logo="BIG BASS">
   <div class="fsbanner bbbanner" id="bbFs"></div>
   <div class="slotframe bbframe">
     <div class="grid5" id="bbGrid"></div>
@@ -250,7 +249,7 @@
 </section>
 
 <!-- DOG HOUSE MEGAWAYS -->
-<section id="doghouse">
+<section id="doghouse" data-logo="DOG HOUSE">
   <div class="fsbanner dgbanner" id="dgFs"></div>
   <div class="olytop">
     <div class="olybadge" id="dgWays">— способов</div>
@@ -291,6 +290,23 @@
     <button class="btn primary" id="mnCash" disabled>ЗАБРАТЬ 💰</button>
   </div>
   <div class="paytable">Поле 5×5. Каждая открытая 💎 увеличивает множитель, но одна мина 💣 сжигает ставку. Чем больше мин, тем быстрее растёт множитель. RTP ≈ 97%.</div>
+</section>
+
+<!-- КОЛЕСО ФОРТУНЫ -->
+<section id="fortune">
+  <div class="roulette-top">
+    <div class="wheel-wrap"><div class="pointer"></div><canvas id="whCanvas" width="520" height="520"></canvas></div>
+    <div class="result-ball" id="whBall">–</div>
+  </div>
+  <div class="msg" id="whMsg">Выберите ставку и риск, затем крутите колесо</div>
+  <div class="controls">
+    <label>Ставка: <input type="number" id="whBet" value="100" min="1" step="1"></label>
+    <label>Риск: <select id="whRisk"><option value="low">Низкий</option><option value="mid" selected>Средний</option><option value="high">Высокий</option></select></label>
+    <button class="btn primary" id="whSpin">КРУТИТЬ ★</button>
+  </div>
+  <div class="whlegend" id="whLegend"></div>
+  <div class="history" id="whHist"></div>
+  <div class="paytable">Выпавший множитель сектора умножается на вашу ставку (×0 — проигрыш). Чем выше риск, тем реже выигрыш, но крупнее множитель — до ×19.</div>
 </section>
 
 <!-- РУЛЕТКА -->
@@ -342,6 +358,8 @@
 <footer>Игра на виртуальные деньги, только для развлечения.</footer>
 
 <script src="js/core.js"></script>
+<script src="js/art.js"></script>
+<script src="js/anim.js"></script>
 <script src="js/slots.js"></script>
 <script src="js/olympus.js"></script>
 <script src="js/sweet.js"></script>
@@ -355,5 +373,7 @@
 <script src="js/crash.js"></script>
 <script src="js/plinko.js"></script>
 <script src="js/mines.js"></script>
+<script src="js/wheel.js"></script>
+<script src="js/catalog.js"></script>
 </body>
 </html>

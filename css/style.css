@@ -160,3 +160,138 @@
   .mcell.boom { background: #b71c1c; border-color: #ff5252; opacity: 1; }
   .mninfo { text-align: center; min-height: 24px; font-size: 15px; color: var(--muted); }
   .mninfo b { color: var(--gold); }
+  /* Колесо фортуны */
+  .whlegend { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin: 10px 0; align-items: center; }
+  .whlegend span { padding: 3px 10px; border-radius: 14px; font-size: 13px; font-weight: 700; color: #fff; }
+  .whlegend em { color: var(--muted); font-size: 13px; }
+  #whCanvas { transition: transform 5.2s cubic-bezier(.12,.6,.1,1); }
+  /* Верхняя панель и каталог */
+  nav#tabs { align-items: center; }
+  nav#tabs button[data-tab="catalog"] { font-weight: 700; }
+  nav#tabs.in-game button[data-tab="catalog"] { background: var(--gold); color: #222; }
+  #curGame { font-size: 18px; font-weight: 700; color: var(--gold); margin-left: 6px; }
+  .catbar { display: flex; flex-direction: column; gap: 10px; margin-bottom: 8px; }
+  #catSearch { width: 100%; padding: 12px 16px; border-radius: 12px; border: 1px solid #2c4a39; background: #0b1510; color: var(--text); font-size: 16px; }
+  .catchips { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chipbtn { padding: 8px 16px; border-radius: 20px; border: 1px solid #2c4a39; background: var(--panel); color: var(--text); font-size: 15px; cursor: pointer; }
+  .chipbtn.on { background: var(--gold); color: #222; border-color: var(--gold); font-weight: 700; }
+  .cathead { font-size: 20px; margin: 22px 0 10px; color: var(--gold); }
+  .cgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 14px; }
+  .gcard { position: relative; display: flex; flex-direction: column; gap: 6px; align-items: flex-start; text-align: left; padding: 16px; min-height: 190px;
+    border: 0; border-radius: 16px; color: #fff; cursor: pointer; overflow: hidden; background: linear-gradient(140deg, var(--c1), var(--c2));
+    box-shadow: 0 6px 18px #0006; transition: transform .18s, box-shadow .18s; font-family: inherit; }
+  .gcard:hover, .gcard:focus-visible { transform: translateY(-4px) scale(1.02); box-shadow: 0 12px 26px #000a; outline: 2px solid #fff8; }
+  .gcard .gicon { font-size: 44px; line-height: 1; filter: drop-shadow(0 2px 4px #0006); }
+  .gcard .gtitle { font-size: 19px; font-weight: 800; text-shadow: 0 1px 3px #0008; }
+  .gcard .gdesc { font-size: 13px; line-height: 1.35; opacity: .95; text-shadow: 0 1px 2px #0006; }
+  .gcard .gtags { display: flex; gap: 5px; flex-wrap: wrap; margin-top: auto; }
+  .gcard .gtags i { font-style: normal; font-size: 11px; padding: 2px 8px; border-radius: 10px; background: #0005; }
+  .gcard .gplay { position: absolute; right: 12px; top: 12px; font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 12px; background: #fff3; opacity: 0; transition: .18s; }
+  .gcard:hover .gplay, .gcard:focus-visible .gplay { opacity: 1; }
+  .cgrid.recent .gcard { min-height: 150px; }
+  .catempty { text-align: center; padding: 40px; color: var(--muted); font-size: 18px; }
+
+  /* ===== Графика: векторные символы и тематическое оформление ===== */
+  svg.sym { width: 84%; height: 84%; display: block; filter: drop-shadow(0 2px 2px #0007); pointer-events: none; }
+  table svg.sym { width: 30px; height: 30px; display: inline-block; }
+  .sc, .oc, .dc { overflow: visible; }
+  .sc.letter, .dc.letter { text-shadow: 0 2px 0 #fff8, 0 3px 4px #0005; }
+  .gtitle-logo { display: block; text-align: center; font: 900 clamp(26px, 6vw, 40px) Georgia, 'Times New Roman', serif; letter-spacing: 5px; margin: 0 0 8px; }
+  #olympus::before, #sweet::before, #bigbass::before, #doghouse::before, #egypt::before, #slots::before { content: attr(data-logo); display: block; text-align: center;
+    font: 900 clamp(26px, 6vw, 40px) Georgia, 'Times New Roman', serif; letter-spacing: 5px; margin: 0 0 10px; -webkit-background-clip: text; background-clip: text; color: transparent; }
+  #olympus::before { background-image: linear-gradient(#fffbd0, #f5b920 55%, #9a5c00); filter: drop-shadow(0 2px 3px #000a); -webkit-text-stroke: 1px #5a3a00; }
+  #sweet::before { background-image: linear-gradient(#ffffff, #ffd0ec 50%, #ff5ca8); filter: drop-shadow(0 2px 3px #6a1b9a); -webkit-text-stroke: 1.5px #b0207a; }
+  #bigbass::before { background-image: linear-gradient(#fff59d, #ffb300 55%, #e65100); filter: drop-shadow(0 2px 3px #012a5a); -webkit-text-stroke: 1.5px #0a3f78; }
+  #doghouse::before { background-image: linear-gradient(#fff9c4, #ffc107 50%, #e65100); filter: drop-shadow(0 2px 3px #3b2110); -webkit-text-stroke: 1.5px #5a2d0a; }
+  #egypt::before { background-image: linear-gradient(#fff3b0, #e5a712 55%, #7a4a00); filter: drop-shadow(0 2px 3px #000a); -webkit-text-stroke: 1px #3b2110; }
+  #slots::before { background-image: linear-gradient(#fff59d, #ffca28 50%, #e65100); filter: drop-shadow(0 2px 3px #4a0008); -webkit-text-stroke: 1.5px #7a0a14; }
+
+  /* Фруктовый слот: рамка с лампочками */
+  #slots { background: radial-gradient(circle at top, #6a0f1c, #2a050b); border-color: #ffca28; }
+  #slots .slotframe { background: linear-gradient(#8a1220, #3b0208); border: 5px solid #ffca28; box-shadow: 0 0 0 3px #7a0a14, 0 0 28px #ff6f0088; }
+  #slots .slotframe::before, #slots .slotframe::after { content: ''; position: absolute; left: 6px; right: 6px; height: 10px;
+    background: radial-gradient(circle, #fffde7 0 2.5px, #ffee58 3px 4px, transparent 5px) 0 0 / 20px 10px repeat-x; }
+  #slots .slotframe::before { top: -8px; } #slots .slotframe::after { bottom: -8px; }
+  #slots .sc { background: linear-gradient(#fffef6, #efe3c2); border: 1px solid #b89a4a; box-shadow: inset 0 0 12px #8a6a1a55; }
+
+  /* Олимп: небо, мрамор и золото */
+  #olympus { background: radial-gradient(ellipse at 20% 10%, #ffffffaa 0 6%, transparent 22%), radial-gradient(ellipse at 80% 16%, #ffffff88 0 5%, transparent 20%), linear-gradient(#63b0ff, #2e55c4 45%, #1a2270); border-color: #f5c542; }
+  #olympus .olywrap { position: relative; }
+  #olympus .olywrap::before, #olympus .olywrap::after { content: ''; position: absolute; top: 46px; bottom: -6px; width: 24px; z-index: 0; border-radius: 4px 4px 0 0;
+    background: repeating-linear-gradient(90deg, #f7efd6 0 5px, #d2c39a 5px 9px, #f7efd6 9px 12px); box-shadow: 0 -8px 0 #efe3bd, 0 0 8px #0005; }
+  #olympus .olywrap::before { left: -30px; } #olympus .olywrap::after { right: -30px; }
+  #olympus .olygrid { position: relative; z-index: 1; border: 6px solid transparent; border-radius: 16px; background: linear-gradient(#0d1a5af0, #050b33f0) padding-box, linear-gradient(#fff3b0, #f5b920 40%, #9a5c00 60%, #fff3b0) border-box; box-shadow: 0 0 30px #7ac0ff88, inset 0 0 40px #0009; }
+  #olympus .oc { background: radial-gradient(circle at 50% 35%, #3a58d066, #10186e88); border: 1px solid #ffffff1f; }
+  #olympus .oc.orb, #sweet .oc.orb { animation: orbpulse 1.4s ease-in-out infinite; }
+  @keyframes orbpulse { 50% { box-shadow: 0 0 24px #ff6ef0, inset 0 0 12px #fff6; } }
+  #olympus .olybadge { background: linear-gradient(#0d1a5acc, #050b33cc); }
+
+  /* Sweet: облака и конфетная рамка */
+  #sweet { background: radial-gradient(ellipse at 15% 8%, #fff 0 5%, transparent 20%), radial-gradient(ellipse at 85% 14%, #ffffffcc 0 5%, transparent 18%), linear-gradient(#7fd0ff, #ffb0e2 55%, #ffd5f4); border-color: #ff80ab; }
+  #sweet .olygrid { border: 8px solid transparent; border-radius: 18px; background: linear-gradient(#ffffffb0, #ffd0f0b0) padding-box, repeating-linear-gradient(45deg, #ff4fa0 0 12px, #fff 12px 24px) border-box; box-shadow: 0 6px 24px #b0207a88; }
+  #sweet .oc { background: #ffffffb0; border: 1px solid #ffffff; box-shadow: inset 0 -3px 0 #f0a0d0aa; }
+  #sweet .olybadge { background: #ffffffcc; color: #7a1a5a; border-color: #ff5ca8; }
+  #sweet .orbbadge b { color: #d81b60; }
+
+  /* Big Bass: море и деревянная рамка */
+  #bigbass { background: radial-gradient(circle at 20% 70%, #ffffff22 0 3%, transparent 4%), radial-gradient(circle at 78% 55%, #ffffff22 0 2%, transparent 3%), radial-gradient(circle at 60% 85%, #ffffff1a 0 3%, transparent 4%), linear-gradient(#7fd6ff 0, #1a86c9 22%, #0a3f78 58%, #03192f); border-color: #4fc3f7; }
+  #bigbass .bbframe { background: linear-gradient(#0f6aa0aa, #04294acc); border: 9px solid #8a5325; border-image: none; border-radius: 16px; box-shadow: 0 0 0 3px #3b2110, inset 0 0 26px #001a3a, 0 8px 22px #0008; }
+  #bigbass .sc { background: linear-gradient(#f4fbff, #cfe9f7); border: 1px solid #ffffffaa; }
+  #bigbass .sc.fish { background: linear-gradient(#e0f7ff, #8fd3f5); } #bigbass .sc.fisher { background: linear-gradient(#fff3b0, #ffca28); }
+
+  /* Dog House: луг и забор */
+  #doghouse { background: repeating-linear-gradient(90deg, #f8f3e6 0 16px, transparent 16px 24px) 0 26% / 100% 60px no-repeat, linear-gradient(#8fd8ff 0 27%, #7cc45c 27% 60%, #4f9a3a); border-color: #9ccc65; }
+  #doghouse .dggrid { border: 9px solid #a86b32; border-radius: 16px; background: linear-gradient(#fff7e0d8, #f3dfb4d8); box-shadow: 0 0 0 3px #4a2a10, inset 0 0 22px #8a5a2a55, 0 8px 22px #0007; }
+  #doghouse .dc { background: linear-gradient(#ffffff, #fbeecb); border: 1px solid #d9b77a; box-shadow: inset 0 -3px 0 #e2c58a; }
+  #doghouse .dc.wild { background: linear-gradient(#ffe6b0, #ffb74d); }
+  #doghouse .olybadge { background: #3b2110cc; }
+
+  /* Египет: песчаник и золото */
+  #egypt { background: repeating-linear-gradient(90deg, #ffffff08 0 3px, transparent 3px 14px), linear-gradient(#f0c877, #d08a2a 55%, #7a430e); border-color: #ffca28; }
+  #egypt .egframe { background: linear-gradient(#5a3208, #2a1602); border: 8px solid #e5a712; border-radius: 12px; box-shadow: 0 0 0 3px #5a3a00, inset 0 0 24px #000a, 0 0 26px #ffb30088; }
+  #egypt .sc { background: linear-gradient(#fdf1cf, #ecd08e); border: 1px solid #b98a33; box-shadow: inset 0 -3px 0 #d8b060; }
+  #egypt .sc.letter { color: #7a3a00; }
+  #egypt .sc.book { background: linear-gradient(#fff3b0, #ffca28); box-shadow: 0 0 12px #ffb300aa; }
+  /* Читаемость текста на светлых темах */
+  #olympus .msg, #sweet .msg, #egypt .msg, #bigbass .msg, #doghouse .msg, #slots .msg { text-shadow: 0 1px 3px #000a; }
+  #sweet { color: #4a1040; }
+  #sweet .olygrid { background: linear-gradient(#fff4fb, #ffd9f3) padding-box, repeating-linear-gradient(45deg, #ff4fa0 0 12px, #fff 12px 24px) border-box; }
+  #sweet .msg { color: #7a1a5a; text-shadow: 0 1px 0 #fff; }
+  #sweet .msg.win { color: #c2185b; } #sweet .msg.lose { color: #b71c1c; }
+  #sweet .controls, #sweet label, #sweet .controls span { color: #4a1040; text-shadow: 0 1px 0 #ffffffaa; font-weight: 600; }
+  #sweet .paytable { color: #4a1040; }
+  #sweet .paytable summary { color: #a01860; font-weight: 700; }
+  #doghouse .controls, #doghouse label { text-shadow: 0 1px 3px #000c; }
+  /* Состояния клеток должны перебивать тематический фон */
+  #olympus .oc.orb { background: radial-gradient(circle at 35% 30%, #f3c8ff, #b23cfd 45%, #3a0f7a); color: #fff; border: 2px solid #fff8; text-shadow: 0 1px 3px #000; }
+  #sweet .oc.orb { background: radial-gradient(circle at 35% 30%, #ffe0f0, #ff4fa0 45%, #8a0f5a); color: #fff; border: 2px solid #fff; text-shadow: 0 1px 3px #4a0030; }
+  #olympus .oc.scatter, #sweet .oc.scatter { background: radial-gradient(circle, #fff59d99, #ffb30033); box-shadow: 0 0 14px #ffee58; }
+  #olympus .oc.hit, #sweet .oc.hit { background: radial-gradient(circle, #fff59dcc, #ffca2888); box-shadow: 0 0 16px 3px #ffc107; transform: scale(1.08); }
+  #slots .sc.hit, #egypt .sc.hit, #bigbass .sc.hit { background: linear-gradient(#fffbc0, #ffe066); box-shadow: 0 0 16px 4px #ffc107; transform: scale(1.06); }
+  #doghouse .dc.hit { background: linear-gradient(#fffbc0, #ffe066); box-shadow: 0 0 16px 4px #ffb300; transform: scale(1.08); }
+
+  /* ===== Плавные анимации ===== */
+  .rcol { position: relative; }
+  .rcol.rolling { overflow: hidden; }
+  .rcol.rolling > .sc { visibility: hidden; }
+  .rstrip .sc { transition: none; }
+  .sc, .oc, .dc { transition: transform .28s cubic-bezier(.3,1.4,.5,1), opacity .25s, background .3s, box-shadow .3s; }
+  .olygrid, .dggrid { overflow: hidden; }
+  /* падение с лёгким отскоком; --dy — на сколько рядов падает клетка */
+  .oc.drop, .dc.drop { animation: dropdy calc(.3s + var(--dy, 1) * .05s) linear var(--d, 0s) backwards; }
+  @keyframes dropdy {
+    0%   { transform: translateY(calc(var(--dy, 1) * -108%)); animation-timing-function: cubic-bezier(.5, 0, .9, .6); }
+    64%  { transform: translateY(0); animation-timing-function: cubic-bezier(.2, .6, .4, 1); }
+    80%  { transform: translateY(-6%); animation-timing-function: cubic-bezier(.6, 0, .9, .6); }
+    100% { transform: translateY(0); }
+  }
+  .oc.exit, .dc.exit { animation: exitdown .34s cubic-bezier(.5, 0, .9, .6) var(--d, 0s) both; }
+  @keyframes exitdown { to { transform: translateY(130%); opacity: 0; } }
+  .oc.pop, .dc.pop { animation: popout .36s ease-in both; }
+  @keyframes popout { 0% { transform: scale(1.08); } 30% { transform: scale(1.22) rotate(-4deg); opacity: 1; } 100% { transform: scale(0) rotate(14deg); opacity: 0; } }
+  .sc.hit, .oc.hit, .dc.hit { animation: hitpulse .9s ease-in-out infinite alternate; }
+  @keyframes hitpulse { from { filter: brightness(1); } to { filter: brightness(1.18); } }
+  @media (prefers-reduced-motion: reduce) {
+    .oc.drop, .dc.drop, .oc.exit, .dc.exit, .oc.pop, .dc.pop, .sc.hit, .oc.hit, .dc.hit, .oc.orb { animation: none !important; }
+    .sc, .oc, .dc { transition: none; }
+  }

@@ -86,7 +86,8 @@ const SlotEngine = (() => {
     for (let w = 0; w < 3; w++) { const d = document.createElement('div'); d.className = 'sc'; col.appendChild(d); cells[r][w] = d; }
     slotGrid.appendChild(col);
   }
-  const showGrid = g => g.forEach((col, r) => col.forEach((k, w) => cells[r][w].textContent = SYM[k].e));
+  const sym = k => Art.html('fruit', k) || SYM[k].e;
+  const showGrid = g => g.forEach((col, r) => col.forEach((k, w) => cells[r][w].innerHTML = sym(k)));
   showGrid(SE.spinGrid());
   for (let i = 1; i <= 10; i++) $('slotLines').add(new Option(i, i));
   $('slotLines').value = 10;
@@ -94,7 +95,7 @@ const SlotEngine = (() => {
   const LINE_COLORS = ['#ff5252','#40c4ff','#69f0ae','#ffd740','#e040fb','#ff6e40','#18ffff','#b2ff59','#ff4081','#7c4dff'];
   $('fsm').textContent = SE.FS_MULT;
   $('payTable').innerHTML = '<table><tr><th></th><th>×3</th><th>×4</th><th>×5</th></tr>' +
-    Object.values(SYM).filter(s => s.pay).reverse().map(s => `<tr><td>${s.e}</td>${s.pay.map(p => `<td>×${p}</td>`).join('')}</tr>`).join('') +
+    Object.entries(SYM).filter(([, s]) => s.pay).reverse().map(([k, s]) => `<tr><td>${sym(k)}</td>${s.pay.map(p => `<td>×${p}</td>`).join('')}</tr>`).join('') +
     '</table><small>множители от ставки на линию</small>';
 
   const slotTotal = () => +$('slotLines').value * +$('slotBet').value;
@@ -129,17 +130,12 @@ const SlotEngine = (() => {
     b.textContent = `🎁 БЕСПЛАТНЫЕ ВРАЩЕНИЯ: осталось ${freeSpins} · множитель ×${SE.FS_MULT} · выиграно ${fmt(fsWin)} ₽`;
   }
   async function animateSpin(grid) {
-    const cols = document.querySelectorAll('.rcol'), keys = Object.keys(SYM);
-    cols.forEach(c => c.classList.add('spinning'));
-    for (let r = 0; r < 5; r++) {
-      const stop = Date.now() + 500 + r * 350;
-      while (Date.now() < stop) {
-        for (let all = r; all < 5; all++) cells[all].forEach(c => c.textContent = SYM[keys[rnd(keys.length)]].e);
-        await sleep(70);
-      }
-      cols[r].classList.remove('spinning');
-      grid[r].forEach((k, w) => cells[r][w].textContent = SYM[k].e);
-    }
+    const cols = [...slotGrid.querySelectorAll('.rcol')], keys = Object.keys(SYM);
+    await Promise.all(cols.map((col, r) => Anim.reelSpin(col, {
+      count: 10 + r * 4, ms: 900 + r * 260, delay: r * 90, final: grid[r],
+      rand: () => keys[rnd(keys.length)], fill: (el, k) => { el.innerHTML = sym(k); },
+      commit: () => grid[r].forEach((k, w) => cells[r][w].innerHTML = sym(k)),
+    })));
   }
 
   async function doSpin() {

@@ -10,9 +10,21 @@ const Casino = (() => {
   const sleep = ms => new Promise(r => setTimeout(r, ms));
   const fmt = v => Math.round(v * 100) / 100;
 
+  let shown = balance, balRaf = 0;                       // на экране баланс «докручивается» до нового значения
+  function paintBalance(to) {
+    cancelAnimationFrame(balRaf);
+    const from = shown, t0 = performance.now(), ms = Math.min(700, 250 + Math.abs(to - from) / 40);
+    if (from === to || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) { shown = to; $('balance').textContent = to; return; }
+    const step = now => {
+      const t = Math.min(1, (now - t0) / ms), e = 1 - Math.pow(1 - t, 3);
+      shown = t < 1 ? Math.round((from + (to - from) * e) * 100) / 100 : to; $('balance').textContent = shown;
+      if (t < 1) balRaf = requestAnimationFrame(step);
+    };
+    balRaf = requestAnimationFrame(step);
+  }
   function setBalance(v) {
     balance = Math.max(0, Math.round(v * 100) / 100);
-    $('balance').textContent = balance;
+    paintBalance(balance);
     try { localStorage.setItem(KEY, balance); } catch (e) {}
   }
   function msg(el, text, cls) { el.textContent = text; el.className = 'msg ' + (cls || ''); }
@@ -38,18 +50,26 @@ const Casino = (() => {
     return cards;
   }
 
-  // Вкладки (последняя открытая запоминается)
+  // Навигация: каталог ↔ игра (последние открытые запоминаются для «Недавних»)
+  const titles = {};                                     // id → название (заполняет каталог)
   function openTab(t) {
-    const btn = document.querySelector(`nav button[data-tab="${t}"]`); if (!btn) return;
-    document.querySelectorAll('nav button').forEach(b => b.classList.toggle('active', b === btn));
-    document.querySelectorAll('main > section').forEach(s => s.classList.toggle('active', s.id === t));
-    try { localStorage.setItem('casinoTab', t); } catch (e) {}
+    const sec = document.getElementById(t); if (!sec || sec.tagName !== 'SECTION') return;
+    document.querySelectorAll('main > section').forEach(s => s.classList.toggle('active', s === sec));
+    $('tabs').classList.toggle('in-game', t !== 'catalog');
+    $('curGame').textContent = t === 'catalog' ? '' : (titles[t] || t);
+    window.scrollTo(0, 0);
+    try { history.replaceState(null, '', t === 'catalog' ? location.pathname : '#' + t); } catch (e) {}
+    if (t !== 'catalog') {
+      try {
+        const rec = JSON.parse(localStorage.getItem('casinoRecent') || '[]').filter(x => x !== t); rec.unshift(t);
+        localStorage.setItem('casinoRecent', JSON.stringify(rec.slice(0, 4)));
+      } catch (e) {}
+    }
+    document.dispatchEvent(new CustomEvent('casino:tab', { detail: t }));
   }
   setBalance(balance);
   $('reset').onclick = () => { try { localStorage.removeItem(KEY); } catch (e) {} setBalance(START); };
   $('tabs').onclick = e => { if (e.target.dataset.tab) openTab(e.target.dataset.tab); };
-  let last = null; try { last = localStorage.getItem('casinoTab'); } catch (e) {}
-  if (last) openTab(last);
 
-  return { $, rnd, sleep, fmt, msg, readBet, setBalance, cardEl, shoe, START, get balance() { return balance; } };
+  return { $, rnd, sleep, fmt, msg, readBet, setBalance, cardEl, shoe, openTab, titles, START, get balance() { return balance; } };
 })();
