@@ -43,6 +43,16 @@ const Casino = (() => {
     d.innerHTML = `<span>${c.r}${c.s}</span><span class="c">${c.s}</span><span class="bt">${c.r}${c.s}</span>`;
     return d;
   }
+  // Обновляет руку без перерисовки старых карт: новые карты «вылетают» из шуза, закрытая карта переворачивается
+  function syncHand(box, cards, hidden = [], { offset = 0, stagger = 0.18 } = {}) {
+    let k = 0;
+    for (let i = box.children.length - 1; i >= 0; i--) if (!cards[i] || box.children[i]._card !== cards[i]) box.children[i].remove();
+    cards.forEach((c, i) => {
+      const hid = hidden.includes(i), el = box.children[i];
+      if (!el) { const n = cardEl(c, hid); n._card = c; n.classList.add('dealt'); n.style.setProperty('--dl', (offset + k++ * stagger) + 's'); box.appendChild(n); }
+      else if (el.classList.contains('back') && !hid) { const f = cardEl(c); f._card = c; f.classList.add('flip'); box.replaceChild(f, el); }
+    });
+  }
   function shoe(decks) {
     const cards = [], S = ['♠', '♥', '♦', '♣'], R = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
     for (let d = 0; d < decks; d++) for (const s of S) for (const r of R) cards.push({ s, r });
@@ -71,5 +81,5 @@ const Casino = (() => {
   $('reset').onclick = () => { try { localStorage.removeItem(KEY); } catch (e) {} setBalance(START); };
   $('tabs').onclick = e => { if (e.target.dataset.tab) openTab(e.target.dataset.tab); };
 
-  return { $, rnd, sleep, fmt, msg, readBet, setBalance, cardEl, shoe, openTab, titles, START, get balance() { return balance; } };
+  return { $, rnd, sleep, fmt, msg, readBet, setBalance, cardEl, syncHand, shoe, openTab, titles, START, get balance() { return balance; } };
 })();

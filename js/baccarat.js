@@ -1,6 +1,6 @@
 // Баккара: Игрок / Банкир / Ничья
 (() => {
-  const { $, sleep, msg, fmt, setBalance, readBet, cardEl, shoe } = Casino;
+  const { $, sleep, msg, fmt, setBalance, readBet, cardEl, syncHand, shoe } = Casino;
   let deck = [], side = 'player', busy = false;
   const val = c => ('JQK'.includes(c.r) || c.r === '10') ? 0 : c.r === 'A' ? 1 : +c.r;
   const score = h => h.reduce((a, c) => a + val(c), 0) % 10;
@@ -11,7 +11,7 @@
     $('bcSides').querySelectorAll('button').forEach(b => b.classList.toggle('active', b === e.target));
   };
   const show = (p, b) => {
-    $('bcP').replaceChildren(...p.map(c => cardEl(c))); $('bcB').replaceChildren(...b.map(c => cardEl(c)));
+    syncHand($('bcP'), p); syncHand($('bcB'), b);
     $('bcPs').textContent = p.length ? score(p) : ''; $('bcBs').textContent = b.length ? score(b) : '';
   };
   $('bcDeal').onclick = async () => {

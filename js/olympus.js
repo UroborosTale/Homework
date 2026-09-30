@@ -179,6 +179,7 @@ const Olympus = (() => {
       }
       msg($('olyMsg'), `Бонус окончен: ${n} вращений, итого ${fmt(total)} ₽ (×${fmt(total / bet)})`, total ? 'win' : 'lose');
     }
+    Anim.winFx(total, bet);
     oBusy = false; if (!oAuto) setOControls(false);
     if (oAuto) { await sleep(total > 0 ? 900 : 300); if (oAuto) oRound(false); }
   }

@@ -144,7 +144,7 @@ const EgyptEngine = (() => {
       if (!free) { freeLeft = EE.FS; fsSum = 0; expandSym = EE.randomExpand(); started = true; text.push(`${EE.FS} фриспинов! Расширяется ${SYM[expandSym].e}`); }
       else { freeLeft += EE.FS; text.push(`+${EE.FS} фриспинов!`); }
     }
-    if (r.total) setBalance(Casino.balance + r.total);
+    if (r.total) { setBalance(Casino.balance + r.total); Anim.winFx(r.total, tot); }
     if (free) fsSum += r.total;
     banner();
     msg($('egMsg'), r.total ? `${text.join(' · ')} — выигрыш ${fmt(r.total)} ₽` : (text.join(' · ') || 'Не повезло, крутите ещё'), r.total ? 'win' : 'lose');

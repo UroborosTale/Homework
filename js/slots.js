@@ -160,7 +160,7 @@ const SlotEngine = (() => {
       const add = isFree ? SE.RETRIGGER : res.freeSpins; freeSpins += add;
       text.push(`+${add} бесплатных вращений!`);
     }
-    if (win) { setBalance(Casino.balance + win); if (isFree) fsWin += win; }
+    if (win) { setBalance(Casino.balance + win); if (isFree) fsWin += win; Anim.winFx(win, total); }
     updFsBanner();
     msg($('slotMsg'), win ? `${text.join(' · ')} — выигрыш ${fmt(win)} ₽` : (text.join(' · ') || 'Не повезло, крутите ещё'), win ? 'win' : 'lose');
     cycleWins(res);

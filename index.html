@@ -177,7 +177,7 @@
 
 <!-- КОСТИ -->
 <section id="sicbo">
-  <div class="dice"><span id="sbD0">⚀</span><span id="sbD1">⚁</span><span id="sbD2">⚂</span></div>
+  <div class="dice"><span id="sbD0"></span><span id="sbD1"></span><span id="sbD2"></span></div>
   <div class="sbsum" id="sbSum"></div>
   <div class="msg" id="sbMsg">Выберите фишку и кликайте по полю, чтобы делать ставки</div>
   <div class="chips" id="sbChips">
@@ -278,6 +278,7 @@
 <!-- МИНЫ -->
 <section id="mines">
   <div class="msg" id="mnMsg">Выберите ставку и число мин, затем нажмите «Начать»</div>
+  <div class="mnmult" id="mnMultBig">×1.00</div>
   <div class="mngrid" id="mnGrid"></div>
   <div class="mninfo" id="mnInfo"></div>
   <div class="controls">
@@ -290,6 +291,87 @@
     <button class="btn primary" id="mnCash" disabled>ЗАБРАТЬ 💰</button>
   </div>
   <div class="paytable">Поле 5×5. Каждая открытая 💎 увеличивает множитель, но одна мина 💣 сжигает ставку. Чем больше мин, тем быстрее растёт множитель. RTP ≈ 97%.</div>
+</section>
+
+<!-- HOLD & WIN -->
+<section id="holdwin" data-logo="HOLD & WIN">
+  <div class="hwjp">
+    <div class="j mini">MINI<b id="hwJMINI">0</b></div><div class="j minor">MINOR<b id="hwJMINOR">0</b></div>
+    <div class="j major">MAJOR<b id="hwJMAJOR">0</b></div><div class="j grand">GRAND<b id="hwJGRAND">0</b></div>
+  </div>
+  <div class="hwrespins" id="hwRespins" style="display:none">РЕСПИНЫ: <b id="hwLeft">3</b></div>
+  <div class="slotframe hwframe">
+    <div class="grid5" id="hwGrid"></div>
+    <svg class="linesvg" id="hwSvg" viewBox="0 0 560 340" preserveAspectRatio="none"></svg>
+    <div class="hwcollect" id="hwCollect" style="display:none">СОБРАНО: <b id="hwCollectSum">0</b> ₽</div>
+  </div>
+  <div class="msg" id="hwMsg">6+ монет 🪙 запускают бонус Hold & Win</div>
+  <div class="controls">
+    <label>Линий: <select id="hwLines"></select></label>
+    <label>Ставка на линию: <select id="hwBet"></select></label>
+    <span>Всего: <b id="hwTotal">10</b> ₽</span>
+  </div>
+  <div class="controls">
+    <button class="btn primary" id="hwSpin">КРУТИТЬ 🤠</button>
+    <button class="btn" id="hwAuto">Авто: выкл</button>
+  </div>
+  <details class="paytable"><summary>Таблица выплат и правила</summary>
+    <div id="hwPay"></div>
+    <p>⭐ Шериф — дикий (барабаны 2–4). 🪙 Монеты несут сумму (×1…×25 от общей ставки) или джекпот MINI/MINOR/MAJOR.<br>
+       6+ монет на поле — бонус <b>Hold & Win</b>: монеты фиксируются, у вас 3 респина. Каждая новая монета фиксируется и сбрасывает респины на 3. Заполните все 15 клеток — получите <b>GRAND ×1000</b>. В конце все монеты собираются.</p>
+  </details>
+</section>
+
+<!-- ЛАВИНА -->
+<section id="avalanche" data-logo="ЭЛЬДОРАДО">
+  <div class="fsbanner gzbanner" id="gzFs"></div>
+  <div class="olytop">
+    <div class="gzmults" id="gzMults"></div>
+    <div class="olybadge">Выигрыш спина: <b id="gzWin">0</b> ₽</div>
+  </div>
+  <div class="gzframe">
+    <div class="gzgrid" id="gzGrid"></div>
+    <svg class="linesvg" id="gzSvg" viewBox="0 0 560 340" preserveAspectRatio="none"></svg>
+  </div>
+  <div class="msg" id="gzMsg">Каждая лавина подряд увеличивает множитель: ×1 → ×2 → ×3 → ×5</div>
+  <div class="controls">
+    <label>Ставка на линию: <select id="gzBet"></select></label>
+    <span>Всего (10 линий): <b id="gzTotal">10</b> ₽</span>
+  </div>
+  <div class="controls">
+    <button class="btn primary" id="gzSpin">КРУТИТЬ 🗿</button>
+    <button class="btn" id="gzAuto">Авто: выкл</button>
+  </div>
+  <details class="paytable"><summary>Таблица выплат и правила</summary>
+    <div id="gzPay"></div>
+    <p>Лавина: выигравшие маски рассыпаются, сверху падают новые — и так пока есть выигрыши. Каждая следующая лавина в цепочке увеличивает множитель: ×1, ×2, ×3, ×5.<br>
+       ❓ Дикий камень заменяет все маски. 🌀 3 золотых диска на барабанах 1–3 — 10 <b>Free Falls</b> с множителями ×3, ×6, ×9, ×15; во фриспинах можно получить ещё.</p>
+  </details>
+</section>
+
+<!-- НАСЛЕДИЕ -->
+<section id="legacy" data-logo="НАСЛЕДИЕ">
+  <div class="lgfs" id="lgFs" style="display:none"></div>
+  <div class="slotframe lgframe">
+    <div class="grid5" id="lgGrid"></div>
+    <svg class="linesvg" id="lgSvg" viewBox="0 0 560 340" preserveAspectRatio="none"></svg>
+    <div class="lgpick" id="lgPick" style="display:none"><div>Расширяющийся символ</div><div class="lgpicksym"></div></div>
+  </div>
+  <div class="msg" id="lgMsg">3 книги 📖 — фриспины с расширяющимся символом</div>
+  <div class="controls">
+    <label>Линий: <select id="lgLines"></select></label>
+    <label>Ставка на линию: <select id="lgBet"></select></label>
+    <span>Всего: <b id="lgTotal">10</b> ₽</span>
+  </div>
+  <div class="controls">
+    <button class="btn primary" id="lgSpin">КРУТИТЬ 📖</button>
+    <button class="btn" id="lgAuto">Авто: выкл</button>
+  </div>
+  <details class="paytable"><summary>Таблица выплат и правила</summary>
+    <div id="lgPay"></div>
+    <p>📖 Книга — дикий и скаттер. 3+ книги: приз ×2/×20/×200 от общей ставки и 10 фриспинов с одним расширяющимся символом.<br>
+       <b>Наследие:</b> каждый ретриггер во фриспинах даёт +10 вращений и <b>ещё один</b> расширяющийся символ — они копятся до конца бонуса. Старшие символы расширяются с 2 барабанов, младшие — с 3.</p>
+  </details>
 </section>
 
 <!-- КОЛЕСО ФОРТУНЫ -->
@@ -307,6 +389,47 @@
   <div class="whlegend" id="whLegend"></div>
   <div class="history" id="whHist"></div>
   <div class="paytable">Выпавший множитель сектора умножается на вашу ставку (×0 — проигрыш). Чем выше риск, тем реже выигрыш, но крупнее множитель — до ×19.</div>
+</section>
+
+<!-- СКРЕТЧ-КАРТЫ -->
+<section id="scratch">
+  <div class="sccard" id="scCard">
+    <div class="schead"><span>ЗОЛОТАЯ ЛИХОРАДКА</span><small>найдите 3 одинаковые суммы</small></div>
+    <div class="scwrap"><div class="scgrid" id="scGrid"></div><canvas id="scCanvas" width="600" height="500"></canvas></div>
+    <div class="scfoot" id="scPay"></div>
+  </div>
+  <div class="msg" id="scMsg">Купите билет и сотрите защитный слой</div>
+  <div class="controls">
+    <label>Цена билета: <select id="scPrice"></select></label>
+    <button class="btn primary" id="scBuy">КУПИТЬ БИЛЕТ 🎟️</button>
+    <button class="btn" id="scReveal" disabled>Открыть всё</button>
+  </div>
+  <div class="paytable">Сотрите слой мышкой или пальцем. Если три поля показывают одну и ту же сумму — она ваша. Когда сотрёте больше половины, билет откроется сам. RTP ≈ 95%.</div>
+</section>
+
+<!-- КУБИКИ -->
+<section id="dice">
+  <div class="dcpanel">
+    <div class="dcnum" id="dcNum">50.00</div>
+    <div class="dcscale"><div class="dctrack" id="dcTrack"><div class="dcmark" id="dcMark"></div></div>
+      <input type="range" id="dcTarget" min="2" max="98" step="0.01" value="50"><div class="dcticks"><span>0</span><span>25</span><span>50</span><span>75</span><span>100</span></div></div>
+    <div class="dcstats">
+      <div>Порог<b id="dcTargetV">50.00</b></div>
+      <div>Режим<button class="btn" id="dcMode">Больше ▲</button></div>
+      <div>Шанс<b id="dcChance">50%</b></div>
+      <div>Множитель<b id="dcMult">×1.96</b></div>
+      <div>Прибыль<b id="dcProfit">0</b></div>
+    </div>
+  </div>
+  <div class="msg" id="dcMsg">Двигайте ползунок: чем меньше шанс, тем выше множитель</div>
+  <div class="controls">
+    <label>Ставка: <input type="number" id="dcBet" value="100" min="1" step="1"></label>
+    <button class="btn" data-mul="0.5">½</button><button class="btn" data-mul="2">×2</button>
+    <button class="btn primary" id="dcRoll">БРОСИТЬ 🎲</button>
+    <button class="btn" id="dcAuto">Авто: выкл</button>
+  </div>
+  <div class="history" id="dcHist"></div>
+  <div class="paytable">Выпадает случайное число от 0.00 до 99.99. «Больше» — выигрыш, если число больше порога; «Меньше» — если меньше. Множитель = 98 / шанс (RTP 98%).</div>
 </section>
 
 <!-- РУЛЕТКА -->
@@ -360,12 +483,16 @@
 <script src="js/core.js"></script>
 <script src="js/art.js"></script>
 <script src="js/anim.js"></script>
+<script src="js/slotui.js"></script>
 <script src="js/slots.js"></script>
 <script src="js/olympus.js"></script>
 <script src="js/sweet.js"></script>
 <script src="js/egypt.js"></script>
 <script src="js/bigbass.js"></script>
 <script src="js/doghouse.js"></script>
+<script src="js/holdwin.js"></script>
+<script src="js/avalanche.js"></script>
+<script src="js/legacy.js"></script>
 <script src="js/roulette.js"></script>
 <script src="js/blackjack.js"></script>
 <script src="js/baccarat.js"></script>
@@ -374,6 +501,8 @@
 <script src="js/plinko.js"></script>
 <script src="js/mines.js"></script>
 <script src="js/wheel.js"></script>
+<script src="js/scratch.js"></script>
+<script src="js/dice.js"></script>
 <script src="js/catalog.js"></script>
 </body>
 </html>

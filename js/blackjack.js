@@ -1,7 +1,7 @@
 (() => {
   const { $, rnd, sleep, msg, fmt, setBalance, readBet } = Casino;
   /* ================= БЛЭКДЖЕК ================= */
-  const { cardEl } = Casino;
+  const { cardEl, syncHand } = Casino;
   const SUITS = ['♠', '♥', '♦', '♣'], RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
   let deck = [], player = [], dealer = [], bjBet = 0, bjState = 'idle', canDouble = false;
 
@@ -21,8 +21,8 @@
   }
   const isBJ = h => h.length === 2 && score(h) === 21;
   function render(hideDealer) {
-    $('pHand').replaceChildren(...player.map(c => cardEl(c)));
-    $('dHand').replaceChildren(...dealer.map((c, i) => cardEl(c, hideDealer && i === 1)));
+    syncHand($('pHand'), player, [], { offset: 0, stagger: 0.18 });
+    syncHand($('dHand'), dealer, hideDealer ? [1] : [], { offset: 0.09, stagger: 0.18 });
     $('pScore').textContent = player.length ? score(player) : '';
     $('dScore').textContent = dealer.length ? (hideDealer ? score([dealer[0]]) : score(dealer)) : '';
   }

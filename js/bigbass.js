@@ -150,7 +150,7 @@ const BassEngine = (() => {
       if (nl > lvl) { freeLeft += BE.RETRIGGER * (nl - lvl); text.push(`Уровень ${nl}! Рыба ×${BE.fsLevel(coll).mult}, +${BE.RETRIGGER} вращений`); lvl = nl; }
       if (r.fs) { freeLeft += BE.RETRIGGER; text.push(`+${BE.RETRIGGER} фриспинов (⚓)`); }
     } else if (r.fs) { freeLeft = r.fs; coll = 0; lvl = 0; fsSum = 0; started = true; text.push(`${r.fs} фриспинов!`); }
-    if (r.total) setBalance(Casino.balance + r.total);
+    if (r.total) { setBalance(Casino.balance + r.total); Anim.winFx(r.total, tot); }
     if (free) fsSum += r.total;
     banner();
     msg($('bbMsg'), r.total ? `${text.join(' · ')} — выигрыш ${fmt(r.total)} ₽` : (text.join(' · ') || 'Не повезло, забрасывайте снова'), r.total ? 'win' : 'lose');

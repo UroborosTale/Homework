@@ -170,6 +170,7 @@ const DogEngine = (() => {
       }
       msg($('dgMsg'), `Бонус окончен: ${n} вращений, итого ${fmt(total)} ₽ (×${fmt(total / bet)})`, total ? 'win' : 'lose');
     }
+    Anim.winFx(total, bet);
     busy = false; if (!auto) setOff(false);
     if (auto) { await sleep(total > 0 ? 900 : 300); if (auto) round(false); }
   }

@@ -58,7 +58,7 @@ const Anim = (() => {
   // Плавный счётчик числа в элементе
   const tokens = new WeakMap();
   function countTo(el, to, ms = 600, fmt = v => Math.round(v * 100) / 100) {
-    const from = parseFloat(String(el.textContent).replace(/\s/g, '').replace(',', '.')) || 0, tok = {}; tokens.set(el, tok);
+    const from = parseFloat(String(el.textContent).replace(/[^0-9.,-]/g, '').replace(',', '.')) || 0, tok = {}; tokens.set(el, tok);
     if (reduce() || from === to) { el.textContent = fmt(to); return; }
     const t0 = performance.now();
     const step = now => {
@@ -68,5 +68,37 @@ const Anim = (() => {
     };
     requestAnimationFrame(step);
   }
-  return { reelSpin, dropDiff, countTo, reduce, easeOutCubic, bezier };
+
+  // Крупный выигрыш: оверлей BIG/MEGA/EPIC WIN с набегающей суммой и дождём монет (не блокирует игру)
+  let fxBusy = false;
+  function winFx(win, bet) {
+    if (!bet || win < bet * 10 || fxBusy) return;
+    const ratio = win / bet, tier = ratio >= 100 ? 'EPIC WIN' : ratio >= 50 ? 'MEGA WIN' : ratio >= 25 ? 'SUPER WIN' : 'BIG WIN';
+    let o = document.getElementById('winfx');
+    if (!o) {
+      o = document.createElement('div'); o.id = 'winfx';
+      o.innerHTML = '<canvas></canvas><div class="wfx-box"><div class="wfx-t"></div><div class="wfx-a"><span>0</span> ₽</div><div class="wfx-x"></div></div>';
+      document.body.appendChild(o); o.onclick = () => o.classList.remove('show');
+    }
+    fxBusy = true; o.className = 'show tier-' + tier.split(' ')[0].toLowerCase();
+    o.querySelector('.wfx-t').textContent = tier; o.querySelector('.wfx-x').textContent = '×' + (Math.round(ratio * 10) / 10);
+    const amt = o.querySelector('.wfx-a span'); amt.textContent = 0; countTo(amt, Math.round(win * 100) / 100, 1600);
+    const cv = o.querySelector('canvas'), g = cv.getContext('2d'); cv.width = innerWidth; cv.height = innerHeight;
+    const n = Math.min(160, 40 + ratio * 1.2), coins = Array.from({ length: n }, () => ({
+      x: Math.random() * cv.width, y: -20 - Math.random() * cv.height * .8, vx: (Math.random() - .5) * 2, vy: 2 + Math.random() * 4,
+      r: 7 + Math.random() * 9, a: Math.random() * 6, va: .1 + Math.random() * .2 }));
+    const t0 = performance.now(), D = reduce() ? 1400 : 3000;
+    const frame = now => {
+      const t = now - t0; g.clearRect(0, 0, cv.width, cv.height);
+      if (!reduce()) coins.forEach(c => {
+        c.vy += .12; c.x += c.vx; c.y += c.vy; c.a += c.va; const w = Math.abs(Math.cos(c.a)) * c.r + 1;
+        const gr = g.createLinearGradient(c.x - w, c.y, c.x + w, c.y); gr.addColorStop(0, '#fff3b0'); gr.addColorStop(.5, '#f5b920'); gr.addColorStop(1, '#a56a00');
+        g.fillStyle = gr; g.beginPath(); g.ellipse(c.x, c.y, w, c.r, 0, 0, 7); g.fill(); g.strokeStyle = '#7a4a00'; g.lineWidth = 1.5; g.stroke();
+      });
+      if (t < D && o.classList.contains('show')) requestAnimationFrame(frame);
+      else { o.classList.remove('show'); g.clearRect(0, 0, cv.width, cv.height); fxBusy = false; }
+    };
+    requestAnimationFrame(frame);
+  }
+  return { reelSpin, dropDiff, countTo, reduce, easeOutCubic, bezier, winFx };
 })();

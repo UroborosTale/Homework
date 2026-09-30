@@ -11,6 +11,9 @@ const Art = (() => {
     rad('cPink', '#ffc6e0', '#e0287a'), rad('cRed', '#ff9a9a', '#c4001f'), rad('cGreen', '#d4ff9a', '#3a9a10'),
     rad('cYellow', '#fff7a0', '#f2b600'), rad('cPurple', '#e3b8ff', '#7a2cc4'), rad('cOrange', '#ffd39a', '#f06400'),
     rad('cBlue', '#b8e8ff', '#1b7ad0'), rad('cWater', '#bff0ff', '#1a8bd0'),
+    grad('sGold', '#fff1a6', '#e0a526', '#8a5a08'), grad('sGrey', '#eef1f4', '#a9b3bd', '#5d6873'), grad('sTeal', '#bff3e6', '#3fb39a', '#1b6b5a'),
+    grad('sRed', '#ffc7b8', '#d8583a', '#7d2414'), grad('sPurple', '#e2cdf7', '#9463c9', '#4d2a7a'), grad('sBlue', '#cde6ff', '#4f8fd6', '#244f86'),
+    grad('stoneG', '#cfc6b0', '#9c927a', '#6b6450'), grad('black2', '#4a4a55', '#15151c'), grad('copper', '#ffd2a0', '#c8732a', '#6e3408'),
     grad('sand', '#f8e4a8', '#e0b866', '#b98a33'), grad('cream', '#ffffff', '#f6e7d8'), grad('red2', '#ff6b6b', '#b3000f'),
     grad('teal', '#7af0e0', '#0a8a8a', '#065a5a'), grad('brown', '#a97142', '#6d4220'), grad('leaf', '#8ee06a', '#2c8a1c'),
   ].join('');
@@ -121,7 +124,46 @@ const Art = (() => {
     $: `<path d="M34 24 Q50 10 66 24 L60 34 Q50 28 40 34 Z" fill="url(#gold)" ${stroke}/><path d="M40 34 Q6 60 16 84 Q26 96 50 96 Q74 96 84 84 Q94 60 60 34 Z" fill="url(#gold)" ${stroke}/><path d="M38 34 H62" stroke="#a56a00" stroke-width="6" stroke-linecap="round"/><text x="50" y="82" text-anchor="middle" font-family="Georgia,serif" font-weight="900" font-size="40" fill="#5a3a00">$</text>`,
   };
 
-  const sets = { olympus, sweet, bass, dog, egypt, fruit };
+
+  // ----- Дикий Запад (Hold & Win)
+  const west = {
+    G: `<path d="M8 40 H66 Q72 40 72 34 V30 H86 Q92 30 92 36 V46 H70 L64 56 H44 L40 70 Q38 86 24 88 H14 Q18 72 22 56 H8 Z" fill="url(#silver)" stroke="#39434e" stroke-width="2.5" stroke-linejoin="round"/>
+      <rect x="44" y="28" width="22" height="12" rx="3" fill="url(#brown)" stroke="#3b2110" stroke-width="2"/><circle cx="55" cy="47" r="7" fill="none" stroke="#39434e" stroke-width="3"/><path d="M14 86 Q18 70 24 58 H38 Q34 74 30 86 Z" fill="url(#wood)" stroke="#3b2110" stroke-width="2"/><path d="M12 44 H62" stroke="#fff" stroke-width="3" opacity=".6" stroke-linecap="round"/>`,
+    H: `<ellipse cx="50" cy="66" rx="46" ry="14" fill="url(#brown)" stroke="#3b2110" stroke-width="2.5"/><path d="M24 64 Q22 30 36 24 Q50 32 64 24 Q78 30 76 64 Q50 74 24 64 Z" fill="url(#fur)" stroke="#3b2110" stroke-width="2.5"/>
+      <path d="M26 56 Q50 64 74 56 L75 62 Q50 70 25 62 Z" fill="#2a1a10"/><path d="M34 32 Q38 44 36 56" stroke="#fff" stroke-width="3" opacity=".35" fill="none" stroke-linecap="round"/><circle cx="64" cy="60" r="3" fill="url(#gold)"/>`,
+    B: `<path d="M34 8 H64 V58 Q64 66 72 70 L90 78 Q96 82 94 90 H22 Q18 90 18 84 V70 Q30 66 32 56 Z" fill="url(#brown)" stroke="#3b2110" stroke-width="2.5" stroke-linejoin="round"/>
+      <path d="M34 8 H64 V20 H34 Z" fill="#5a3418"/><path d="M38 30 Q48 38 58 30 M38 42 Q48 50 58 42" stroke="url(#gold)" stroke-width="3" fill="none"/><rect x="18" y="86" width="76" height="6" rx="2" fill="#2a1a10"/><path d="M10 84 L18 84 M8 88 L14 94" stroke="url(#silver)" stroke-width="4" stroke-linecap="round"/>`,
+    S: `<path d="M24 86 Q8 50 26 24 Q50 0 74 24 Q92 50 76 86 L62 86 Q74 54 64 34 Q50 20 36 34 Q26 54 38 86 Z" fill="url(#silver)" stroke="#39434e" stroke-width="2.5" stroke-linejoin="round"/>
+      ${[[30,74],[24,56],[30,38],[70,74],[76,56],[70,38]].map(([x,y]) => `<circle cx="${x}" cy="${y}" r="3" fill="#39434e"/>`).join('')}<path d="M28 30 Q38 16 50 14" stroke="#fff" stroke-width="3" fill="none" opacity=".7" stroke-linecap="round"/>`,
+    W: `<path d="M50 4 L61 30 L90 30 L67 50 L76 80 L50 62 L24 80 L33 50 L10 30 L39 30 Z" fill="url(#gold)" ${stroke}/>${[[50,4],[90,30],[76,80],[24,80],[10,30]].map(([x,y]) => `<circle cx="${x}" cy="${y}" r="6" fill="url(#gold)" ${stroke}/>`).join('')}
+      <circle cx="50" cy="44" r="15" fill="#a56a00" opacity=".35"/><text x="50" y="51" text-anchor="middle" font-family="Georgia,serif" font-weight="900" font-size="15" fill="#5a3a00">WILD</text>`,
+    C: `<circle cx="50" cy="50" r="42" fill="url(#gold)" ${stroke}/><circle cx="50" cy="50" r="33" fill="none" stroke="#a56a00" stroke-width="3" stroke-dasharray="4 4"/><circle cx="50" cy="50" r="42" fill="none" stroke="#fff" stroke-width="2" opacity=".5"/><ellipse cx="34" cy="30" rx="12" ry="6" fill="#fff" opacity=".45" transform="rotate(-30 34 30)"/>`,
+  };
+
+  // ----- Каменные маски (лавинный слот)
+  const mask = (g, eyes = '#1a120a') => `<rect x="10" y="10" width="80" height="80" rx="14" fill="url(#${g})" stroke="#2a2016" stroke-width="3"/>
+    <path d="M10 30 H90 M10 70 H90" stroke="#00000033" stroke-width="2"/><rect x="16" y="16" width="68" height="68" rx="10" fill="none" stroke="#ffffff55" stroke-width="2"/>
+    <path d="M22 38 Q32 30 44 38 Q32 46 22 38 Z M56 38 Q68 30 78 38 Q68 46 56 38 Z" fill="${eyes}"/><circle cx="33" cy="38" r="3" fill="#ffe082"/><circle cx="67" cy="38" r="3" fill="#ffe082"/>
+    <path d="M50 42 L44 60 H56 Z" fill="#00000044"/><path d="M32 70 Q50 80 68 70 L66 66 Q50 74 34 66 Z" fill="${eyes}"/><path d="M20 24 L34 20" stroke="#fff" stroke-width="4" opacity=".5" stroke-linecap="round"/>`;
+  const stone = {
+    gold: mask('sGold'), grey: mask('sGrey'), teal: mask('sTeal'), red: mask('sRed'), purple: mask('sPurple'), blue: mask('sBlue'),
+    W: `<rect x="10" y="10" width="80" height="80" rx="14" fill="url(#stoneG)" stroke="#2a2016" stroke-width="3"/><path d="M14 40 L40 36 L60 44 L86 38 M30 60 L50 66 L82 62" stroke="#00000033" stroke-width="2" fill="none"/>
+      <text x="50" y="72" text-anchor="middle" font-family="Georgia,serif" font-weight="900" font-size="60" fill="url(#gold)" stroke="#5a3a00" stroke-width="2">?</text>`,
+    F: `<circle cx="50" cy="50" r="42" fill="url(#gold)" ${stroke}/>${Array.from({ length: 12 }, (_, i) => `<path d="M50 8 L54 18 H46 Z" fill="#a56a00" transform="rotate(${i * 30} 50 50)"/>`).join('')}
+      <circle cx="50" cy="50" r="24" fill="url(#copper)" stroke="#5a3a00" stroke-width="2"/><path d="M40 46 Q44 42 48 46 M52 46 Q56 42 60 46 M42 58 Q50 64 58 58" stroke="#3b1a00" stroke-width="3" fill="none" stroke-linecap="round"/>`,
+  };
+
+  // ----- «Наследие» (тёмная гробница)
+  const legacy = {
+    P: `<path d="M22 20 Q50 2 78 20 L84 86 Q50 98 16 86 Z" fill="url(#gold)" ${stroke}/><path d="M22 20 L16 86 M78 20 L84 86" stroke="#1565c0" stroke-width="7"/><path d="M30 26 H70 M26 44 H74 M24 62 H76" stroke="#1565c0" stroke-width="5" opacity=".9"/>
+      <ellipse cx="50" cy="56" rx="17" ry="22" fill="url(#copper)" stroke="#5a3a00" stroke-width="2"/><path d="M38 50 Q44 46 48 50 M52 50 Q56 46 62 50" stroke="#111" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M44 70 Q50 73 56 70" stroke="#6a1a10" stroke-width="3" fill="none"/><path d="M44 14 Q50 4 56 14 L50 22 Z" fill="url(#gRed)" stroke="#5a3a00" stroke-width="1.5"/>`,
+    N: `<path d="M26 44 L16 4 L40 30 Z M74 44 L84 4 L60 30 Z" fill="url(#black2)" stroke="url(#gold)" stroke-width="2.5" stroke-linejoin="round"/><path d="M22 40 Q50 18 78 40 Q86 62 70 76 L62 94 H38 L30 76 Q14 62 22 40 Z" fill="url(#black2)" stroke="url(#gold)" stroke-width="2.5"/>
+      <path d="M38 52 L48 56 L38 58 Z M62 52 L52 56 L62 58 Z" fill="#ffd54f"/><path d="M44 70 L50 90 L56 70 Z" fill="#2a2a33"/><ellipse cx="50" cy="74" rx="6" ry="4" fill="#111"/><path d="M30 76 L70 76" stroke="url(#gold)" stroke-width="4"/><path d="M34 84 L66 84" stroke="#1565c0" stroke-width="4"/>`,
+    H: egypt.F, S: egypt.S,
+    B: `<path d="M6 30 Q28 18 50 30 Q72 18 94 30 V84 Q72 72 50 84 Q28 72 6 84 Z" fill="url(#red2)" stroke="#4a0008" stroke-width="3" stroke-linejoin="round"/><path d="M50 30 V84" stroke="#4a0008" stroke-width="3"/><path d="M12 38 Q28 30 44 38 V72 Q28 64 12 72 Z M56 38 Q72 30 88 38 V72 Q72 64 56 72 Z" fill="#f8e4a8" stroke="#8a5a00" stroke-width="1.5"/>
+      <path d="M20 52 Q28 42 36 52 Q28 60 20 52 Z" fill="#1565c0"/><circle cx="28" cy="52" r="2.4" fill="#fff"/><path d="M62 46 H80 M62 54 H80 M62 62 H74" stroke="#8a5a00" stroke-width="3" stroke-linecap="round"/><path d="M44 12 L50 2 L56 12 L50 22 Z" fill="url(#gold)" ${stroke}/>`,
+  };
+  const sets = { olympus, sweet, bass, dog, egypt, fruit, west, stone, legacy };
   function html(game, key) {
     const inner = sets[game] && sets[game][key];
     return inner ? `<svg class="sym" viewBox="0 0 100 100" aria-hidden="true">${inner}</svg>` : null;
