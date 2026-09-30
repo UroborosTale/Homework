@@ -101,7 +101,7 @@ const BassEngine = (() => {
   $('bbLines').onchange = $('bbBet').onchange = upd; upd();
 
   let busy = false, auto = false, cycle = 0, freeLeft = 0, coll = 0, lvl = 0, fsSum = 0;
-  const clear = () => { cycle++; svg.innerHTML = ''; cells.flat().forEach(c => c.classList.remove('hit')); };
+  const clear = () => { cycle++; svg.style.transition = 'opacity .22s'; svg.style.opacity = 0; setTimeout(() => { svg.innerHTML = ''; svg.style.opacity = 1; }, 230); cells.flat().forEach(c => c.classList.remove('hit')); };
   function drawLine(li, n) {
     const W = 560, H = 340, cw = W / 5, rh = H / 3;
     svg.innerHTML = `<polyline points="${BE.LINES[li].slice(0, n).map((row, r) => `${(r + .5) * cw},${(row + .5) * rh}`).join(' ')}" fill="none" stroke="${COLORS[li]}" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" opacity=".85"/>`;
@@ -126,14 +126,16 @@ const BassEngine = (() => {
       commit: () => g[r].forEach((c, w) => put(r, w, c)),
     })));
   }
+  const lock = () => { $('bbSpin').disabled = true; $('bbLines').disabled = $('bbBet').disabled = true; };
+  const unlock = () => { $('bbSpin').disabled = false; $('bbLines').disabled = $('bbBet').disabled = false; };
   async function doSpin() {
     if (busy) return; const free = freeLeft > 0, lines = +$('bbLines').value, lineBet = +$('bbBet').value, tot = total();
     if (!free) {
-      if (tot > Casino.balance) { auto = false; $('bbAuto').textContent = 'Авто: выкл'; return msg($('bbMsg'), 'Недостаточно средств', 'lose'); }
+      if (tot > Casino.balance) { auto = false; $('bbAuto').textContent = 'Авто: выкл'; unlock(); return msg($('bbMsg'), 'Недостаточно средств', 'lose'); }
       setBalance(Casino.balance - tot);
     } else freeLeft--;
-    busy = true; $('bbSpin').disabled = true; $('bbLines').disabled = $('bbBet').disabled = true;
-    clear(); banner(); msg($('bbMsg'), free ? 'Бесплатное вращение…' : 'Забрасываем удочку…');
+    busy = true; lock();
+    clear(); banner(); if (!auto) msg($('bbMsg'), free ? 'Бесплатное вращение…' : 'Забрасываем удочку…');
     const r = BE.spin(lines, lineBet, free ? BE.fsLevel(coll).mult : 1);
     await animate(r.grid);
     const text = []; let started = false;
@@ -148,16 +150,16 @@ const BassEngine = (() => {
       if (nl > lvl) { freeLeft += BE.RETRIGGER * (nl - lvl); text.push(`Уровень ${nl}! Рыба ×${BE.fsLevel(coll).mult}, +${BE.RETRIGGER} вращений`); lvl = nl; }
       if (r.fs) { freeLeft += BE.RETRIGGER; text.push(`+${BE.RETRIGGER} фриспинов (⚓)`); }
     } else if (r.fs) { freeLeft = r.fs; coll = 0; lvl = 0; fsSum = 0; started = true; text.push(`${r.fs} фриспинов!`); }
-    if (r.total) setBalance(Casino.balance + r.total);
+    if (r.total) { setBalance(Casino.balance + r.total); Anim.winFx(r.total, tot); }
     if (free) fsSum += r.total;
     banner();
     msg($('bbMsg'), r.total ? `${text.join(' · ')} — выигрыш ${fmt(r.total)} ₽` : (text.join(' · ') || 'Не повезло, забрасывайте снова'), r.total ? 'win' : 'lose');
     cycleWins(r.wins);
     if (free && freeLeft === 0) { await sleep(1200); msg($('bbMsg'), `Бонус окончен! Итого во фриспинах: ${fmt(fsSum)} ₽`, 'win'); fsSum = 0; coll = 0; lvl = 0; banner(); }
-    busy = false; $('bbSpin').disabled = false; $('bbLines').disabled = $('bbBet').disabled = false;
+    busy = false; if (!auto) unlock();
     if (freeLeft > 0) { await sleep(started ? 2200 : 1400); doSpin(); }
-    else if (auto) { await sleep(900); if (auto) doSpin(); }
+    else if (auto) { await sleep(r.total ? 1500 : 450); if (auto) doSpin(); }
   }
   $('bbSpin').onclick = () => { auto = false; $('bbAuto').textContent = 'Авто: выкл'; doSpin(); };
-  $('bbAuto').onclick = () => { auto = !auto; $('bbAuto').textContent = 'Авто: ' + (auto ? 'вкл' : 'выкл'); if (auto && !busy) doSpin(); };
+  $('bbAuto').onclick = () => { auto = !auto; $('bbAuto').textContent = 'Авто: ' + (auto ? 'вкл' : 'выкл'); if (auto && !busy) doSpin(); else if (!auto && !busy) unlock(); };
 })();

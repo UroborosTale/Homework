@@ -18,11 +18,16 @@
     const step = 2 * Math.PI / segs.length; g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, cv.width, cv.height); g.translate(R, R);
     segs.forEach((m, i) => {
       const a0 = -Math.PI / 2 + i * step, a1 = a0 + step;
-      g.beginPath(); g.moveTo(0, 0); g.arc(0, 0, R - 4, a0, a1); g.closePath();
-      g.fillStyle = colorOf(m); g.fill(); g.strokeStyle = '#ffffffaa'; g.lineWidth = 2; g.stroke();
+      g.beginPath(); g.moveTo(0, 0); g.arc(0, 0, R - 26, a0, a1); g.closePath();
+      const sg = g.createRadialGradient(0, 0, 40, 0, 0, R - 26); sg.addColorStop(0, '#00000055'); sg.addColorStop(.6, colorOf(m)); sg.addColorStop(1, colorOf(m));
+      g.fillStyle = sg; g.fill(); g.strokeStyle = '#ffe082'; g.lineWidth = 2; g.stroke();
       g.save(); g.rotate(a0 + step / 2 + Math.PI / 2); g.fillStyle = '#fff'; g.font = 'bold 20px sans-serif'; g.textAlign = 'center';
-      g.fillText(label(m), 0, -R + 40); g.restore();
+      g.shadowColor = '#000'; g.shadowBlur = 4; g.fillText(label(m), 0, -R + 62); g.restore();
     });
+    g.beginPath(); g.arc(0, 0, R - 2, 0, 7); g.arc(0, 0, R - 26, 0, 7, true); const rim = g.createLinearGradient(-R, -R, R, R);
+    rim.addColorStop(0, '#fff3b0'); rim.addColorStop(.5, '#c8901a'); rim.addColorStop(1, '#7a4a00'); g.fillStyle = rim; g.fill();
+    for (let i = 0; i < segs.length; i++) { const a = -Math.PI / 2 + i * step; g.beginPath(); g.arc(Math.cos(a) * (R - 14), Math.sin(a) * (R - 14), 5, 0, 7);
+      g.fillStyle = i % 2 ? '#fffde7' : '#ffca28'; g.shadowColor = '#ffeb3b'; g.shadowBlur = 8; g.fill(); g.shadowBlur = 0; }
     g.beginPath(); g.arc(0, 0, 60, 0, 7); g.fillStyle = '#212121'; g.fill(); g.lineWidth = 6; g.strokeStyle = '#ffd54f'; g.stroke();
     g.fillStyle = '#ffd54f'; g.font = 'bold 34px sans-serif'; g.textAlign = 'center'; g.fillText('★', 0, 12);
     cv.style.transition = 'none'; cv.style.transform = 'none'; angle = 0; void cv.offsetWidth; cv.style.transition = '';
@@ -36,9 +41,14 @@
     setBalance(Casino.balance - bet); msg($('whMsg'), 'Крутим колесо…');
     const idx = rnd(segs.length), step = 360 / segs.length;
     angle = Math.ceil(angle / 360) * 360 + 360 * 6 - (idx + 0.5) * step;
-    cv.style.transform = `rotate(${angle}deg)`; await sleep(5300);
+    cv.style.transform = `rotate(${angle}deg)`;
+    const ptr = cv.parentElement.querySelector('.pointer'); let lastSeg = -1, spinning = true;
+    const watch = () => { if (!spinning) return; const m = getComputedStyle(cv).transform; if (m && m !== 'none') { const [a, b] = m.slice(7, -1).split(',').map(Number);
+      const deg = (Math.atan2(b, a) * 180 / Math.PI + 360) % 360, seg = Math.floor(deg / (360 / segs.length));
+      if (seg !== lastSeg) { lastSeg = seg; ptr.classList.remove('tick'); void ptr.offsetWidth; ptr.classList.add('tick'); } } requestAnimationFrame(watch); };
+    requestAnimationFrame(watch); await sleep(5300); spinning = false;
     const m = segs[idx], win = Math.round(bet * m * 100) / 100, ball = $('whBall');
-    ball.textContent = label(m); ball.style.background = colorOf(m);
+    ball.textContent = label(m); ball.style.background = colorOf(m); ball.classList.remove('pop'); void ball.offsetWidth; ball.classList.add('pop'); if (win > bet) Anim.winFx(win, bet);
     if (win) setBalance(Casino.balance + win);
     hist.unshift(m); hist = hist.slice(0, 14);
     $('whHist').replaceChildren(...hist.map(v => { const s = document.createElement('span'); s.className = 'wide'; s.textContent = label(v); s.style.background = colorOf(v); return s; }));
