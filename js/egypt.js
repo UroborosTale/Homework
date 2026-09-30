@@ -125,7 +125,7 @@ const EgyptEngine = (() => {
   async function doSpin() {
     if (busy) return; const free = freeLeft > 0, lines = +$('egLines').value, lineBet = +$('egBet').value, tot = total();
     if (!free) {
-      if (tot > Casino.balance) { auto = false; $('egAuto').textContent = 'Авто: выкл'; unlock(); return msg($('egMsg'), 'Недостаточно средств', 'lose'); }
+      if (tot > Casino.balance) { auto = false; ap.cancel(); unlock(); return msg($('egMsg'), 'Недостаточно средств', 'lose'); }
       setBalance(Casino.balance - tot);
     } else { freeLeft--; }
     busy = true; lock();
@@ -152,8 +152,8 @@ const EgyptEngine = (() => {
     if (free && freeLeft === 0) { await sleep(1200); msg($('egMsg'), `Бонус окончен! Итого во фриспинах: ${fmt(fsSum)} ₽`, 'win'); fsSum = 0; banner(); }
     busy = false; if (!auto) unlock();
     if (freeLeft > 0) { await sleep(started ? 2200 : 1300); doSpin(); }
-    else if (auto) { await sleep(r.total ? 1500 : 450); if (auto) doSpin(); }
+    else if (auto && ap.after(r.total, tot)) { await sleep(r.total ? 1500 : 450); if (auto) doSpin(); }
   }
-  $('egSpin').onclick = () => { auto = false; $('egAuto').textContent = 'Авто: выкл'; doSpin(); };
-  $('egAuto').onclick = () => { auto = !auto; $('egAuto').textContent = 'Авто: ' + (auto ? 'вкл' : 'выкл'); if (auto && !busy) doSpin(); else if (!auto && !busy) unlock(); };
+  $('egSpin').onclick = () => { auto = false; ap.cancel(); doSpin(); };
+  const ap = SlotUI.auto($('egAuto'), { start: () => { auto = true; if (!busy) doSpin(); }, stop: () => { auto = false; if (!busy) unlock(); } });
 })();

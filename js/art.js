@@ -163,7 +163,31 @@ const Art = (() => {
     B: `<path d="M6 30 Q28 18 50 30 Q72 18 94 30 V84 Q72 72 50 84 Q28 72 6 84 Z" fill="url(#red2)" stroke="#4a0008" stroke-width="3" stroke-linejoin="round"/><path d="M50 30 V84" stroke="#4a0008" stroke-width="3"/><path d="M12 38 Q28 30 44 38 V72 Q28 64 12 72 Z M56 38 Q72 30 88 38 V72 Q72 64 56 72 Z" fill="#f8e4a8" stroke="#8a5a00" stroke-width="1.5"/>
       <path d="M20 52 Q28 42 36 52 Q28 60 20 52 Z" fill="#1565c0"/><circle cx="28" cy="52" r="2.4" fill="#fff"/><path d="M62 46 H80 M62 54 H80 M62 62 H74" stroke="#8a5a00" stroke-width="3" stroke-linecap="round"/><path d="M44 12 L50 2 L56 12 L50 22 Z" fill="url(#gold)" ${stroke}/>`,
   };
-  const sets = { olympus, sweet, bass, dog, egypt, fruit, west, stone, legacy };
+
+  // ----- Самураи (Megaways)
+  const samurai = {
+    helm: `<path d="M50 6 L40 30 Q30 18 20 10 Q24 30 34 38 Z M50 6 L60 30 Q70 18 80 10 Q76 30 66 38 Z" fill="url(#gold)" ${stroke}/>
+      <path d="M16 62 Q16 30 50 28 Q84 30 84 62 Z" fill="url(#black2)" stroke="url(#gold)" stroke-width="3"/><path d="M26 40 Q50 32 74 40" stroke="#ffffff33" stroke-width="3" fill="none"/>
+      <path d="M8 62 H92 L86 72 H14 Z" fill="#8a0f14" stroke="url(#gold)" stroke-width="2.5"/><path d="M12 72 H88 L82 82 H18 Z" fill="#6a0a10" stroke="url(#gold)" stroke-width="2.5"/><path d="M18 82 H82 L76 92 H24 Z" fill="#4a0508" stroke="url(#gold)" stroke-width="2.5"/>
+      <circle cx="50" cy="48" r="7" fill="url(#gRed)" stroke="url(#gold)" stroke-width="2"/>`,
+    sword: `<path d="M86 8 Q70 30 36 62 L30 58 Q66 26 86 8 Z" fill="url(#silver)" stroke="#39434e" stroke-width="2"/><path d="M84 10 Q68 30 36 60" stroke="#fff" stroke-width="1.5" opacity=".8" fill="none"/>
+      <ellipse cx="33" cy="63" rx="12" ry="5" fill="url(#gold)" ${stroke} transform="rotate(-42 33 63)"/>
+      <path d="M30 66 L10 88 L16 94 L36 72 Z" fill="#1a1a1a" stroke="#000" stroke-width="2"/>${[0, 1, 2, 3].map(i => `<path d="M${28 - i * 4.5} ${70 + i * 5} l6 6 M${22 - i * 4.5} ${70 + i * 5} l6 -1" stroke="#c62828" stroke-width="2.5"/>`).join('')}<circle cx="12" cy="92" r="4" fill="url(#gold)"/>`,
+    fan: `<path d="M50 88 L6 44 A62 62 0 0 1 94 44 Z" fill="#fff4e0" stroke="#5a0a10" stroke-width="3" stroke-linejoin="round"/>
+      ${Array.from({ length: 9 }, (_, i) => { const a = Math.PI * (1.25 + i * .0625) ; return `<path d="M50 88 L${50 + Math.cos(a) * 62} ${88 + Math.sin(a) * 62}" stroke="#8a5a2a" stroke-width="1.6"/>`; }).join('')}
+      <circle cx="50" cy="52" r="15" fill="url(#gRed)"/><path d="M50 88 L6 44 A62 62 0 0 1 94 44 Z" fill="none" stroke="url(#gold)" stroke-width="3"/><circle cx="50" cy="88" r="5" fill="url(#gold)" ${stroke}/>`,
+    lantern: `<rect x="36" y="6" width="28" height="10" rx="3" fill="#1a1a1a"/><path d="M50 2 V6" stroke="#1a1a1a" stroke-width="3"/>
+      <ellipse cx="50" cy="50" rx="34" ry="36" fill="url(#red2)" stroke="#4a0008" stroke-width="3"/>${[24, 34, 44, 54, 64, 74].map(y => `<path d="M${50 - Math.sqrt(Math.max(0, 1 - ((y - 50) / 36) ** 2)) * 34} ${y} Q50 ${y + 4} ${50 + Math.sqrt(Math.max(0, 1 - ((y - 50) / 36) ** 2)) * 34} ${y}" stroke="#4a0008" stroke-width="1.6" fill="none" opacity=".6"/>`).join('')}
+      <ellipse cx="40" cy="36" rx="8" ry="14" fill="#fff" opacity=".2"/><rect x="36" y="84" width="28" height="8" rx="3" fill="#1a1a1a"/><path d="M50 92 V99" stroke="url(#gold)" stroke-width="4"/><circle cx="50" cy="50" r="10" fill="none" stroke="#ffd54f" stroke-width="3" opacity=".8"/>`,
+    W: `<path d="M20 30 L10 4 L34 22 Z M80 30 L90 4 L66 22 Z" fill="url(#gold)" ${stroke}/><path d="M16 34 Q50 8 84 34 Q92 64 72 86 Q50 98 28 86 Q8 64 16 34 Z" fill="url(#gRed)" stroke="#3a0000" stroke-width="3"/>
+      <path d="M26 40 L44 48 L28 54 Z M74 40 L56 48 L72 54 Z" fill="#ffd54f" stroke="#3a0000" stroke-width="2"/><path d="M40 62 Q50 58 60 62" stroke="#3a0000" stroke-width="3" fill="none"/>
+      <path d="M30 70 Q50 86 70 70 L66 80 Q50 90 34 80 Z" fill="#fff" stroke="#3a0000" stroke-width="2"/><path d="M34 70 L38 80 M66 70 L62 80" stroke="#3a0000" stroke-width="2"/>
+      <rect x="22" y="88" width="56" height="12" rx="4" fill="url(#gold)" ${stroke}/><text x="50" y="97.5" text-anchor="middle" font-family="Georgia,serif" font-weight="900" font-size="10" fill="#5a1a00">WILD</text>`,
+    S: `<circle cx="50" cy="50" r="44" fill="url(#gold)" ${stroke}/><circle cx="50" cy="50" r="36" fill="#fff8e6" stroke="#a56a00" stroke-width="2"/>
+      ${Array.from({ length: 12 }, (_, i) => `<path d="M50 50 L${50 + Math.cos(i * Math.PI / 6 - .13) * 34} ${50 + Math.sin(i * Math.PI / 6 - .13) * 34} L${50 + Math.cos(i * Math.PI / 6 + .13) * 34} ${50 + Math.sin(i * Math.PI / 6 + .13) * 34} Z" fill="#e53935"/>`).join('')}
+      <circle cx="50" cy="50" r="15" fill="url(#gRed)" stroke="#fff" stroke-width="2"/><ellipse cx="36" cy="30" rx="10" ry="5" fill="#fff" opacity=".45" transform="rotate(-30 36 30)"/>`,
+  };
+  const sets = { olympus, sweet, bass, dog, egypt, fruit, west, stone, legacy, samurai };
   function html(game, key) {
     const inner = sets[game] && sets[game][key];
     return inner ? `<svg class="sym" viewBox="0 0 100 100" aria-hidden="true">${inner}</svg>` : null;

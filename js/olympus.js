@@ -163,7 +163,7 @@ const Olympus = (() => {
   async function oRound(buy) {
     if (oBusy) return; const bet = +$('olyBet').value, ante = $('olyAnte').checked;
     const cost = buy ? OL.BUY_COST * bet : oCost();
-    if (cost > Casino.balance) { oAuto = false; $('olyAuto').textContent = 'Авто: выкл'; setOControls(false); return msg($('olyMsg'), 'Недостаточно средств', 'lose'); }
+    if (cost > Casino.balance) { oAuto = false; ap.cancel(); setOControls(false); return msg($('olyMsg'), 'Недостаточно средств', 'lose'); }
     oBusy = true; setOControls(true); setBalance(Casino.balance - cost);
     $('olyFs').style.display = 'none';
     let r = await oSpinOnce(bet, buy ? { forceScatters: 4 } : { ante });
@@ -181,12 +181,12 @@ const Olympus = (() => {
     }
     Anim.winFx(total, bet);
     oBusy = false; if (!oAuto) setOControls(false);
-    if (oAuto) { await sleep(total > 0 ? 900 : 300); if (oAuto) oRound(false); }
+    if (oAuto && ap.after(total, bet)) { await sleep(total > 0 ? 900 : 300); if (oAuto) oRound(false); }
   }
-  $('olySpin').onclick = () => { oAuto = false; $('olyAuto').textContent = 'Авто: выкл'; oRound(false); };
+  $('olySpin').onclick = () => { oAuto = false; ap.cancel(); oRound(false); };
   $('olyBuy').onclick = () => { if (!oBusy && confirm(`Купить бонус за ${OL.BUY_COST * $('olyBet').value} ₽?`)) oRound(true); };
-  $('olyAuto').onclick = () => { oAuto = !oAuto; $('olyAuto').textContent = 'Авто: ' + (oAuto ? 'вкл' : 'выкл'); if (oAuto && !oBusy) oRound(false); else if (!oAuto && !oBusy) setOControls(false); };
-  $('olyTurbo').onclick = () => { oTurbo = !oTurbo; $('olyTurbo').textContent = 'Турбо: ' + (oTurbo ? 'вкл' : 'выкл'); };
+  const ap = SlotUI.auto($('olyAuto'), { start: () => { oAuto = true; if (!oBusy) oRound(false); }, stop: () => { oAuto = false; if (!oBusy) setOControls(false); } });
+  $('olyTurbo').onclick = () => { oTurbo = !oTurbo; $('olympus').classList.toggle('turbo', oTurbo); $('olyTurbo').textContent = 'Турбо: ' + (oTurbo ? 'вкл' : 'выкл'); };
 
 
 })();

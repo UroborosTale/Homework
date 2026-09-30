@@ -374,6 +374,34 @@
   </details>
 </section>
 
+<!-- САМУРАИ MEGAWAYS -->
+<section id="samurai" data-logo="САМУРАИ MEGAWAYS">
+  <div class="sakura" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+  <div class="smfs" id="smFs" style="display:none"><span>Фриспины: <b id="smFsLeft">0</b></span><span class="smmult">Множитель <b id="smMult">×1</b></span><span>Выиграно: <b id="smFsWon">0</b> ₽</span></div>
+  <div class="olytop">
+    <div class="olybadge" id="smWays">— способов</div>
+    <div class="olybadge">Выигрыш спина: <b id="smWin">0</b> ₽</div>
+  </div>
+  <div class="dggrid smgrid" id="smGrid"></div>
+  <div class="msg" id="smMsg">До 117 649 способов выиграть. 4+ 🔴 — фриспины с растущим множителем</div>
+  <div class="controls">
+    <label>Ставка: <select id="smBet"></select></label>
+    <span>Цена: <b id="smCost">10</b> ₽</span>
+  </div>
+  <div class="controls">
+    <button class="btn primary" id="smSpin">КРУТИТЬ ⚔️</button>
+    <button class="btn" id="smAuto">Авто: выкл</button>
+    <button class="btn" id="smTurbo">Турбо: выкл</button>
+    <button class="btn" id="smBuy">Купить бонус</button>
+  </div>
+  <details class="paytable"><summary>Таблица выплат и правила</summary>
+    <div id="smPay"></div>
+    <p>Каждый спин барабаны получают высоту от 2 до 7 символов. Выигрыш — совпадения слева направо от 1-го барабана на 3+ барабанах подряд; число способов = произведение совпавших символов на барабанах.<br>
+       Лавина: выигравшие символы разрубаются, сверху падают новые. 👹 Маска они — дикий на барабанах 2–5.<br>
+       🔴 4+ скаттера — 12 фриспинов и +5 за каждый скаттер сверх четырёх. Во фриспинах <b>множитель начинается с ×1 и растёт на +1 после каждой лавины — без сброса до конца бонуса</b>. 3+ скаттера во фриспинах — ещё +5. Максимальный выигрыш спина — ×10 000.</p>
+  </details>
+</section>
+
 <!-- КОЛЕСО ФОРТУНЫ -->
 <section id="fortune">
   <div class="roulette-top">
@@ -432,6 +460,28 @@
   <div class="paytable">Выпадает случайное число от 0.00 до 99.99. «Больше» — выигрыш, если число больше порога; «Меньше» — если меньше. Множитель = 98 / шанс (RTP 98%).</div>
 </section>
 
+<!-- HI-LO -->
+<section id="hilo">
+  <div class="hltable">
+    <div class="hlinfo"><div>Множитель<b id="hlMult">×1.00</b></div><div>Выигрыш<b id="hlWin">0</b> ₽</div></div>
+    <div class="hlmain">
+      <button class="btn hlbtn lo" id="hlLo">▼</button>
+      <div class="hlcard" id="hlCard"></div>
+      <button class="btn hlbtn hi" id="hlHi">▲</button>
+    </div>
+    <div class="hltrail" id="hlTrail"></div>
+  </div>
+  <div class="msg" id="hlMsg">Сделайте ставку и начните</div>
+  <div class="controls">
+    <label>Ставка: <input type="number" id="hlBet" value="100" min="1" step="1"></label>
+    <button class="btn" data-mul="0.5">½</button><button class="btn" data-mul="2">×2</button>
+    <button class="btn primary" id="hlStart">НАЧАТЬ</button>
+    <button class="btn" id="hlSkip">Пропустить</button>
+    <button class="btn primary" id="hlCash">ЗАБРАТЬ 💰</button>
+  </div>
+  <div class="paytable">Туз — самая младшая карта, король — старшая. Угадайте, будет ли следующая карта выше (или равна) либо ниже (или равна). Множитель зависит от шанса (RTP 97%) и перемножается с каждым верным ответом. Забрать можно в любой момент; ошибка сжигает ставку. Можно 3 раза пропустить карту.</div>
+</section>
+
 <!-- РУЛЕТКА -->
 <section id="roulette">
   <div class="roulette-top">
@@ -461,20 +511,37 @@
   <div class="table">
     <div class="hand-label">Дилер: <b id="dScore"></b></div>
     <div class="hand" id="dHand"></div>
-    <div class="hand-label">Вы: <b id="pScore"></b></div>
-    <div class="hand" id="pHand"></div>
+    <div class="bjspot"><div class="bjstack" id="bjStack"></div></div>
+    <div class="phands" id="pHands"></div>
   </div>
-  <div class="msg" id="bjMsg">Сделайте ставку и раздайте карты</div>
+  <div class="msg" id="bjMsg">Поставьте фишки и раздайте карты</div>
   <div class="controls" id="bjBetRow">
-    <label>Ставка: <input type="number" id="bjBet" value="10" min="1" step="1"></label>
+    <div class="bjchips" id="bjChips">
+      <button class="bjc c10" data-c="10">10</button><button class="bjc c50" data-c="50">50</button><button class="bjc c100" data-c="100">100</button>
+      <button class="bjc c500" data-c="500">500</button><button class="bjc c1000" data-c="1000">1K</button><button class="bjc c5000" data-c="5000">5K</button>
+    </div>
+    <label>Ставка: <input type="number" id="bjBet" value="100" min="1" step="1"></label>
+    <button class="btn" id="bjClear">Очистить</button><button class="btn" id="bjRebet">Повторить</button><button class="btn" id="bjX2">×2</button>
     <button class="btn primary" id="deal">РАЗДАТЬ</button>
+  </div>
+  <div class="controls" id="bjInsRow" style="display:none">
+    <button class="btn primary" id="insYes">Застраховать</button><button class="btn" id="insNo">Без страховки</button>
   </div>
   <div class="controls" id="bjActions" style="display:none">
     <button class="btn primary" id="hit">Взять</button>
     <button class="btn" id="stand">Стоп</button>
     <button class="btn" id="double">Удвоить</button>
+    <button class="btn" id="split">Сплит</button>
+    <button class="btn" id="surrender">Сдаться</button>
+    <button class="btn" id="bjHint">💡 Подсказка</button>
   </div>
-  <div class="paytable">Блэкджек — 3:2 · Победа — 1:1 · Дилер берёт до 17 и останавливается на 17</div>
+  <div class="bjstats" id="bjStats"></div>
+  <details class="paytable"><summary>Правила</summary>
+    <p>6 колод. Блэкджек платит 3:2, обычная победа 1:1. Дилер берёт до 17 и стоит на всех 17. При тузе или десятке дилер сразу проверяет блэкджек.<br>
+       <b>Удвоить</b> — на любых двух картах, в том числе после сплита. <b>Сплит</b> — две карты одного достоинства, до 4 рук; после сплита тузов — по одной карте.<br>
+       <b>Страховка</b> — когда у дилера туз: половина ставки, платит 2:1 при блэкджеке дилера. <b>Сдаться</b> — на первых двух картах, возвращается половина ставки.<br>
+       💡 Подсказка показывает ход по базовой стратегии.</p>
+  </details>
 </section>
 
 </main>
@@ -493,6 +560,7 @@
 <script src="js/holdwin.js"></script>
 <script src="js/avalanche.js"></script>
 <script src="js/legacy.js"></script>
+<script src="js/samurai.js"></script>
 <script src="js/roulette.js"></script>
 <script src="js/blackjack.js"></script>
 <script src="js/baccarat.js"></script>
@@ -503,6 +571,8 @@
 <script src="js/wheel.js"></script>
 <script src="js/scratch.js"></script>
 <script src="js/dice.js"></script>
+<script src="js/hilo.js"></script>
+<script src="js/slotextras.js"></script>
 <script src="js/catalog.js"></script>
 </body>
 </html>

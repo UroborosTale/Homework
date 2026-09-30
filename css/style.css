@@ -554,3 +554,102 @@
   #plinko { background: radial-gradient(ellipse at top, #24306a, #0a0e24); }
   #crCanvas, #plCanvas { border: 2px solid #3a4a8a; box-shadow: 0 10px 26px #000a; }
   #sicbo .sbsum { margin-top: 12px; }
+
+  /* ===== Блэкджек: руки, фишки, ставка ===== */
+  .phands { display: flex; gap: 14px; flex-wrap: wrap; }
+  .phand { padding: 6px 8px; border-radius: 12px; border: 2px solid transparent; transition: border-color .3s, background .3s; }
+  .phand.active { border-color: #ffd54f; background: #ffd54f14; box-shadow: 0 0 16px #ffd54f55; }
+  .phand em { font-style: normal; font-weight: 800; margin-left: 4px; }
+  .phand em.win { color: #69f0ae; } .phand em.lose { color: #ff8a80; }
+  .bjspot { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 86px; height: 86px; border-radius: 50%; border: 2px dashed #e8c35a88; pointer-events: none; opacity: .9; }
+  .bjstack { position: relative; width: 100%; height: 100%; }
+  .bjstack i { position: absolute; left: 50%; margin-left: -22px; width: 44px; height: 14px; border-radius: 50%; box-shadow: 0 2px 2px #0008; }
+  .bjstack b { position: absolute; left: 50%; bottom: -22px; transform: translateX(-50%); font-size: 13px; color: #ffd54f; text-shadow: 0 1px 2px #000; white-space: nowrap; }
+  .bjchips { display: flex; gap: 6px; }
+  button.bjc { width: 46px; height: 46px; border-radius: 50%; border: 3px dashed #fff; color: #fff; font: 800 12px sans-serif; cursor: pointer; box-shadow: 0 3px 6px #0008; transition: transform .15s; }
+  button.bjc:hover { transform: translateY(-4px); }
+  .bjc.c10 { background: radial-gradient(circle, #1565c0 60%, #0d47a1); } .bjc.c50 { background: radial-gradient(circle, #c62828 60%, #8e0000); }
+  .bjc.c100 { background: radial-gradient(circle, #2e7d32 60%, #1b5e20); } .bjc.c500 { background: radial-gradient(circle, #6a1b9a 60%, #4a148c); }
+  .bjc.c1000 { background: radial-gradient(circle, #212121 60%, #000); border-color: #ffd54f; } .bjc.c5000 { background: radial-gradient(circle, #ff8f00 60%, #e65100); }
+  .bjstack i.bjc { border: 2px dashed #fff; }
+  .bjstats { text-align: center; color: var(--muted); font-size: 13px; margin-top: 6px; }
+  #blackjack .table { min-height: 330px; }
+
+  /* ===== Hi-Lo ===== */
+  #hilo { background: radial-gradient(ellipse at top, #1f3a6a, #0a1428); }
+  .hltable { max-width: 640px; margin: 0 auto; padding: 18px; border-radius: 22px; background: radial-gradient(ellipse at 50% 30%, #1f8a4c, #0c5c30 60%, #063a1e);
+    border: 10px solid #6d3b12; box-shadow: inset 0 0 0 2px #e8c35a88, inset 0 0 40px #0009, 0 10px 26px #000a; }
+  .hlinfo { display: flex; justify-content: center; gap: 12px; margin-bottom: 10px; }
+  .hlinfo > div { background: #0007; border-radius: 12px; padding: 6px 16px; text-align: center; font-size: 12px; color: #cfe8d8; }
+  .hlinfo b { display: block; font-size: 22px; color: #ffd54f; }
+  .hlmain { display: flex; align-items: center; justify-content: center; gap: 18px; }
+  .hlcard { perspective: 800px; min-width: 130px; display: flex; justify-content: center; }
+  .card.big { width: 120px; height: 170px; font-size: 26px; padding: 9px 10px; border-radius: 12px; }
+  .card.big .c { font-size: 64px; }
+  .card.big.good { box-shadow: 0 0 0 4px #69f0ae, 0 0 28px #00e676; } .card.big.bad { box-shadow: 0 0 0 4px #ff5252, 0 0 28px #ff1744; animation: numshake .4s; }
+  .hlbtn { width: 150px; min-height: 96px; font-size: 18px; font-weight: 800; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; border-radius: 16px; }
+  .hlbtn small { font-size: 12px; font-weight: 600; opacity: .85; }
+  .hlbtn.hi { background: linear-gradient(#2e7d32, #1b5e20); border-color: #69f0ae; } .hlbtn.lo { background: linear-gradient(#c62828, #8e0000); border-color: #ff8a80; }
+  .hlbtn:not(:disabled):hover { transform: translateY(-3px); box-shadow: 0 8px 16px #0008; }
+  .hltrail { display: flex; gap: 6px; justify-content: center; margin-top: 14px; min-height: 60px; flex-wrap: wrap; }
+  .hlt { position: relative; }
+  .card.mini { width: 38px; height: 54px; font-size: 11px; padding: 3px; border-radius: 5px; animation: dealfly .4s ease-out; }
+  .card.mini .c, .card.mini .bt { display: none; }
+  .hlt.ok .card { box-shadow: 0 0 0 2px #69f0ae; } .hlt.bad .card { box-shadow: 0 0 0 2px #ff5252; } .hlt.skip .card { opacity: .5; }
+  @media (max-width: 560px) { .hlbtn { width: 100px; font-size: 14px; } .card.big { width: 96px; height: 136px; } }
+
+  /* ===== Самураи Megaways ===== */
+  #samurai { position: relative; overflow: hidden; border-color: #b71c1c;
+    background: radial-gradient(circle at 78% 18%, #ff5252 0 7%, #ff525244 8%, transparent 16%), linear-gradient(#2a0a1e, #140610 55%, #07030a); }
+  #samurai::before { background-image: linear-gradient(#fff, #ffcdd2 45%, #d32f2f); filter: drop-shadow(0 2px 4px #000); -webkit-text-stroke: 1.5px #3a0008; }
+  #samurai.sm-fs { background: radial-gradient(circle at 78% 18%, #ffd54f 0 7%, #ffd54f44 8%, transparent 16%), linear-gradient(#3a0a0a, #1a0404 55%, #0a0202); }
+  .smgrid { border: 9px solid #1a1a1a; border-radius: 12px; background: linear-gradient(#2a1a14e0, #120a08e0); box-shadow: 0 0 0 3px #b71c1c, inset 0 0 26px #000c, 0 8px 22px #000a; position: relative; z-index: 1; }
+  #samurai .dc { background: linear-gradient(#3a2418, #22140c); border: 1px solid #b71c1c55; box-shadow: inset 0 0 10px #000a; color: #ffcdd2; }
+  #samurai .dc.letter { font-family: 'Brush Script MT', Georgia, serif; font-style: italic; color: #ff8a80; text-shadow: 0 2px 3px #000; }
+  #samurai .dc.wild { background: radial-gradient(circle, #b71c1c88, #22140c); } #samurai .dc.scat { background: radial-gradient(circle, #ffd54f66, #22140c); }
+  #samurai .dc.hit { background: radial-gradient(circle, #ffcdd2aa, #b71c1c66); box-shadow: 0 0 16px 4px #ff5252; transform: scale(1.08); }
+  #samurai .dc.slash { animation: slash .42s ease-in both; }
+  @keyframes slash { 0% { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); filter: brightness(1.8); } 35% { transform: scale(1.1); }
+    100% { clip-path: polygon(0 0, 100% 0, 0 100%, 0 100%); transform: translate(-20%, 20%) rotate(-12deg) scale(.6); opacity: 0; } }
+  .smlow { font: italic 900 20px Georgia, serif; color: #ff8a80; }
+  .smfs { justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; padding: 8px 14px; margin-bottom: 8px; border-radius: 12px;
+    background: linear-gradient(90deg, #b71c1c, #4a0008); border: 1px solid #ffd54f; font-weight: 700; position: relative; z-index: 1; }
+  .smmult b { display: inline-block; min-width: 54px; text-align: center; font-size: 22px; color: #ffd54f; text-shadow: 0 0 10px #ff9800; }
+  .smmult b.bump { animation: bump .5s cubic-bezier(.3, 1.8, .5, 1); }
+  .sakura { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
+  .sakura i { position: absolute; top: -20px; width: 12px; height: 9px; border-radius: 12px 0; background: #ffb7c5; opacity: .75; animation: petal 9s linear infinite; }
+  .sakura i:nth-child(1) { left: 5%; animation-delay: 0s; } .sakura i:nth-child(2) { left: 18%; animation-delay: 2.5s; animation-duration: 11s; }
+  .sakura i:nth-child(3) { left: 32%; animation-delay: 5s; } .sakura i:nth-child(4) { left: 47%; animation-delay: 1.2s; animation-duration: 12s; }
+  .sakura i:nth-child(5) { left: 61%; animation-delay: 3.8s; } .sakura i:nth-child(6) { left: 74%; animation-delay: 6.5s; animation-duration: 10s; }
+  .sakura i:nth-child(7) { left: 86%; animation-delay: .6s; } .sakura i:nth-child(8) { left: 95%; animation-delay: 4.4s; animation-duration: 13s; }
+  @keyframes petal { 0% { transform: translate(0, 0) rotate(0); } 50% { transform: translate(-40px, 50vh) rotate(200deg); } 100% { transform: translate(20px, 110vh) rotate(420deg); } }
+  #samurai > *:not(.sakura) { position: relative; z-index: 1; }
+  @media (prefers-reduced-motion: reduce) { .sakura { display: none; } }
+  .bjspot { left: auto; right: 34px; top: auto; bottom: 52px; transform: none; }
+  /* Турбо: анимации поля тоже ускоряются, чтобы не отставать от игры */
+  section.turbo .oc.drop, section.turbo .dc.drop { animation-duration: .2s; animation-delay: calc(var(--d, 0s) / 3); }
+  section.turbo .oc.exit, section.turbo .dc.exit { animation-duration: .14s; animation-delay: 0s; }
+  section.turbo .oc.pop, section.turbo .dc.pop, section.turbo .dc.slash { animation-duration: .14s; }
+
+  /* ===== Улучшения слотов: ставка −/+/MAX, авто-окно, уведомления ===== */
+  .betstep { display: inline-flex; gap: 4px; }
+  .betstep .btn { padding: 6px 12px; font-weight: 800; }
+  .betstep .maxb { background: linear-gradient(#e53935, #8e0000); border-color: #ff8a80; }
+  select.bumped { animation: bump .35s cubic-bezier(.3, 1.8, .5, 1); }
+  .controls select { padding: 6px 8px; border-radius: 8px; background: #0b1510; color: #fff; border: 1px solid #2c4a39; font-size: 15px; }
+  .btn.autoon { background: linear-gradient(#e53935, #8e0000); border-color: #ff8a80; color: #fff; animation: autopulse 1.2s ease-in-out infinite alternate; }
+  @keyframes autopulse { to { box-shadow: 0 0 14px #ff5252; } }
+  .btn.kpress { animation: bump .25s ease-out; }
+  .modal { position: fixed; inset: 0; z-index: 900; display: none; align-items: center; justify-content: center; background: #000b; padding: 16px; }
+  .modal.show { display: flex; animation: fxin .25s ease-out; }
+  .mbox { width: 100%; max-width: 460px; background: linear-gradient(#1f3326, #122019); border: 2px solid var(--gold); border-radius: 18px; padding: 20px; box-shadow: 0 20px 50px #000c; animation: fxpop .35s cubic-bezier(.3, 1.5, .5, 1); }
+  .mbox h3 { margin: 0 0 12px; color: var(--gold); }
+  .mrow { margin: 12px 0; } .mt { font-size: 14px; color: var(--muted); margin-bottom: 6px; }
+  .mopts { display: flex; flex-wrap: wrap; gap: 6px; }
+  .mopt { padding: 7px 13px; border-radius: 18px; border: 1px solid #2c4a39; background: #0b1510; color: #fff; cursor: pointer; font-weight: 700; }
+  .mopt.on { background: var(--gold); color: #222; border-color: var(--gold); }
+  .mbtns { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+  #toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(120px); z-index: 950; padding: 12px 20px; border-radius: 12px;
+    background: #1f3326; border: 1px solid var(--gold); color: #fff; font-weight: 700; box-shadow: 0 10px 30px #000a; transition: transform .35s cubic-bezier(.3, 1.4, .5, 1); pointer-events: none; }
+  #toast.show { animation: toast 3.2s ease forwards; }
+  @keyframes toast { 0% { transform: translateX(-50%) translateY(120px); } 10%, 85% { transform: translateX(-50%) translateY(0); } 100% { transform: translateX(-50%) translateY(120px); } }

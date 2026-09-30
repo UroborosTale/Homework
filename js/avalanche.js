@@ -120,7 +120,7 @@ const AvalancheEngine = (() => {
   async function doSpin() {
     if (busy) return; const free = freeLeft > 0, lineBet = +$('gzBet').value, tot = total();
     if (!free) {
-      if (tot > Casino.balance) { auto = false; $('gzAuto').textContent = 'Авто: выкл'; unlock(); return msg($('gzMsg'), 'Недостаточно средств', 'lose'); }
+      if (tot > Casino.balance) { auto = false; ap.cancel(); unlock(); return msg($('gzMsg'), 'Недостаточно средств', 'lose'); }
       setBalance(Casino.balance - tot);
     } else freeLeft--;
     busy = true; lock(); banner();
@@ -141,8 +141,8 @@ const AvalancheEngine = (() => {
     if (freeLeft > 0) { await sleep(700); doSpin(); return; }
     multBar(false, 0);
     if (!auto) unlock();
-    if (auto) { await sleep(r.total ? 1100 : 350); if (auto) doSpin(); }
+    if (auto && ap.after(r.total, tot)) { await sleep(r.total ? 1100 : 350); if (auto) doSpin(); }
   }
-  $('gzSpin').onclick = () => { auto = false; $('gzAuto').textContent = 'Авто: выкл'; doSpin(); };
-  $('gzAuto').onclick = () => { auto = !auto; $('gzAuto').textContent = 'Авто: ' + (auto ? 'вкл' : 'выкл'); if (auto && !busy) doSpin(); else if (!auto && !busy) unlock(); };
+  $('gzSpin').onclick = () => { auto = false; ap.cancel(); doSpin(); };
+  const ap = SlotUI.auto($('gzAuto'), { start: () => { auto = true; if (!busy) doSpin(); }, stop: () => { auto = false; if (!busy) unlock(); } });
 })();

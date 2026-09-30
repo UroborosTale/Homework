@@ -155,7 +155,7 @@ const DogEngine = (() => {
   }
   async function round(buy) {
     if (busy) return; const bet = +$('dgBet').value, cost = buy ? DE.BUY_COST * bet : bet;
-    if (cost > Casino.balance) { auto = false; $('dgAuto').textContent = 'Авто: выкл'; setOff(false); return msg($('dgMsg'), 'Недостаточно средств', 'lose'); }
+    if (cost > Casino.balance) { auto = false; ap.cancel(); setOff(false); return msg($('dgMsg'), 'Недостаточно средств', 'lose'); }
     busy = true; setOff(true); setBalance(Casino.balance - cost); $('dgFs').style.display = 'none';
     let r = await spinOnce(bet, { forceScatters: buy ? 3 : 0 }), total = r.total;
     if (r.fs) {
@@ -172,10 +172,10 @@ const DogEngine = (() => {
     }
     Anim.winFx(total, bet);
     busy = false; if (!auto) setOff(false);
-    if (auto) { await sleep(total > 0 ? 900 : 300); if (auto) round(false); }
+    if (auto && ap.after(total, bet)) { await sleep(total > 0 ? 900 : 300); if (auto) round(false); }
   }
-  $('dgSpin').onclick = () => { auto = false; $('dgAuto').textContent = 'Авто: выкл'; round(false); };
+  $('dgSpin').onclick = () => { auto = false; ap.cancel(); round(false); };
   $('dgBuy').onclick = () => { if (!busy && confirm(`Купить бонус за ${DE.BUY_COST * $('dgBet').value} ₽?`)) round(true); };
-  $('dgAuto').onclick = () => { auto = !auto; $('dgAuto').textContent = 'Авто: ' + (auto ? 'вкл' : 'выкл'); if (auto && !busy) round(false); else if (!auto && !busy) setOff(false); };
-  $('dgTurbo').onclick = () => { turbo = !turbo; $('dgTurbo').textContent = 'Турбо: ' + (turbo ? 'вкл' : 'выкл'); };
+  const ap = SlotUI.auto($('dgAuto'), { start: () => { auto = true; if (!busy) round(false); }, stop: () => { auto = false; if (!busy) setOff(false); } });
+  $('dgTurbo').onclick = () => { turbo = !turbo; $('doghouse').classList.toggle('turbo', turbo); $('dgTurbo').textContent = 'Турбо: ' + (turbo ? 'вкл' : 'выкл'); };
 })();

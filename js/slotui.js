@@ -45,5 +45,55 @@ const SlotUI = (() => {
       Object.entries(syms).filter(([, s]) => s.pay).map(([k, s]) => `<tr><td>${symIcon(k)}</td>${s.pay.map(p => `<td>×${Math.round(p * 100) / 100}</td>`).join('')}</tr>`).join('') +
       `</table><small>${note}</small>`;
   }
-  return { create, payTable, COLORS };
+
+  // ---- Автоигра с настройками: число спинов и условия остановки (общая для всех слотов)
+  let cfg = { spins: 50, stopWin: 0, stopLoss: 0 };
+  try { Object.assign(cfg, JSON.parse(localStorage.getItem('casinoAutoCfg') || '{}')); } catch (e) {}
+  function toast(text) {
+    let t = document.getElementById('toast'); if (!t) { t = document.createElement('div'); t.id = 'toast'; document.body.appendChild(t); }
+    t.textContent = text; t.classList.remove('show'); void t.offsetWidth; t.classList.add('show');
+  }
+  function openModal(onStart) {
+    let m = document.getElementById('autoModal');
+    if (!m) {
+      m = document.createElement('div'); m.id = 'autoModal'; m.className = 'modal';
+      const row = (key, title, opts) => `<div class="mrow"><div class="mt">${title}</div><div class="mopts" data-key="${key}">${opts.map(([v, l]) => `<button class="mopt" data-v="${v}">${l}</button>`).join('')}</div></div>`;
+      m.innerHTML = `<div class="mbox"><h3>⚙️ Автоигра</h3>
+        ${row('spins', 'Количество спинов', [[10, '10'], [25, '25'], [50, '50'], [100, '100'], [250, '250'], [0, '∞']])}
+        ${row('stopWin', 'Остановить при выигрыше за спин от', [[0, 'нет'], [10, '×10'], [50, '×50'], [100, '×100'], [500, '×500']])}
+        ${row('stopLoss', 'Остановить при потере баланса', [[0, 'нет'], [0.1, '10%'], [0.25, '25%'], [0.5, '50%']])}
+        <div class="mbtns"><button class="btn" data-act="cancel">Отмена</button><button class="btn primary" data-act="start">▶ Запустить</button></div></div>`;
+      document.body.appendChild(m);
+      m.addEventListener('click', e => {
+        const o = e.target.closest('.mopt');
+        if (o) { const k = o.parentElement.dataset.key; cfg[k] = +o.dataset.v; paint(); return; }
+        if (e.target === m || e.target.dataset.act === 'cancel') m.classList.remove('show');
+        if (e.target.dataset.act === 'start') { m.classList.remove('show'); try { localStorage.setItem('casinoAutoCfg', JSON.stringify(cfg)); } catch (err) {} m._start && m._start({ ...cfg }); }
+      });
+    }
+    const paint = () => m.querySelectorAll('.mopts').forEach(g => g.querySelectorAll('.mopt').forEach(b => b.classList.toggle('on', +b.dataset.v === cfg[g.dataset.key])));
+    paint(); m._start = onStart; m.classList.add('show');
+  }
+  function auto(btn, { start, stop }) {
+    const st = { on: false, left: Infinity, cfg: null, startBal: 0 };
+    const label = () => { btn.textContent = st.on ? `■ Стоп${isFinite(st.left) ? ` (${st.left})` : ''}` : 'Авто: выкл'; btn.classList.toggle('autoon', st.on); };
+    btn.onclick = () => {
+      if (st.on) { st.on = false; label(); stop(); return; }
+      openModal(c => { st.on = true; st.cfg = c; st.left = c.spins || Infinity; st.startBal = Casino.balance; label(); start(); });
+    };
+    return {
+      get on() { return st.on; },
+      cancel() { st.on = false; label(); },
+      after(win, bet) {                                    // вызывается в конце раунда; false — авто остановлено
+        if (!st.on) return false;
+        st.left--; let why = '';
+        if (st.left <= 0) why = 'Автоигра завершена';
+        else if (st.cfg.stopWin && win >= bet * st.cfg.stopWin) why = `Автоигра остановлена: выигрыш ×${Math.round(win / bet)}`;
+        else if (st.cfg.stopLoss && Casino.balance <= st.startBal * (1 - st.cfg.stopLoss)) why = 'Автоигра остановлена: достигнут лимит потерь';
+        if (why) { st.on = false; label(); stop(); toast(why); return false; }
+        label(); return true;
+      },
+    };
+  }
+  return { create, payTable, COLORS, auto, toast };
 })();

@@ -145,7 +145,7 @@ const SlotEngine = (() => {
     if (slotBusy) return;
     const isFree = freeSpins > 0, lines = +$('slotLines').value, lineBet = +$('slotBet').value, total = slotTotal();
     if (gamble) takeGamble();
-    if (!isFree) { if (total > Casino.balance) { autoOn = false; $('auto').textContent = 'Авто: выкл'; unlock(); return msg($('slotMsg'), 'Недостаточно средств', 'lose'); } setBalance(Casino.balance - total); }
+    if (!isFree) { if (total > Casino.balance) { autoOn = false; ap.cancel(); unlock(); return msg($('slotMsg'), 'Недостаточно средств', 'lose'); } setBalance(Casino.balance - total); }
     else freeSpins--;
     slotBusy = true; lock();
     clearWins(); updFsBanner(); if (!autoOn) msg($('slotMsg'), isFree ? 'Бесплатное вращение…' : 'Крутим…');
@@ -172,13 +172,10 @@ const SlotEngine = (() => {
     if (win && !isFree && !res.bonus) offerGamble(win);
     else if (!isFree) hideGambleBtns();
     if (freeSpins > 0) { await sleep(900); doSpin(); }
-    else if (autoOn && !gamble) { await sleep(win ? 1500 : 450); if (autoOn) doSpin(); }
+    else if (autoOn && !gamble && ap.after(win, total)) { await sleep(win ? 1500 : 450); if (autoOn) doSpin(); }
   }
-  $('spin').onclick = () => { autoOn = false; $('auto').textContent = 'Авто: выкл'; doSpin(); };
-  $('auto').onclick = () => {
-    autoOn = !autoOn; $('auto').textContent = 'Авто: ' + (autoOn ? 'вкл' : 'выкл');
-    if (autoOn && !slotBusy) doSpin(); else if (!autoOn && !slotBusy) unlock();
-  };
+  $('spin').onclick = () => { autoOn = false; ap.cancel(); doSpin(); };
+  const ap = SlotUI.auto($('auto'), { start: () => { autoOn = true; if (!slotBusy) doSpin(); }, stop: () => { autoOn = false; if (!slotBusy) unlock(); } });
 
   /* --- Риск-игра --- */
   function hideGambleBtns() { $('gambleBtn').style.display = $('collectBtn').style.display = 'none'; }

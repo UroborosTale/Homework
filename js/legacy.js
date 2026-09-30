@@ -103,7 +103,7 @@ const LegacyEngine = (() => {
   async function doSpin() {
     if (busy) return; const free = freeLeft > 0, lines = +$('lgLines').value, lineBet = +$('lgBet').value, tot = total();
     if (!free) {
-      if (tot > Casino.balance) { auto = false; $('lgAuto').textContent = 'Авто: выкл'; unlock(); return msg($('lgMsg'), 'Недостаточно средств', 'lose'); }
+      if (tot > Casino.balance) { auto = false; ap.cancel(); unlock(); return msg($('lgMsg'), 'Недостаточно средств', 'lose'); }
       setBalance(Casino.balance - tot);
     } else freeLeft--;
     busy = true; lock(); ui.clear(); banner();
@@ -141,8 +141,8 @@ const LegacyEngine = (() => {
     busy = false;
     if (freeLeft > 0) { await sleep(1100); doSpin(); return; }
     if (!auto) unlock();
-    if (auto) { await sleep(r.total ? 1500 : 450); if (auto) doSpin(); }
+    if (auto && ap.after(r.total, tot)) { await sleep(r.total ? 1500 : 450); if (auto) doSpin(); }
   }
-  $('lgSpin').onclick = () => { auto = false; $('lgAuto').textContent = 'Авто: выкл'; doSpin(); };
-  $('lgAuto').onclick = () => { auto = !auto; $('lgAuto').textContent = 'Авто: ' + (auto ? 'вкл' : 'выкл'); if (auto && !busy) doSpin(); else if (!auto && !busy) unlock(); };
+  $('lgSpin').onclick = () => { auto = false; ap.cancel(); doSpin(); };
+  const ap = SlotUI.auto($('lgAuto'), { start: () => { auto = true; if (!busy) doSpin(); }, stop: () => { auto = false; if (!busy) unlock(); } });
 })();
