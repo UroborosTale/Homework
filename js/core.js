@@ -1,7 +1,7 @@
 // Общее ядро: баланс, вкладки, утилиты и карты. Подключается первым.
 const Casino = (() => {
   const $ = id => document.getElementById(id);
-  const START = 50000, KEY = 'casinoBalance50k';
+  const START = 500000, KEY = 'casinoBalance500k';
   let balance = NaN;
   try { balance = parseFloat(localStorage.getItem(KEY)); } catch (e) {}
   if (isNaN(balance)) balance = START;
