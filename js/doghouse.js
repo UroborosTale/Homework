@@ -99,18 +99,25 @@ const DogEngine = (() => {
   const DE = DogEngine, SYM = DE.SYMS;
   const gridEl = $('dgGrid'), cols = [];                    // cols[reel] = массив DOM-ячеек
   for (let r = 0; r < DE.REELS; r++) { const c = document.createElement('div'); c.className = 'dgcol'; gridEl.appendChild(c); cols.push([]); }
-  function render(grid, drop) {
+  // drop: анимация падения; prev — предыдущее поле (тогда падают только сдвинувшиеся и новые клетки)
+  function render(grid, drop, prev) {
+    const dy = drop ? (prev ? Anim.dropDiff(prev, grid) : grid.map(col => col.map(() => col.length + 1))) : null;
     grid.forEach((col, r) => {
       const host = gridEl.children[r]; host.replaceChildren(); cols[r] = [];
       col.forEach((x, i) => {
-        const d = document.createElement('div');
-        d.className = 'dc' + (x.s === 'W' ? ' wild' : x.s === 'S' ? ' scat' : '') + ('AKQJ'.includes(x.s) ? ' letter' : '') + (drop ? ' drop' : '');
-        d.style.setProperty('--d', (r * 0.05 + (col.length - i) * 0.03) + 's');
+        const d = document.createElement('div'), dd = dy ? dy[r][i] : 0;
+        d.className = 'dc' + (x.s === 'W' ? ' wild' : x.s === 'S' ? ' scat' : '') + ('AKQJ'.includes(x.s) ? ' letter' : '') + (dd ? ' drop' : '');
+        if (dd) { d.style.setProperty('--dy', dd); d.style.setProperty('--d', (prev ? r * 0.012 : r * 0.05 + (col.length - i) * 0.025) + 's'); }
         d.innerHTML = x.s === 'W' ? `${Art.html('dog', 'W')}${x.m > 1 ? `<b class="wm">×${x.m}</b>` : ''}` : 'AKQJ'.includes(x.s) ? x.s : (Art.html('dog', x.s) || SYM[x.s].e);
         host.appendChild(d); cols[r].push(d);
       });
     });
     $('dgWays').textContent = grid.reduce((a, c) => a * c.length, 1).toLocaleString('ru-RU') + ' способов';
+  }
+  async function exitGrid() {                        // старые символы уходят вниз перед новым спином
+    if (Anim.reduce()) return;
+    cols.forEach((col, r) => col.forEach((el, i) => { el.style.setProperty('--d', (r * 0.03 + (col.length - i) * 0.015) + 's'); el.classList.add('exit'); }));
+    await d(420);
   }
   render(DE.spin(1).grids[0], false);
   [10, 20, 50, 100, 200, 500, 1000, 2500].forEach(v => $('dgBet').add(new Option(v, v)));
@@ -126,20 +133,17 @@ const DogEngine = (() => {
   const randSyms = ['D', 'P', 'H', 'B', 'A', 'K', 'Q', 'J'];
 
   async function playSpin(r) {
-    const heights = r.heights, fake = () => heights.map(h => Array.from({ length: h }, () => ({ s: randSyms[rnd(8)] })));
-    $('dgWin').textContent = 0; gridEl.classList.add('spinning');
-    const end = Date.now() + (turbo ? 250 : 700);
-    while (Date.now() < end) { render(fake(), false); await sleep(70); }
-    gridEl.classList.remove('spinning'); render(r.grids[0], true); await d(800);
+    Anim.countTo($('dgWin'), 0, 200);
+    await exitGrid(); render(r.grids[0], true); await d(700);
     let acc = 0;
     for (let i = 0; i < r.steps.length; i++) {
       const wins = r.steps[i]; if (!wins.length) break;
       wins.forEach(w => w.cells.forEach(([a, b]) => cols[a][b] && cols[a][b].classList.add('hit')));
-      const step = wins.reduce((s, w) => s + w.win, 0); acc += step; $('dgWin').textContent = fmt(acc);
+      const step = wins.reduce((s, w) => s + w.win, 0); acc += step; Anim.countTo($('dgWin'), fmt(acc), 500);
       msg($('dgMsg'), wins.map(w => `${SYM[w.sym].e}×${w.reels} · ${w.ways} путей${w.mult > 1 ? ' · ×' + w.mult : ''}`).join('  |  ') + ` = ${fmt(step)} ₽`, 'win');
       await d(1000);
       wins.forEach(w => w.cells.forEach(([a, b]) => cols[a][b] && cols[a][b].classList.add('pop'))); await d(400);
-      render(r.grids[i + 1], true); await d(650);
+      render(r.grids[i + 1], true, r.grids[i]); await d(600);
     }
   }
   async function spinOnce(bet, opts) {

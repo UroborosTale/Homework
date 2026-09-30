@@ -10,9 +10,21 @@ const Casino = (() => {
   const sleep = ms => new Promise(r => setTimeout(r, ms));
   const fmt = v => Math.round(v * 100) / 100;
 
+  let shown = balance, balRaf = 0;                       // на экране баланс «докручивается» до нового значения
+  function paintBalance(to) {
+    cancelAnimationFrame(balRaf);
+    const from = shown, t0 = performance.now(), ms = Math.min(700, 250 + Math.abs(to - from) / 40);
+    if (from === to || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) { shown = to; $('balance').textContent = to; return; }
+    const step = now => {
+      const t = Math.min(1, (now - t0) / ms), e = 1 - Math.pow(1 - t, 3);
+      shown = t < 1 ? Math.round((from + (to - from) * e) * 100) / 100 : to; $('balance').textContent = shown;
+      if (t < 1) balRaf = requestAnimationFrame(step);
+    };
+    balRaf = requestAnimationFrame(step);
+  }
   function setBalance(v) {
     balance = Math.max(0, Math.round(v * 100) / 100);
-    $('balance').textContent = balance;
+    paintBalance(balance);
     try { localStorage.setItem(KEY, balance); } catch (e) {}
   }
   function msg(el, text, cls) { el.textContent = text; el.className = 'msg ' + (cls || ''); }

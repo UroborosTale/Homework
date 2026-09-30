@@ -130,17 +130,12 @@ const SlotEngine = (() => {
     b.textContent = `🎁 БЕСПЛАТНЫЕ ВРАЩЕНИЯ: осталось ${freeSpins} · множитель ×${SE.FS_MULT} · выиграно ${fmt(fsWin)} ₽`;
   }
   async function animateSpin(grid) {
-    const cols = document.querySelectorAll('.rcol'), keys = Object.keys(SYM);
-    cols.forEach(c => c.classList.add('spinning'));
-    for (let r = 0; r < 5; r++) {
-      const stop = Date.now() + 500 + r * 350;
-      while (Date.now() < stop) {
-        for (let all = r; all < 5; all++) cells[all].forEach(c => c.innerHTML = sym(keys[rnd(keys.length)]));
-        await sleep(70);
-      }
-      cols[r].classList.remove('spinning');
-      grid[r].forEach((k, w) => cells[r][w].innerHTML = sym(k));
-    }
+    const cols = [...slotGrid.querySelectorAll('.rcol')], keys = Object.keys(SYM);
+    await Promise.all(cols.map((col, r) => Anim.reelSpin(col, {
+      count: 10 + r * 4, ms: 900 + r * 260, delay: r * 90, final: grid[r],
+      rand: () => keys[rnd(keys.length)], fill: (el, k) => { el.innerHTML = sym(k); },
+      commit: () => grid[r].forEach((k, w) => cells[r][w].innerHTML = sym(k)),
+    })));
   }
 
   async function doSpin() {

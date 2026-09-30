@@ -269,3 +269,29 @@
   #olympus .oc.hit, #sweet .oc.hit { background: radial-gradient(circle, #fff59dcc, #ffca2888); box-shadow: 0 0 16px 3px #ffc107; transform: scale(1.08); }
   #slots .sc.hit, #egypt .sc.hit, #bigbass .sc.hit { background: linear-gradient(#fffbc0, #ffe066); box-shadow: 0 0 16px 4px #ffc107; transform: scale(1.06); }
   #doghouse .dc.hit { background: linear-gradient(#fffbc0, #ffe066); box-shadow: 0 0 16px 4px #ffb300; transform: scale(1.08); }
+
+  /* ===== Плавные анимации ===== */
+  .rcol { position: relative; }
+  .rcol.rolling { overflow: hidden; }
+  .rcol.rolling > .sc { visibility: hidden; }
+  .rstrip .sc { transition: none; }
+  .sc, .oc, .dc { transition: transform .28s cubic-bezier(.3,1.4,.5,1), opacity .25s, background .3s, box-shadow .3s; }
+  .olygrid, .dggrid { overflow: hidden; }
+  /* падение с лёгким отскоком; --dy — на сколько рядов падает клетка */
+  .oc.drop, .dc.drop { animation: dropdy calc(.3s + var(--dy, 1) * .05s) linear var(--d, 0s) backwards; }
+  @keyframes dropdy {
+    0%   { transform: translateY(calc(var(--dy, 1) * -108%)); animation-timing-function: cubic-bezier(.5, 0, .9, .6); }
+    64%  { transform: translateY(0); animation-timing-function: cubic-bezier(.2, .6, .4, 1); }
+    80%  { transform: translateY(-6%); animation-timing-function: cubic-bezier(.6, 0, .9, .6); }
+    100% { transform: translateY(0); }
+  }
+  .oc.exit, .dc.exit { animation: exitdown .34s cubic-bezier(.5, 0, .9, .6) var(--d, 0s) both; }
+  @keyframes exitdown { to { transform: translateY(130%); opacity: 0; } }
+  .oc.pop, .dc.pop { animation: popout .36s ease-in both; }
+  @keyframes popout { 0% { transform: scale(1.08); } 30% { transform: scale(1.22) rotate(-4deg); opacity: 1; } 100% { transform: scale(0) rotate(14deg); opacity: 0; } }
+  .sc.hit, .oc.hit, .dc.hit { animation: hitpulse .9s ease-in-out infinite alternate; }
+  @keyframes hitpulse { from { filter: brightness(1); } to { filter: brightness(1.18); } }
+  @media (prefers-reduced-motion: reduce) {
+    .oc.drop, .dc.drop, .oc.exit, .dc.exit, .oc.pop, .dc.pop, .sc.hit, .oc.hit, .dc.hit, .oc.orb { animation: none !important; }
+    .sc, .oc, .dc { transition: none; }
+  }

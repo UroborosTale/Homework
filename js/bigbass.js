@@ -83,11 +83,12 @@ const BassEngine = (() => {
     for (let w = 0; w < 3; w++) { const d = document.createElement('div'); d.className = 'sc'; col.appendChild(d); cells[r][w] = d; }
     grid5.appendChild(col);
   }
-  function put(r, w, c) {                                     // c — ячейка вида { s, v }
-    const el = cells[r][w], k = c.s;
+  function fillEl(el, c) {                                    // c — ячейка вида { s, v }
+    const k = c.s;
     el.classList.toggle('letter', 'AKQJ'.includes(k)); el.classList.toggle('fish', k === 'M'); el.classList.toggle('fisher', k === 'W');
     if (k === 'M') el.innerHTML = `${Art.html('bass', 'M')}<b class="fv">×${c.v}</b>`; else if ('AKQJ'.includes(k)) el.textContent = k; else el.innerHTML = Art.html('bass', k) || SYM[k].e;
   }
+  const put = (r, w, c) => fillEl(cells[r][w], c);
   const show = g => g.forEach((col, r) => col.forEach((c, w) => put(r, w, c)));
   show(BE.spin(10, 1).grid);
   for (let i = 1; i <= 10; i++) $('bbLines').add(new Option(i, i)); $('bbLines').value = 10;
@@ -118,13 +119,12 @@ const BassEngine = (() => {
     b.textContent = `🎣 ФРИСПИНЫ: осталось ${freeLeft} · рыбаков собрано ${coll} · множитель рыбы ×${BE.fsLevel(coll).mult} · выиграно ${fmt(fsSum)} ₽`;
   }
   async function animate(g) {
-    const cols = grid5.querySelectorAll('.rcol'), keys = ['R', 'T', 'F', 'D', 'A', 'K', 'Q', 'J', 'S', 'W'];
-    cols.forEach(c => c.classList.add('spinning'));
-    for (let r = 0; r < 5; r++) {
-      const stop = Date.now() + 450 + r * 320;
-      while (Date.now() < stop) { for (let a = r; a < 5; a++) cells[a].forEach((_, w) => put(a, w, { s: keys[rnd(keys.length)] })); await sleep(70); }
-      cols[r].classList.remove('spinning'); g[r].forEach((c, w) => put(r, w, c));
-    }
+    const cols = [...grid5.querySelectorAll('.rcol')], keys = ['R', 'T', 'F', 'D', 'A', 'K', 'Q', 'J', 'S', 'W', 'M'];
+    await Promise.all(cols.map((col, r) => Anim.reelSpin(col, {
+      count: 10 + r * 4, ms: 900 + r * 260, delay: r * 90, final: g[r],
+      rand: () => { const k = keys[rnd(keys.length)]; return k === 'M' ? { s: 'M', v: [2, 3, 5, 10][rnd(4)] } : { s: k }; }, fill: fillEl,
+      commit: () => g[r].forEach((c, w) => put(r, w, c)),
+    })));
   }
   async function doSpin() {
     if (busy) return; const free = freeLeft > 0, lines = +$('bbLines').value, lineBet = +$('bbBet').value, tot = total();

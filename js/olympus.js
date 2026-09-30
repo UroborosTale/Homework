@@ -99,13 +99,20 @@ const Olympus = (() => {
     for (let r = 0; r < OL.ROWS; r++) { const d = document.createElement('div'); d.className = 'oc'; col.appendChild(d); oCells[c][r] = d; }
     oGrid.appendChild(col);
   }
-  function oRender(g, drop) {
+  // drop: false — просто показать; true — анимация падения. prev — предыдущее поле: тогда падают только сдвинувшиеся и новые клетки
+  function oRender(g, drop, prev) {
+    const dy = drop ? (prev ? Anim.dropDiff(prev, g) : g.map(col => col.map(() => OL.ROWS + 1))) : null;
     g.forEach((col, c) => col.forEach((x, r) => {
-      const el = oCells[c][r];
-      el.className = 'oc' + (x.s === 'orb' ? ' orb' : x.s === 'scatter' ? ' scatter' : '') + (drop ? ' drop' : '');
-      el.style.setProperty('--d', (c * 0.05 + (OL.ROWS - r) * 0.03) + 's');
+      const el = oCells[c][r], d = dy ? dy[c][r] : 0;
+      el.className = 'oc' + (x.s === 'orb' ? ' orb' : x.s === 'scatter' ? ' scatter' : '') + (d ? ' drop' : '');
+      if (d) { el.style.setProperty('--dy', d); el.style.setProperty('--d', (prev ? c * 0.012 : c * 0.05 + (OL.ROWS - r) * 0.025) + 's'); }
       if (x.s === 'orb') el.textContent = '×' + x.v; else el.innerHTML = Art.html('olympus', x.s) || OL.SYMS[x.s].e;
     }));
+  }
+  async function exitGrid() {                        // старые символы уходят вниз перед новым спином
+    if (Anim.reduce()) return;
+    oCells.forEach((col, c) => col.forEach((el, r) => { el.style.setProperty('--d', (c * 0.03 + (OL.ROWS - r) * 0.015) + 's'); el.classList.add('exit'); }));
+    await od(420);
   }
   oRender(OL.spin(1).grids[0], false);
   [10, 20, 50, 100, 200, 500, 1000, 2500].forEach(v => $('olyBet').add(new Option(v, v)));
@@ -123,23 +130,23 @@ const Olympus = (() => {
 
   async function playSpin(r, bet, carry) {         // проигрывает анимацию одного спина, возвращает ничего
     let acc = 0, shown = carry + orbSumOf(r.grids[0]);
-    $('olyWin').textContent = 0; $('olyMult').textContent = '×' + shown;
-    oRender(r.grids[0], true); await od(800);
+    Anim.countTo($('olyWin'), 0, 200); $('olyMult').textContent = '×' + shown;
+    await exitGrid(); oRender(r.grids[0], true); await od(700);
     for (let i = 0; i < r.steps.length; i++) {
       const cl = r.steps[i]; if (!cl.length) break;
       cl.forEach(c => c.cells.forEach(([a, b]) => oCells[a][b].classList.add('hit')));
       r.grids[i].forEach((col, a) => col.forEach((x, b) => { if (x.s === 'orb') oCells[a][b].classList.add('hit'); }));
-      acc += cl.reduce((s, c) => s + c.win, 0); $('olyWin').textContent = fmt(acc);
+      acc += cl.reduce((s, c) => s + c.win, 0); Anim.countTo($('olyWin'), fmt(acc), 500);
       await od(900);
       cl.forEach(c => c.cells.forEach(([a, b]) => oCells[a][b].classList.add('pop')));
       r.grids[i].forEach((col, a) => col.forEach((x, b) => { if (x.s === 'orb') oCells[a][b].classList.add('pop'); }));
       await od(400);
-      oRender(r.grids[i + 1], true);
+      oRender(r.grids[i + 1], true, r.grids[i]);
       shown += orbSumOf(r.grids[i + 1]); $('olyMult').textContent = '×' + shown;
       await od(700);
     }
     if (r.base > 0 && r.mult > 0) {
-      $('olyWin').textContent = fmt(r.lineWin);
+      Anim.countTo($('olyWin'), fmt(r.lineWin), 700);
       msg($('olyMsg'), `${fmt(r.base)} ₽ × ${r.mult} = ${fmt(r.lineWin)} ₽`, 'win'); await od(900);
     }
   }
