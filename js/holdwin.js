@@ -135,7 +135,7 @@ const HoldWinEngine = (() => {
 
   async function doSpin() {
     if (busy) return; const lines = +$('hwLines').value, lineBet = +$('hwBet').value, tot = total();
-    if (tot > Casino.balance) { auto = false; $('hwAuto').textContent = 'Авто: выкл'; unlock(); return msg($('hwMsg'), 'Недостаточно средств', 'lose'); }
+    if (tot > Casino.balance) { auto = false; ap.cancel(); unlock(); return msg($('hwMsg'), 'Недостаточно средств', 'lose'); }
     setBalance(Casino.balance - tot); busy = true; lock(); ui.clear();
     if (!auto) msg($('hwMsg'), 'Крутим…');
     const r = HE.spin(lines, lineBet);
@@ -150,8 +150,8 @@ const HoldWinEngine = (() => {
     }
     if (win) Anim.winFx(win, tot);
     busy = false; if (!auto) unlock();
-    if (auto) { await sleep(win ? 1500 : 450); if (auto) doSpin(); }
+    if (auto && ap.after(win, tot)) { await sleep(win ? 1500 : 450); if (auto) doSpin(); }
   }
-  $('hwSpin').onclick = () => { auto = false; $('hwAuto').textContent = 'Авто: выкл'; doSpin(); };
-  $('hwAuto').onclick = () => { auto = !auto; $('hwAuto').textContent = 'Авто: ' + (auto ? 'вкл' : 'выкл'); if (auto && !busy) doSpin(); else if (!auto && !busy) unlock(); };
+  $('hwSpin').onclick = () => { auto = false; ap.cancel(); doSpin(); };
+  const ap = SlotUI.auto($('hwAuto'), { start: () => { auto = true; if (!busy) doSpin(); }, stop: () => { auto = false; if (!busy) unlock(); } });
 })();

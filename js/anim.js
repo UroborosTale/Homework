@@ -28,12 +28,13 @@ const Anim = (() => {
       for (let i = 0; i < n; i++) { const d = document.createElement('div'); d.className = 'sc'; o.fill(d, o.rand()); mk(d); }
       olds.forEach(mk);
       col.classList.add('rolling'); col.appendChild(strip);
-      const total = (n + 3) * step, over = h * 0.13, D = o.ms, t1 = 0.84;   // total — путь до итоговых символов
+      const sp = col.closest('section.turbo') ? .45 : 1;       // турбо ускоряет прокрутку
+      const total = (n + 3) * step, over = h * 0.13, D = o.ms * sp, t1 = 0.84;   // total — путь до итоговых символов
       let t0 = null, lastY = -total;
       const setY = y => { strip.style.transform = `translateY(${y}px)`; const v = Math.abs(y - lastY); lastY = y; strip.style.filter = v > 12 ? `blur(${Math.min(2.6, v / 26).toFixed(1)}px)` : 'none'; };
       setY(-total);
       const frame = now => {
-        if (t0 === null) t0 = now + (o.delay || 0);
+        if (t0 === null) t0 = now + (o.delay || 0) * sp;
         const t = Math.max(0, Math.min(1, (now - t0) / D));
         let y;
         if (t < t1) y = -total + (total + over) * spinEase(t / t1);       // разгон и торможение до небольшого перелёта

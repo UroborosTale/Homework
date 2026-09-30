@@ -165,7 +165,7 @@ const SweetEngine = (() => {
   async function oRound(buy) {
     if (oBusy) return; const bet = +$('swBet').value, ante = $('swAnte').checked;
     const cost = buy ? OL.BUY_COST * bet : oCost();
-    if (cost > Casino.balance) { oAuto = false; $('swAuto').textContent = 'Авто: выкл'; setOControls(false); return msg($('swMsg'), 'Недостаточно средств', 'lose'); }
+    if (cost > Casino.balance) { oAuto = false; ap.cancel(); setOControls(false); return msg($('swMsg'), 'Недостаточно средств', 'lose'); }
     oBusy = true; setOControls(true); setBalance(Casino.balance - cost);
     $('swFs').style.display = 'none';
     let r = await oSpinOnce(bet, buy ? { forceScatters: 4 } : { ante });
@@ -183,12 +183,12 @@ const SweetEngine = (() => {
     }
     Anim.winFx(total, bet);
     oBusy = false; if (!oAuto) setOControls(false);
-    if (oAuto) { await sleep(total > 0 ? 900 : 300); if (oAuto) oRound(false); }
+    if (oAuto && ap.after(total, bet)) { await sleep(total > 0 ? 900 : 300); if (oAuto) oRound(false); }
   }
-  $('swSpin').onclick = () => { oAuto = false; $('swAuto').textContent = 'Авто: выкл'; oRound(false); };
+  $('swSpin').onclick = () => { oAuto = false; ap.cancel(); oRound(false); };
   $('swBuy').onclick = () => { if (!oBusy && confirm(`Купить бонус за ${OL.BUY_COST * $('swBet').value} ₽?`)) oRound(true); };
-  $('swAuto').onclick = () => { oAuto = !oAuto; $('swAuto').textContent = 'Авто: ' + (oAuto ? 'вкл' : 'выкл'); if (oAuto && !oBusy) oRound(false); else if (!oAuto && !oBusy) setOControls(false); };
-  $('swTurbo').onclick = () => { oTurbo = !oTurbo; $('swTurbo').textContent = 'Турбо: ' + (oTurbo ? 'вкл' : 'выкл'); };
+  const ap = SlotUI.auto($('swAuto'), { start: () => { oAuto = true; if (!oBusy) oRound(false); }, stop: () => { oAuto = false; if (!oBusy) setOControls(false); } });
+  $('swTurbo').onclick = () => { oTurbo = !oTurbo; $('sweet').classList.toggle('turbo', oTurbo); $('swTurbo').textContent = 'Турбо: ' + (oTurbo ? 'вкл' : 'выкл'); };
 
 
 })();

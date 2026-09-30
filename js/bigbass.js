@@ -131,7 +131,7 @@ const BassEngine = (() => {
   async function doSpin() {
     if (busy) return; const free = freeLeft > 0, lines = +$('bbLines').value, lineBet = +$('bbBet').value, tot = total();
     if (!free) {
-      if (tot > Casino.balance) { auto = false; $('bbAuto').textContent = 'Авто: выкл'; unlock(); return msg($('bbMsg'), 'Недостаточно средств', 'lose'); }
+      if (tot > Casino.balance) { auto = false; ap.cancel(); unlock(); return msg($('bbMsg'), 'Недостаточно средств', 'lose'); }
       setBalance(Casino.balance - tot);
     } else freeLeft--;
     busy = true; lock();
@@ -158,8 +158,8 @@ const BassEngine = (() => {
     if (free && freeLeft === 0) { await sleep(1200); msg($('bbMsg'), `Бонус окончен! Итого во фриспинах: ${fmt(fsSum)} ₽`, 'win'); fsSum = 0; coll = 0; lvl = 0; banner(); }
     busy = false; if (!auto) unlock();
     if (freeLeft > 0) { await sleep(started ? 2200 : 1400); doSpin(); }
-    else if (auto) { await sleep(r.total ? 1500 : 450); if (auto) doSpin(); }
+    else if (auto && ap.after(r.total, tot)) { await sleep(r.total ? 1500 : 450); if (auto) doSpin(); }
   }
-  $('bbSpin').onclick = () => { auto = false; $('bbAuto').textContent = 'Авто: выкл'; doSpin(); };
-  $('bbAuto').onclick = () => { auto = !auto; $('bbAuto').textContent = 'Авто: ' + (auto ? 'вкл' : 'выкл'); if (auto && !busy) doSpin(); else if (!auto && !busy) unlock(); };
+  $('bbSpin').onclick = () => { auto = false; ap.cancel(); doSpin(); };
+  const ap = SlotUI.auto($('bbAuto'), { start: () => { auto = true; if (!busy) doSpin(); }, stop: () => { auto = false; if (!busy) unlock(); } });
 })();
