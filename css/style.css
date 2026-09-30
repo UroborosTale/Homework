@@ -160,3 +160,33 @@
   .mcell.boom { background: #b71c1c; border-color: #ff5252; opacity: 1; }
   .mninfo { text-align: center; min-height: 24px; font-size: 15px; color: var(--muted); }
   .mninfo b { color: var(--gold); }
+  /* Колесо фортуны */
+  .whlegend { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin: 10px 0; align-items: center; }
+  .whlegend span { padding: 3px 10px; border-radius: 14px; font-size: 13px; font-weight: 700; color: #fff; }
+  .whlegend em { color: var(--muted); font-size: 13px; }
+  #whCanvas { transition: transform 5.2s cubic-bezier(.12,.6,.1,1); }
+  /* Верхняя панель и каталог */
+  nav#tabs { align-items: center; }
+  nav#tabs button[data-tab="catalog"] { font-weight: 700; }
+  nav#tabs.in-game button[data-tab="catalog"] { background: var(--gold); color: #222; }
+  #curGame { font-size: 18px; font-weight: 700; color: var(--gold); margin-left: 6px; }
+  .catbar { display: flex; flex-direction: column; gap: 10px; margin-bottom: 8px; }
+  #catSearch { width: 100%; padding: 12px 16px; border-radius: 12px; border: 1px solid #2c4a39; background: #0b1510; color: var(--text); font-size: 16px; }
+  .catchips { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chipbtn { padding: 8px 16px; border-radius: 20px; border: 1px solid #2c4a39; background: var(--panel); color: var(--text); font-size: 15px; cursor: pointer; }
+  .chipbtn.on { background: var(--gold); color: #222; border-color: var(--gold); font-weight: 700; }
+  .cathead { font-size: 20px; margin: 22px 0 10px; color: var(--gold); }
+  .cgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 14px; }
+  .gcard { position: relative; display: flex; flex-direction: column; gap: 6px; align-items: flex-start; text-align: left; padding: 16px; min-height: 190px;
+    border: 0; border-radius: 16px; color: #fff; cursor: pointer; overflow: hidden; background: linear-gradient(140deg, var(--c1), var(--c2));
+    box-shadow: 0 6px 18px #0006; transition: transform .18s, box-shadow .18s; font-family: inherit; }
+  .gcard:hover, .gcard:focus-visible { transform: translateY(-4px) scale(1.02); box-shadow: 0 12px 26px #000a; outline: 2px solid #fff8; }
+  .gcard .gicon { font-size: 44px; line-height: 1; filter: drop-shadow(0 2px 4px #0006); }
+  .gcard .gtitle { font-size: 19px; font-weight: 800; text-shadow: 0 1px 3px #0008; }
+  .gcard .gdesc { font-size: 13px; line-height: 1.35; opacity: .95; text-shadow: 0 1px 2px #0006; }
+  .gcard .gtags { display: flex; gap: 5px; flex-wrap: wrap; margin-top: auto; }
+  .gcard .gtags i { font-style: normal; font-size: 11px; padding: 2px 8px; border-radius: 10px; background: #0005; }
+  .gcard .gplay { position: absolute; right: 12px; top: 12px; font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 12px; background: #fff3; opacity: 0; transition: .18s; }
+  .gcard:hover .gplay, .gcard:focus-visible .gplay { opacity: 1; }
+  .cgrid.recent .gcard { min-height: 150px; }
+  .catempty { text-align: center; padding: 40px; color: var(--muted); font-size: 18px; }

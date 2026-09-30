@@ -38,18 +38,26 @@ const Casino = (() => {
     return cards;
   }
 
-  // Вкладки (последняя открытая запоминается)
+  // Навигация: каталог ↔ игра (последние открытые запоминаются для «Недавних»)
+  const titles = {};                                     // id → название (заполняет каталог)
   function openTab(t) {
-    const btn = document.querySelector(`nav button[data-tab="${t}"]`); if (!btn) return;
-    document.querySelectorAll('nav button').forEach(b => b.classList.toggle('active', b === btn));
-    document.querySelectorAll('main > section').forEach(s => s.classList.toggle('active', s.id === t));
-    try { localStorage.setItem('casinoTab', t); } catch (e) {}
+    const sec = document.getElementById(t); if (!sec || sec.tagName !== 'SECTION') return;
+    document.querySelectorAll('main > section').forEach(s => s.classList.toggle('active', s === sec));
+    $('tabs').classList.toggle('in-game', t !== 'catalog');
+    $('curGame').textContent = t === 'catalog' ? '' : (titles[t] || t);
+    window.scrollTo(0, 0);
+    try { history.replaceState(null, '', t === 'catalog' ? location.pathname : '#' + t); } catch (e) {}
+    if (t !== 'catalog') {
+      try {
+        const rec = JSON.parse(localStorage.getItem('casinoRecent') || '[]').filter(x => x !== t); rec.unshift(t);
+        localStorage.setItem('casinoRecent', JSON.stringify(rec.slice(0, 4)));
+      } catch (e) {}
+    }
+    document.dispatchEvent(new CustomEvent('casino:tab', { detail: t }));
   }
   setBalance(balance);
   $('reset').onclick = () => { try { localStorage.removeItem(KEY); } catch (e) {} setBalance(START); };
   $('tabs').onclick = e => { if (e.target.dataset.tab) openTab(e.target.dataset.tab); };
-  let last = null; try { last = localStorage.getItem('casinoTab'); } catch (e) {}
-  if (last) openTab(last);
 
-  return { $, rnd, sleep, fmt, msg, readBet, setBalance, cardEl, shoe, START, get balance() { return balance; } };
+  return { $, rnd, sleep, fmt, msg, readBet, setBalance, cardEl, shoe, openTab, titles, START, get balance() { return balance; } };
 })();

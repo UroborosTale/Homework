@@ -1,0 +1,63 @@
+// Каталог игр: карточки с поиском, категориями и «недавними»
+(() => {
+  const { $, titles, openTab } = Casino;
+  const CATS = { slots: '🎰 Слоты', table: '🃏 Настольные', fast: '🚀 Быстрые игры' };
+  // id совпадает с id секции игры
+  const GAMES = [
+    { id: 'slots', cat: 'slots', icon: '🍒', title: 'Фруктовый слот', desc: '5×3, 10 линий, дикий, фриспины, бонус «Сундуки» и риск-игра', tags: ['10 линий', 'бонус'], c: ['#c62828', '#f9a825'] },
+    { id: 'olympus', cat: 'slots', icon: '⚡', title: 'Олимп', desc: 'Платит везде, тумбл, шары множителей до ×500, ante и покупка бонуса', tags: ['8+ платит', '×500'], c: ['#283593', '#7c4dff'] },
+    { id: 'sweet', cat: 'slots', icon: '🍬', title: 'Sweet', desc: 'Сладкий тумбл, бомбы-множители во фриспинах, ante и покупка бонуса', tags: ['8+ платит', 'бомбы'], c: ['#ec407a', '#7e57c2'] },
+    { id: 'egypt', cat: 'slots', icon: '📖', title: 'Египет', desc: 'Книга — дикий и скаттер, расширяющийся символ во фриспинах', tags: ['10 линий', 'расширение'], c: ['#8d5a1b', '#e0a800'] },
+    { id: 'bigbass', cat: 'slots', icon: '🎣', title: 'Big Bass', desc: 'Рыбак собирает денежных рыб, во фриспинах растут уровни', tags: ['10 линий', 'рыбалка'], c: ['#0277bd', '#26c6da'] },
+    { id: 'doghouse', cat: 'slots', icon: '🐕', title: 'Dog House', desc: 'До 117 649 способов, тумбл и липкие дикие с множителями', tags: ['Megaways', 'тумбл'], c: ['#558b2f', '#ef6c00'] },
+    { id: 'roulette', cat: 'table', icon: '🎡', title: 'Рулетка', desc: 'Европейская рулетка: числа, дюжины, красное/чёрное и другое', tags: ['1 ноль', '35:1'], c: ['#1b5e20', '#b71c1c'] },
+    { id: 'blackjack', cat: 'table', icon: '🃏', title: 'Блэкджек', desc: 'Взять, стоп, удвоить. Блэкджек платит 3:2', tags: ['3:2', '21'], c: ['#004d40', '#26a69a'] },
+    { id: 'baccarat', cat: 'table', icon: '🎴', title: 'Баккара', desc: 'Игрок, Банкир или Ничья с классическими правилами третьей карты', tags: ['8 колод'], c: ['#4a148c', '#ad1457'] },
+    { id: 'sicbo', cat: 'table', icon: '🎲', title: 'Кости (Sic Bo)', desc: 'Три кубика: малое/большое, числа, суммы и тройки до 150:1', tags: ['3 кубика', '150:1'], c: ['#b71c1c', '#ff7043'] },
+    { id: 'crash', cat: 'fast', icon: '🚀', title: 'Ракета', desc: 'Множитель растёт — успейте забрать выигрыш до взрыва. Авто-вывод', tags: ['RTP 96%', 'авто-вывод'], c: ['#0d47a1', '#00bcd4'] },
+    { id: 'plinko', cat: 'fast', icon: '🔻', title: 'Плинко', desc: '8/12/16 рядов и три уровня риска, множители до ×100+', tags: ['3 риска'], c: ['#311b92', '#00acc1'] },
+    { id: 'mines', cat: 'fast', icon: '💣', title: 'Мины', desc: 'Открывайте безопасные клетки 5×5 и вовремя забирайте выигрыш', tags: ['1–24 мины', 'RTP 97%'], c: ['#37474f', '#43a047'] },
+    { id: 'fortune', cat: 'fast', icon: '🎯', title: 'Колесо фортуны', desc: 'Крутите колесо и получите множитель ставки до ×19. Три уровня риска', tags: ['×19', '3 риска'], c: ['#f9a825', '#e91e63'] },
+  ];
+  GAMES.forEach(g => titles[g.id] = g.icon + ' ' + g.title);
+  let cat = 'all', q = '';
+
+  function card(g) {
+    const b = document.createElement('button'); b.className = 'gcard'; b.dataset.id = g.id;
+    b.style.setProperty('--c1', g.c[0]); b.style.setProperty('--c2', g.c[1]);
+    b.innerHTML = `<span class="gicon">${g.icon}</span><span class="gtitle">${g.title}</span><span class="gdesc">${g.desc}</span>` +
+      `<span class="gtags">${g.tags.map(t => `<i>${t}</i>`).join('')}</span><span class="gplay">Играть ▸</span>`;
+    b.onclick = () => openTab(g.id); return b;
+  }
+  const match = g => (cat === 'all' || g.cat === cat) && (!q || (g.title + ' ' + g.desc + ' ' + g.tags.join(' ')).toLowerCase().includes(q));
+  function render() {
+    const list = $('catList'); list.replaceChildren();
+    let shown = 0;
+    for (const [key, name] of Object.entries(CATS)) {
+      const items = GAMES.filter(g => g.cat === key && match(g)); if (!items.length) continue;
+      shown += items.length;
+      const h = document.createElement('h2'); h.className = 'cathead'; h.textContent = `${name} · ${items.length}`;
+      const grid = document.createElement('div'); grid.className = 'cgrid'; items.forEach(g => grid.appendChild(card(g)));
+      list.append(h, grid);
+    }
+    if (!shown) list.innerHTML = '<div class="catempty">Ничего не найдено 🤷</div>';
+    // недавние
+    let rec = []; try { rec = JSON.parse(localStorage.getItem('casinoRecent') || '[]'); } catch (e) {}
+    const recent = rec.map(id => GAMES.find(g => g.id === id)).filter(Boolean);
+    const box = $('catRecent'); box.replaceChildren();
+    if (recent.length && !q && cat === 'all') {
+      const h = document.createElement('h2'); h.className = 'cathead'; h.textContent = '🕘 Недавние';
+      const grid = document.createElement('div'); grid.className = 'cgrid recent'; recent.forEach(g => grid.appendChild(card(g))); box.append(h, grid);
+    }
+  }
+  const chips = $('catChips');
+  [['all', 'Все · ' + GAMES.length], ...Object.entries(CATS).map(([k, v]) => [k, `${v} · ${GAMES.filter(g => g.cat === k).length}`])].forEach(([k, label]) => {
+    const b = document.createElement('button'); b.className = 'chipbtn' + (k === 'all' ? ' on' : ''); b.textContent = label;
+    b.onclick = () => { cat = k; chips.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); render(); };
+    chips.appendChild(b);
+  });
+  $('catSearch').oninput = e => { q = e.target.value.trim().toLowerCase(); render(); };
+  document.addEventListener('casino:tab', e => { if (e.detail === 'catalog') render(); });   // обновляем «Недавние»
+  render();
+  const h = location.hash.slice(1); if (h && GAMES.some(g => g.id === h)) openTab(h);          // ссылка вида …/#crash
+})();
