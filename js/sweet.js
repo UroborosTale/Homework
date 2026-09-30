@@ -106,13 +106,13 @@ const SweetEngine = (() => {
       const el = oCells[c][r];
       el.className = 'oc' + (x.s === 'orb' ? ' orb' : x.s === 'scatter' ? ' scatter' : '') + (drop ? ' drop' : '');
       el.style.setProperty('--d', (c * 0.05 + (OL.ROWS - r) * 0.03) + 's');
-      el.textContent = x.s === 'orb' ? '×' + x.v : OL.SYMS[x.s].e;
+      if (x.s === 'orb') el.textContent = '×' + x.v; else el.innerHTML = Art.html('sweet', x.s) || OL.SYMS[x.s].e;
     }));
   }
   oRender(OL.spin(1).grids[0], false);
   [10, 20, 50, 100, 200, 500, 1000, 2500].forEach(v => $('swBet').add(new Option(v, v)));
   $('swPay').innerHTML = '<table><tr><th></th><th>8–9</th><th>10–11</th><th>12+</th></tr>' +
-    Object.values(OL.SYMS).filter(s => s.pay).map(s => `<tr><td>${s.e}</td>${s.pay.map(p => `<td>×${p}</td>`).join('')}</tr>`).join('') +
+    Object.entries(OL.SYMS).filter(([, s]) => s.pay).map(([k, s]) => `<tr><td>${Art.html('sweet', k)}</td>${s.pay.map(p => `<td>×${p}</td>`).join('')}</tr>`).join('') +
     '</table><small>множители от ставки</small>';
   const oCost = () => +$('swBet').value * ($('swAnte').checked ? OL.ANTE : 1);
   const updOCost = () => { $('swCost').textContent = oCost(); $('swBuy').textContent = `Купить бонус (${OL.BUY_COST * $('swBet').value} ₽)`; };

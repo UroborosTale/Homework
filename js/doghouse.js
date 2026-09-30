@@ -106,7 +106,7 @@ const DogEngine = (() => {
         const d = document.createElement('div');
         d.className = 'dc' + (x.s === 'W' ? ' wild' : x.s === 'S' ? ' scat' : '') + ('AKQJ'.includes(x.s) ? ' letter' : '') + (drop ? ' drop' : '');
         d.style.setProperty('--d', (r * 0.05 + (col.length - i) * 0.03) + 's');
-        d.innerHTML = x.s === 'W' ? `🏠${x.m > 1 ? `<b class="wm">×${x.m}</b>` : ''}` : SYM[x.s].e;
+        d.innerHTML = x.s === 'W' ? `${Art.html('dog', 'W')}${x.m > 1 ? `<b class="wm">×${x.m}</b>` : ''}` : 'AKQJ'.includes(x.s) ? x.s : (Art.html('dog', x.s) || SYM[x.s].e);
         host.appendChild(d); cols[r].push(d);
       });
     });
@@ -115,7 +115,7 @@ const DogEngine = (() => {
   render(DE.spin(1).grids[0], false);
   [10, 20, 50, 100, 200, 500, 1000, 2500].forEach(v => $('dgBet').add(new Option(v, v)));
   $('dgPay').innerHTML = '<table><tr><th></th><th>3</th><th>4</th><th>5</th><th>6</th></tr>' +
-    Object.values(SYM).filter(s => s.pay).map(s => `<tr><td>${s.e}</td>${s.pay.map(p => `<td>×${Math.round(p * 1000) / 1000}</td>`).join('')}</tr>`).join('') +
+    Object.entries(SYM).filter(([, s]) => s.pay).map(([k, s]) => `<tr><td>${'AKQJ'.includes(k) ? k : Art.html('dog', k)}</td>${s.pay.map(p => `<td>×${Math.round(p * 1000) / 1000}</td>`).join('')}</tr>`).join('') +
     '</table><small>множитель ставки за каждый способ (число способов = произведение символов на барабанах)</small>';
   const updCost = () => { $('dgCost').textContent = $('dgBet').value; $('dgBuy').textContent = `Купить бонус (${DE.BUY_COST * $('dgBet').value} ₽)`; };
   $('dgBet').onchange = updCost; updCost();

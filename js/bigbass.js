@@ -86,7 +86,7 @@ const BassEngine = (() => {
   function put(r, w, c) {                                     // c — ячейка вида { s, v }
     const el = cells[r][w], k = c.s;
     el.classList.toggle('letter', 'AKQJ'.includes(k)); el.classList.toggle('fish', k === 'M'); el.classList.toggle('fisher', k === 'W');
-    if (k === 'M') el.innerHTML = `🐟<b class="fv">×${c.v}</b>`; else el.textContent = SYM[k].e;
+    if (k === 'M') el.innerHTML = `${Art.html('bass', 'M')}<b class="fv">×${c.v}</b>`; else if ('AKQJ'.includes(k)) el.textContent = k; else el.innerHTML = Art.html('bass', k) || SYM[k].e;
   }
   const show = g => g.forEach((col, r) => col.forEach((c, w) => put(r, w, c)));
   show(BE.spin(10, 1).grid);
@@ -94,7 +94,7 @@ const BassEngine = (() => {
   [1, 2, 5, 10, 25, 50].forEach(v => $('bbBet').add(new Option(v, v)));
   const COLORS = ['#ff5252','#40c4ff','#69f0ae','#ffd740','#e040fb','#ff6e40','#18ffff','#b2ff59','#ff4081','#7c4dff'];
   $('bbPay').innerHTML = '<table><tr><th></th><th>×3</th><th>×4</th><th>×5</th></tr>' +
-    Object.values(SYM).filter(s => s.pay).map(s => `<tr><td>${s.e}</td>${s.pay.map(p => `<td>×${p}</td>`).join('')}</tr>`).join('') + '</table><small>множители от ставки на линию</small>';
+    Object.entries(SYM).filter(([, s]) => s.pay).map(([k, s]) => `<tr><td>${'AKQJ'.includes(k) ? k : Art.html('bass', k)}</td>${s.pay.map(p => `<td>×${p}</td>`).join('')}</tr>`).join('') + '</table><small>множители от ставки на линию</small>';
   const total = () => +$('bbLines').value * +$('bbBet').value;
   const upd = () => $('bbTotal').textContent = total();
   $('bbLines').onchange = $('bbBet').onchange = upd; upd();

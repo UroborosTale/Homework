@@ -81,14 +81,14 @@ const EgyptEngine = (() => {
     for (let w = 0; w < 3; w++) { const d = document.createElement('div'); d.className = 'sc'; col.appendChild(d); cells[r][w] = d; }
     grid5.appendChild(col);
   }
-  const put = (r, w, k) => { const c = cells[r][w]; c.textContent = SYM[k].e; c.classList.toggle('letter', k.length === 1 && 'AKQJ'.includes(k)); c.classList.toggle('book', k === 'B'); };
+  const put = (r, w, k) => { const c = cells[r][w]; if (k.length === 1 && 'AKQJ'.includes(k)) c.textContent = k; else c.innerHTML = Art.html('egypt', k) || SYM[k].e; c.classList.toggle('letter', k.length === 1 && 'AKQJ'.includes(k)); c.classList.toggle('book', k === 'B'); };
   const show = g => g.forEach((col, r) => col.forEach((k, w) => put(r, w, k)));
   show(EE.spinGrid());
   for (let i = 1; i <= 10; i++) $('egLines').add(new Option(i, i)); $('egLines').value = 10;
   [1, 2, 5, 10, 25, 50].forEach(v => $('egBet').add(new Option(v, v)));
   const COLORS = ['#ff5252','#40c4ff','#69f0ae','#ffd740','#e040fb','#ff6e40','#18ffff','#b2ff59','#ff4081','#7c4dff'];
   $('egPay').innerHTML = '<table><tr><th></th><th>×3</th><th>×4</th><th>×5</th></tr>' +
-    Object.entries(SYM).filter(([, s]) => s.pay).map(([, s]) => `<tr><td>${s.e}</td>${s.pay.map(p => `<td>×${p}</td>`).join('')}</tr>`).join('') + '</table><small>множители от ставки на линию</small>';
+    Object.entries(SYM).filter(([, s]) => s.pay).map(([k, s]) => `<tr><td>${'AKQJ'.includes(k) ? k : Art.html('egypt', k)}</td>${s.pay.map(p => `<td>×${p}</td>`).join('')}</tr>`).join('') + '</table><small>множители от ставки на линию</small>';
   const total = () => +$('egLines').value * +$('egBet').value;
   const upd = () => $('egTotal').textContent = total();
   $('egLines').onchange = $('egBet').onchange = upd; upd();
