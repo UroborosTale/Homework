@@ -15,13 +15,17 @@
 <nav id="tabs">
   <button data-tab="slots" class="active">🍒 Слоты</button>
   <button data-tab="olympus">⚡ Олимп</button>
+  <button data-tab="sweet">🍬 Sweet</button>
   <button data-tab="egypt">📖 Египет</button>
+  <button data-tab="bigbass">🎣 Big Bass</button>
+  <button data-tab="doghouse">🐕 Dog House</button>
   <button data-tab="roulette">🎡 Рулетка</button>
   <button data-tab="blackjack">🃏 Блэкджек</button>
   <button data-tab="baccarat">🎴 Баккара</button>
   <button data-tab="sicbo">🎲 Кости</button>
   <button data-tab="crash">🚀 Ракета</button>
   <button data-tab="plinko">🔻 Плинко</button>
+  <button data-tab="mines">💣 Мины</button>
 </nav>
 <main>
 
@@ -96,6 +100,38 @@
        Ante увеличивает цену на 25% и шанс скаттеров. «Купить бонус» — 100× ставки, сразу 4 скаттера.</p>
   </details>
 </section>
+
+<!-- SWEET -->
+<section id="sweet">
+  <div class="olywrap">
+    <div class="olytop">
+      <div class="olybadge" id="swFs" style="display:none"></div>
+      <div class="olybadge orbbadge">💣 Бомбы (×): <b id="swMult">×0</b></div>
+      <div class="olybadge">Выигрыш спина: <b id="swWin">0</b> ₽</div>
+    </div>
+    <div class="olygrid" id="swGrid"></div>
+  </div>
+  <div class="msg" id="swMsg">Соберите 8+ одинаковых сладостей в любом месте поля</div>
+  <div class="controls">
+    <label>Ставка: <select id="swBet"></select></label>
+    <label class="ante"><input type="checkbox" id="swAnte"> Ante ×1.25 (шанс 🎂 выше)</label>
+    <span>Цена: <b id="swCost">0</b> ₽</span>
+  </div>
+  <div class="controls">
+    <button class="btn primary" id="swSpin">КРУТИТЬ 🍭</button>
+    <button class="btn" id="swAuto">Авто: выкл</button>
+    <button class="btn" id="swTurbo">Турбо: выкл</button>
+    <button class="btn" id="swBuy">Купить бонус (×100)</button>
+  </div>
+  <details class="paytable"><summary>Таблица выплат и правила</summary>
+    <div id="swPay"></div>
+    <p>🍬 Платит за 8+ одинаковых символов в любом месте (не по линиям). Выигравшие символы исчезают, остальные падают, сверху добавляются новые (тумбл) — пока есть выигрыши.<br>
+       💣 Бомбы множителей (×2 … ×500) падают <b>только во фриспинах</b>: их значения суммируются и в конце цепочки умножают выигрыш спина.<br>
+       🎂 4+ скаттера — приз ×3/×5/×100 от ставки и 10 бесплатных вращений; 3+ 🎂 во фриспинах — ещё +5.<br>
+       Ante увеличивает цену на 25% и шанс скаттеров. «Купить бонус» — сразу 4 скаттера.</p>
+  </details>
+</section>
+
 
 <!-- ЕГИПЕТ -->
 <section id="egypt">
@@ -188,6 +224,75 @@
   <div class="paytable">Шарик случайно отскакивает влево/вправо на каждом ряду. Множители подобраны под RTP ≈ 96%; можно бросать несколько шариков подряд.</div>
 </section>
 
+<!-- BIG BASS -->
+<section id="bigbass">
+  <div class="fsbanner bbbanner" id="bbFs"></div>
+  <div class="slotframe bbframe">
+    <div class="grid5" id="bbGrid"></div>
+    <svg class="linesvg" id="bbSvg" viewBox="0 0 560 340" preserveAspectRatio="none"></svg>
+  </div>
+  <div class="msg" id="bbMsg">Рыбак 🧔 (5-й барабан) собирает денежных рыб 🐟</div>
+  <div class="controls">
+    <label>Линий: <select id="bbLines"></select></label>
+    <label>Ставка на линию: <select id="bbBet"></select></label>
+    <span>Всего: <b id="bbTotal">10</b> ₽</span>
+  </div>
+  <div class="controls">
+    <button class="btn primary" id="bbSpin">КРУТИТЬ 🎣</button>
+    <button class="btn" id="bbAuto">Авто: выкл</button>
+  </div>
+  <details class="paytable"><summary>Таблица выплат и правила</summary>
+    <div id="bbPay"></div>
+    <p>🧔 Рыбак — дикий и «сборщик»: появляется только на 5-м барабане. Когда он на поле, он собирает значения всех 🐟 (×2 … ×50 от общей ставки), каждый рыбак — все рыбы.<br>
+       ⚓ 3+ скаттера — приз ×2/×10/×50 от общей ставки и 10/15/20 фриспинов; 3+ ⚓ во фриспинах — ещё +10.<br>
+       Во фриспинах считаются пойманные рыбаки: 4-й — уровень 1 (рыба ×2, +10 вращений), 8-й — уровень 2 (×3, +10), 12-й — уровень 3 (×10, +10).</p>
+  </details>
+</section>
+
+<!-- DOG HOUSE MEGAWAYS -->
+<section id="doghouse">
+  <div class="fsbanner dgbanner" id="dgFs"></div>
+  <div class="olytop">
+    <div class="olybadge" id="dgWays">— способов</div>
+    <div class="olybadge">Выигрыш спина: <b id="dgWin">0</b> ₽</div>
+  </div>
+  <div class="dggrid" id="dgGrid"></div>
+  <div class="msg" id="dgMsg">Высота барабанов меняется каждый спин: от 2 до 7 символов</div>
+  <div class="controls">
+    <label>Ставка: <select id="dgBet"></select></label>
+    <span>Цена: <b id="dgCost">10</b> ₽</span>
+  </div>
+  <div class="controls">
+    <button class="btn primary" id="dgSpin">КРУТИТЬ 🐕</button>
+    <button class="btn" id="dgAuto">Авто: выкл</button>
+    <button class="btn" id="dgTurbo">Турбо: выкл</button>
+    <button class="btn" id="dgBuy">Купить бонус</button>
+  </div>
+  <details class="paytable"><summary>Таблица выплат и правила</summary>
+    <div id="dgPay"></div>
+    <p>Выигрыш платится за комбинации слева направо (от 3 барабанов, начиная с 1-го). Число «способов» — произведение количества совпавших символов на каждом барабане (до 117 649).<br>
+       Тумбл: выигравшие символы исчезают, сверху падают новые — пока идут выигрыши. 🏠 Дикий заменяет все символы, кроме 🐾, и появляется на барабанах 2–6.<br>
+       🐾 3+ скаттера — бесплатные вращения (3→7, 4→11, 5→15, 6→20). Во фриспинах дикие получают множитель ×2 или ×3, липнут до конца вращения, а множители диких в выигрышной комбинации <b>складываются</b>. Высота барабанов во фриспинах фиксирована. Максимальный выигрыш спина — ×5000.</p>
+  </details>
+</section>
+
+<!-- МИНЫ -->
+<section id="mines">
+  <div class="msg" id="mnMsg">Выберите ставку и число мин, затем нажмите «Начать»</div>
+  <div class="mngrid" id="mnGrid"></div>
+  <div class="mninfo" id="mnInfo"></div>
+  <div class="controls">
+    <label>Ставка: <input type="number" id="mnBet" value="100" min="1" step="1"></label>
+    <label>Мин: <select id="mnCount"></select></label>
+    <button class="btn primary" id="mnStart">НАЧАТЬ</button>
+  </div>
+  <div class="controls">
+    <button class="btn" id="mnRand" disabled>🎲 Случайная клетка</button>
+    <button class="btn primary" id="mnCash" disabled>ЗАБРАТЬ 💰</button>
+  </div>
+  <div class="paytable">Поле 5×5. Каждая открытая 💎 увеличивает множитель, но одна мина 💣 сжигает ставку. Чем больше мин, тем быстрее растёт множитель. RTP ≈ 97%.</div>
+</section>
+
 <!-- РУЛЕТКА -->
 <section id="roulette">
   <div class="roulette-top">
@@ -239,12 +344,16 @@
 <script src="js/core.js"></script>
 <script src="js/slots.js"></script>
 <script src="js/olympus.js"></script>
+<script src="js/sweet.js"></script>
 <script src="js/egypt.js"></script>
+<script src="js/bigbass.js"></script>
+<script src="js/doghouse.js"></script>
 <script src="js/roulette.js"></script>
 <script src="js/blackjack.js"></script>
 <script src="js/baccarat.js"></script>
 <script src="js/sicbo.js"></script>
 <script src="js/crash.js"></script>
 <script src="js/plinko.js"></script>
+<script src="js/mines.js"></script>
 </body>
 </html>
