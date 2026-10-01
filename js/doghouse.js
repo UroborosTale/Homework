@@ -163,6 +163,7 @@ const DogEngine = (() => {
       msg($('dgMsg'), `🐾 ${left} бесплатных вращений! Дикие 🏠 с множителями ×2/×3 липнут до конца вращения`, 'win'); await d(1800);
       $('dgFs').style.display = 'block';
       while (left > 0) {
+        await Casino.whenActive('doghouse');                     // ушли со слота — фриспины ждут возвращения
         left--; n++; $('dgFs').textContent = `🐾 Фриспины: осталось ${left} · выиграно ${fmt(total)} ₽`;
         r = await spinOnce(bet, { free: true, heights }); total += r.total;
         if (r.fs) { left += r.fs; msg($('dgMsg'), `+${r.fs} фриспинов!`, 'win'); await d(1200); }

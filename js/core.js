@@ -77,9 +77,18 @@ const Casino = (() => {
     }
     document.dispatchEvent(new CustomEvent('casino:tab', { detail: t }));
   }
+  // Промис, который выполняется, когда вкладка игры id снова открыта (для паузы фриспинов)
+  const isActive = id => { const s = document.getElementById(id); return !!(s && s.classList.contains('active')); };
+  function whenActive(id) {
+    return new Promise(res => {
+      if (isActive(id)) return res();
+      const h = e => { if (e.detail === id) { document.removeEventListener('casino:tab', h); res(); } };
+      document.addEventListener('casino:tab', h);
+    });
+  }
   setBalance(balance);
   $('reset').onclick = () => { try { localStorage.removeItem(KEY); } catch (e) {} setBalance(START); };
   $('tabs').onclick = e => { if (e.target.dataset.tab) openTab(e.target.dataset.tab); };
 
-  return { $, rnd, sleep, fmt, msg, readBet, setBalance, cardEl, syncHand, shoe, openTab, titles, START, get balance() { return balance; } };
+  return { $, rnd, sleep, fmt, msg, readBet, setBalance, cardEl, syncHand, shoe, openTab, titles, whenActive, isActive, START, get balance() { return balance; } };
 })();

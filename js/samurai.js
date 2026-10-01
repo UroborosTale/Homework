@@ -139,6 +139,7 @@ const SamuraiEngine = (() => {
       msg($('smMsg'), `🔴 ${left} бесплатных вращений! Множитель растёт с каждой лавиной и не сбрасывается`, 'win'); await d(1800);
       $('smFs').style.display = 'flex';
       while (left > 0) {
+        await Casino.whenActive('samurai');                     // ушли со слота — фриспины ждут возвращения
         left--; n++; $('smFsLeft').textContent = left; Anim.countTo($('smFsWon'), fmt(total), 400);
         r = await spinOnce(bet, { free: true, mult: m }); m = r.mult; multBadge(m); total += r.total;
         if (r.fs) { left += r.fs; msg($('smMsg'), `+${r.fs} фриспинов!`, 'win'); await d(1200); }

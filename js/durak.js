@@ -51,8 +51,9 @@
     readCfg(); if (!/^[A-Z0-9]{5}$/.test(c)) return note('Введите код из 5 символов', 'lose');
     note('Подключаюсь…'); $('dkJoin').disabled = true;
     try {
-      net = await DurakNet.join(c, { onData: onClientData, onClose: onHostGone });
+      net = await DurakNet.join(c, { onData: onClientData, onClose: onHostGone }, stage => note(stage));
       role = 'client'; code = c; net.send({ t: 'hello', name: myName }); note('');
+      SlotUI.toast(net.kind === 'peer' ? 'Подключено напрямую' : net.kind === 'relay' ? 'Подключено через ретранслятор' : 'Подключено (вкладки этого браузера)');
       $('dkRoomCode').textContent = code; screen('dkRoom'); $('dkRoomInfo').textContent = 'Ждём, когда хозяин начнёт игру…';
     } catch (e) { note(e.message || 'Не удалось подключиться', 'lose'); }
     $('dkJoin').disabled = false;
@@ -69,7 +70,9 @@
     $('dkAddBot').style.display = $('dkStart').style.display = host ? '' : 'none';
     $('dkAddBot').disabled = seats.length >= cfg.seats; $('dkStart').disabled = seats.length < 2;
     $('dkRoomInfo').textContent = host ? `${modeName(cfg.mode)} · ставка ${cfg.stake} ₽ · мест ${cfg.seats}. Отправьте друзьям код или ссылку.` : `${modeName(cfg.mode)} · ставка ${cfg.stake} ₽ · ждём, когда хозяин начнёт игру…`;
-    $('dkNetKind').textContent = net && net.kind === 'local' ? '⚠️ Онлайн-сервис недоступен: комната работает только между вкладками этого браузера' : '';
+    const k = net && net.kinds;
+    $('dkNetKind').textContent = !net ? '' : net.kind === 'local' ? '⚠️ Онлайн-сервисы недоступны: комната работает только между вкладками этого браузера. Проверьте интернет или попробуйте другую сеть/VPN.'
+      : k && !k.includes('peer') ? 'ℹ️ Прямое соединение недоступно — игра пойдёт через ретранслятор (это нормально)' : k && !k.includes('relay') ? 'ℹ️ Ретранслятор недоступен — только прямое соединение' : '';
   }
   const modeName = m => m === 'perevodnoy' ? 'Переводной' : 'Подкидной';
   $('dkRoomList').onclick = e => { const b = e.target.closest('.dkkick'); if (!b || !isHost()) return; seats.splice(+b.dataset.i, 1); lobbyChanged(); };
@@ -85,6 +88,7 @@
   function onHostData(id, m) {
     if (!m || typeof m !== 'object') return;
     if (m.t === 'hello') {
+      if (seats.some(s => s.id === id)) return;                // повторное приветствие
       if (st && st.phase === 'play') return net.send(id, { t: 'err', msg: 'Партия уже идёт — подождите следующей' });
       if (seats.length >= cfg.seats) { const b = seats.findIndex(s => s.kind === 'bot'); if (b < 0) return net.send(id, { t: 'err', msg: 'Мест нет' }); seats.splice(b, 1); }
       seats.push({ name: clean(m.name), kind: 'human', id }); lobbyChanged();
@@ -268,6 +272,11 @@
     clearTimeout(botTimer); if (net) try { net.close(); } catch (e) {}
     net = null; role = 'none'; st = null; V = null; seats = []; code = ''; prevHand = new Set(); prevTable = 0; prevDef = new Set(); screen('dkLobby');
   }
+
+  // ушли со вкладки дурака — выходим из комнаты (хозяин закрывает её, гостю место занимает бот)
+  document.addEventListener('casino:tab', e => {
+    if (e.detail !== 'durak' && role !== 'none') { leave(); SlotUI.toast('Вы вышли из комнаты дурака'); }
+  });
 
   // ---------------- вход по ссылке ?room=CODE ----------------
   const m = /[?&]room=([A-Z0-9]{5})\b/.exec(location.search);

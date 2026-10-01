@@ -172,6 +172,7 @@ const Olympus = (() => {
       let left = r.fs, carry = 0, n = 0; msg($('olyMsg'), `⚡ ${left} бесплатных вращений!`, 'win'); await od(1600);
       $('olyFs').style.display = 'block';
       while (left > 0) {
+        await Casino.whenActive('olympus');                     // ушли со слота — фриспины ждут возвращения
         left--; n++; $('olyFs').textContent = `⚡ Фриспины: осталось ${left} · выиграно ${fmt(total)} ₽`;
         r = await oSpinOnce(bet, { free: true, carry }); carry = r.newCarry; total += r.total;
         if (r.fs) { left += r.fs; msg($('olyMsg'), `+${r.fs} фриспинов!`, 'win'); await od(1200); }

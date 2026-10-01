@@ -75,7 +75,10 @@ const SlotUI = (() => {
     paint(); m._start = onStart; m.classList.add('show');
   }
   function auto(btn, { start, stop }) {
-    const st = { on: false, left: Infinity, cfg: null, startBal: 0 };
+    const st = { on: false, left: Infinity, cfg: null, startBal: 0 }, sec = btn.closest('section');
+    document.addEventListener('casino:tab', e => {                  // ушли со слота — автоигра останавливается
+      if (st.on && sec && e.detail !== sec.id) { st.on = false; label(); stop(); toast('Автоигра остановлена: вы вышли из слота'); }
+    });
     const label = () => { btn.textContent = st.on ? `■ Стоп${isFinite(st.left) ? ` (${st.left})` : ''}` : 'Авто: выкл'; btn.classList.toggle('autoon', st.on); };
     btn.onclick = () => {
       if (st.on) { st.on = false; label(); stop(); return; }

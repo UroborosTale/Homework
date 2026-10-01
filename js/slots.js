@@ -171,7 +171,7 @@ const SlotEngine = (() => {
     slotBusy = false; if (!autoOn) unlock();
     if (win && !isFree && !res.bonus) offerGamble(win);
     else if (!isFree) hideGambleBtns();
-    if (freeSpins > 0) { await sleep(900); doSpin(); }
+    if (freeSpins > 0) { await sleep(900); await Casino.whenActive('slots'); doSpin(); }
     else if (autoOn && !gamble && ap.after(win, total)) { await sleep(win ? 1500 : 450); if (autoOn) doSpin(); }
   }
   $('spin').onclick = () => { autoOn = false; ap.cancel(); doSpin(); };

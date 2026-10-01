@@ -39,6 +39,7 @@
     busy = false; $('dcRoll').disabled = false;
     if (auto) { await sleep(win ? 500 : 280); if (auto) roll(); }
   }
+  document.addEventListener('casino:tab', e => { if (auto && e.detail !== 'dice') { auto = false; $('dcAuto').textContent = 'Авто: выкл'; } });
   $('dcRoll').onclick = () => { auto = false; $('dcAuto').textContent = 'Авто: выкл'; roll(); };
   $('dcAuto').onclick = () => { auto = !auto; $('dcAuto').textContent = 'Авто: ' + (auto ? 'вкл' : 'выкл'); if (auto && !busy) roll(); };
   upd();
