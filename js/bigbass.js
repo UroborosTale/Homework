@@ -114,8 +114,15 @@ const BassEngine = (() => {
       w.cells.forEach(([r, row]) => cells[r][row].classList.add('hit')); drawLine(w.line, w.count); await sleep(1000);
     }
   }
+  const fsBar = SlotUI.fsProgress($('bbFs')), fishBar = SlotUI.progress(fsBar.el, { cls: 'pbfish' });
+  function fishProgress(on) {                               // сбор рыбаков → уровни множителя рыбы
+    if (!on) return fishBar.hide();
+    const L = BE.LEVELS, max = L[L.length - 1][0], next = L.find(([n]) => coll < n);
+    fishBar.set(coll, max, next ? `🧔 Рыбаков <b>${coll}</b>/${next[0]} → рыба ×${next[1]} и +${BE.RETRIGGER} вращений` : `🧔 Рыбаков: <b>${coll}</b> — максимальный уровень, рыба ×${L[L.length - 1][1]}`,
+      L.map(([n, m]) => ({ at: n, label: '×' + m })));
+  }
   function banner() {
-    const b = $('bbFs'); b.style.display = freeLeft > 0 ? 'block' : 'none';
+    const b = $('bbFs'); b.style.display = freeLeft > 0 || fsSum ? 'block' : 'none'; fsBar.sync(freeLeft, b.style.display === 'block'); fishProgress(b.style.display === 'block');
     b.textContent = `🎣 ФРИСПИНЫ: осталось ${freeLeft} · рыбаков собрано ${coll} · множитель рыбы ×${BE.fsLevel(coll).mult} · выиграно ${fmt(fsSum)} ₽`;
   }
   async function animate(g) {

@@ -124,9 +124,10 @@ const SlotEngine = (() => {
       }
     }
   }
+  const fsBar = SlotUI.fsProgress($('fsBanner'));
   function updFsBanner() {
     const b = $('fsBanner');
-    b.style.display = freeSpins > 0 || fsWin > 0 ? 'block' : 'none';
+    b.style.display = freeSpins > 0 || fsWin > 0 ? 'block' : 'none'; fsBar.sync(freeSpins, b.style.display === 'block');
     b.textContent = `🎁 БЕСПЛАТНЫЕ ВРАЩЕНИЯ: осталось ${freeSpins} · множитель ×${SE.FS_MULT} · выиграно ${fmt(fsWin)} ₽`;
   }
   async function animateSpin(grid) {

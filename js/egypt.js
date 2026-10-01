@@ -108,8 +108,9 @@ const EgyptEngine = (() => {
       w.cells.forEach(([r, row]) => cells[r][row].classList.add('hit')); drawLine(w.line, w.count); await sleep(1000);
     }
   }
+  const fsBar = SlotUI.fsProgress($('egFs'));
   function banner() {
-    const b = $('egFs'); b.style.display = freeLeft > 0 ? 'block' : 'none';
+    const b = $('egFs'); b.style.display = freeLeft > 0 || fsSum ? 'block' : 'none'; fsBar.sync(freeLeft, b.style.display === 'block');
     b.textContent = `📖 ФРИСПИНЫ: осталось ${freeLeft} · расширяется ${expandSym ? SYM[expandSym].e : ''} · выиграно ${fmt(fsSum)} ₽`;
   }
   async function animate(g) {

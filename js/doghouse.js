@@ -114,6 +114,7 @@ const DogEngine = (() => {
     });
     $('dgWays').textContent = grid.reduce((a, c) => a * c.length, 1).toLocaleString('ru-RU') + ' способов';
   }
+  const fsBar = SlotUI.fsProgress($('dgFs'));
   async function exitGrid() {                        // старые символы уходят вниз перед новым спином
     if (Anim.reduce()) return;
     cols.forEach((col, r) => col.forEach((el, i) => { el.style.setProperty('--d', (r * 0.03 + (col.length - i) * 0.015) + 's'); el.classList.add('exit'); }));
@@ -156,7 +157,7 @@ const DogEngine = (() => {
   async function round(buy) {
     if (busy) return; const bet = +$('dgBet').value, cost = buy ? DE.BUY_COST * bet : bet;
     if (cost > Casino.balance) { auto = false; ap.cancel(); setOff(false); return msg($('dgMsg'), 'Недостаточно средств', 'lose'); }
-    busy = true; setOff(true); setBalance(Casino.balance - cost); $('dgFs').style.display = 'none';
+    busy = true; setOff(true); setBalance(Casino.balance - cost); $('dgFs').style.display = 'none'; fsBar.hide();
     let r = await spinOnce(bet, { forceScatters: buy ? 3 : 0 }), total = r.total;
     if (r.fs) {
       let left = r.fs, n = 0; const heights = DE.randHeights();
@@ -164,10 +165,10 @@ const DogEngine = (() => {
       $('dgFs').style.display = 'block';
       while (left > 0) {
         await Casino.whenActive('doghouse');                     // ушли со слота — фриспины ждут возвращения
-        left--; n++; $('dgFs').textContent = `🐾 Фриспины: осталось ${left} · выиграно ${fmt(total)} ₽`;
+        left--; n++; $('dgFs').textContent = `🐾 Фриспины: осталось ${left} · выиграно ${fmt(total)} ₽`; fsBar.show(n, n + left);
         r = await spinOnce(bet, { free: true, heights }); total += r.total;
         if (r.fs) { left += r.fs; msg($('dgMsg'), `+${r.fs} фриспинов!`, 'win'); await d(1200); }
-        $('dgFs').textContent = `🐾 Фриспины: осталось ${left} · выиграно ${fmt(total)} ₽`; await d(500);
+        $('dgFs').textContent = `🐾 Фриспины: осталось ${left} · выиграно ${fmt(total)} ₽`; fsBar.show(n, n + left); await d(500);
       }
       msg($('dgMsg'), `Бонус окончен: ${n} вращений, итого ${fmt(total)} ₽ (×${fmt(total / bet)})`, total ? 'win' : 'lose');
     }

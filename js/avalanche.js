@@ -101,7 +101,8 @@ const AvalancheEngine = (() => {
   let busy = false, auto = false, freeLeft = 0, fsSum = 0;
   const lock = () => { $('gzSpin').disabled = $('gzBet').disabled = true; };
   const unlock = () => { $('gzSpin').disabled = $('gzBet').disabled = false; };
-  function banner() { const b = $('gzFs'); b.style.display = freeLeft > 0 || fsSum ? 'block' : 'none'; b.textContent = `🌀 FREE FALLS: осталось ${freeLeft} · множители ×3/×6/×9/×15 · выиграно ${fmt(fsSum)} ₽`; }
+  const fsBar = SlotUI.fsProgress($('gzFs'));
+  function banner() { const b = $('gzFs'); b.style.display = freeLeft > 0 || fsSum ? 'block' : 'none'; fsBar.sync(freeLeft, b.style.display === 'block'); b.textContent = `🌀 FREE FALLS: осталось ${freeLeft} · множители ×3/×6/×9/×15 · выиграно ${fmt(fsSum)} ₽`; }
 
   async function playSpin(r, free) {
     let acc = 0; Anim.countTo($('gzWin'), 0, 200); multBar(free, 0);

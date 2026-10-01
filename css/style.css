@@ -806,3 +806,32 @@
     .cell { font-size: 11px; }
     .gcard .gdesc { -webkit-line-clamp: 2; }
   }
+
+  /* ---------- Полосы прогресса бонусов ---------- */
+  .pbar { position: relative; height: 26px; margin: 6px auto 8px; max-width: 640px; border-radius: 13px; background: #0009; border: 1px solid #ffffff2a;
+    box-shadow: inset 0 2px 6px #000a; overflow: visible; }
+  .pbfill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; border-radius: 13px; overflow: hidden;
+    background: linear-gradient(90deg, #ff8f00, #ffd54f 70%, #fff3b0); box-shadow: 0 0 12px #ffc10788; transition: width .6s cubic-bezier(.3, 1.1, .5, 1); }
+  .pbfill::after { content: ''; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 30%, #ffffff8c 50%, transparent 70%);
+    background-size: 220% 100%; animation: pbshine 2.2s linear infinite; }
+  @keyframes pbshine { from { background-position: 160% 0; } to { background-position: -60% 0; } }
+  .pbtext { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 0 10px; font-size: 13px; font-weight: 700;
+    color: #fff; text-shadow: 0 1px 2px #000, 0 0 6px #000; z-index: 2; }
+  .pbtext span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pbtext b { color: #ffe082; }
+  .pbmarks { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
+  .pbmarks i { position: absolute; top: -4px; bottom: -4px; width: 2px; margin-left: -1px; background: #ffffff55; }
+  .pbmarks i:last-child { margin-left: -3px; }
+  .pbmarks i b { position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font: 800 11px sans-serif; padding: 1px 6px; border-radius: 8px;
+    background: #263238; color: #b0bec5; border: 1px solid #ffffff33; transition: .3s; }
+  .pbmarks i.on { background: #fff; } .pbmarks i.on b { background: linear-gradient(#ffe082, #ff8f00); color: #3e2000; border-color: #fff; box-shadow: 0 0 10px #ffc107; }
+  .pbmarks i:last-child b { left: auto; right: -4px; transform: none; }
+  .pbar.bump .pbfill { animation: pbbump .5s ease; }
+  @keyframes pbbump { 40% { filter: brightness(1.6); box-shadow: 0 0 22px #ffe082; } }
+  .pbar.full { border-color: #ffe082; box-shadow: inset 0 2px 6px #000a, 0 0 14px #ffd54f88; }
+  .pbar.pbfish { margin-top: 24px; }
+  .pbar.pbfish .pbfill { background: linear-gradient(90deg, #0277bd, #29b6f6 70%, #b3e5fc); box-shadow: 0 0 12px #29b6f688; }
+  .pbar.pbcoin .pbfill { background: linear-gradient(90deg, #8d6e00, #ffca28 60%, #fff59d); }
+  .pbar.pbcoin.full .pbfill { background: linear-gradient(90deg, #c62828, #ffca28, #c62828); }
+  @media (max-width: 600px) { .pbar { height: 24px; } .pbtext { font-size: 11px; padding: 0 6px; } }
+  @media (prefers-reduced-motion: reduce) { .pbfill::after { animation: none; } }

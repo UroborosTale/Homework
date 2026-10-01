@@ -98,5 +98,43 @@ const SlotUI = (() => {
       },
     };
   }
-  return { create, payTable, COLORS, auto, toast };
+  // ---- Полоса прогресса бонуса. anchor — элемент, рядом с которым она появляется
+  // set(v, max, html, ticks) — ticks: [{ at, label }] — отметки уровней на полосе
+  function progress(anchor, { cls = '', where = 'afterend' } = {}) {
+    const el = document.createElement('div'); el.className = 'pbar ' + cls; el.style.display = 'none';
+    el.innerHTML = '<div class="pbfill"></div><div class="pbmarks"></div><span class="pbtext"></span>';
+    anchor.insertAdjacentElement(where, el);
+    const [fill, marks, text] = el.children;
+    let last = -1;
+    return {
+      el,
+      set(v, max, html, ticks = []) {
+        el.style.display = '';
+        const k = max > 0 ? Math.max(0, Math.min(1, v / max)) : 0;
+        fill.style.width = (k * 100).toFixed(2) + '%'; el.classList.toggle('full', k >= 1);
+        text.innerHTML = `<span>${html}</span>`;
+        marks.innerHTML = ticks.map(t => `<i class="${v >= t.at ? 'on' : ''}" style="left:${t.at / max * 100}%"><b>${t.label}</b></i>`).join('');
+        if (last >= 0 && v > last) { el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); }
+        last = v;
+      },
+      hide() { el.style.display = 'none'; last = -1; },
+    };
+  }
+  // Прогресс фриспинов по счётчику «осталось»: сам считает сыгранные и докупленные вращения.
+  // sync(left, active) — active=false (бонус закончился) прячет полосу и сбрасывает счёт
+  function fsProgress(anchor, opts) {
+    const bar = progress(anchor, { cls: 'pbfs', ...opts }); let done = 0, total = 0, prev = 0;
+    const draw = () => bar.set(done, total, `Фриспин <b>${Math.min(done, total)}</b> из <b>${total}</b>`, []);
+    return {
+      el: bar.el,
+      sync(left, active = true) {
+        if (!active) { done = total = prev = 0; bar.hide(); return; }
+        if (left > prev) total += left - prev; else done += prev - left;
+        prev = left; if (total) draw();
+      },
+      show(n, totalNow) { done = n; total = totalNow; prev = totalNow - n; draw(); },
+      hide() { done = total = prev = 0; bar.hide(); },
+    };
+  }
+  return { create, payTable, COLORS, auto, toast, progress, fsProgress };
 })();

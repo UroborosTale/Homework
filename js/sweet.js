@@ -111,6 +111,7 @@ const SweetEngine = (() => {
       if (x.s === 'orb') el.textContent = '×' + x.v; else el.innerHTML = Art.html('sweet', x.s) || OL.SYMS[x.s].e;
     }));
   }
+  const fsBar = SlotUI.fsProgress($('swFs').parentElement);
   async function exitGrid() {                        // старые символы уходят вниз перед новым спином
     if (Anim.reduce()) return;
     oCells.forEach((col, c) => col.forEach((el, r) => { el.style.setProperty('--d', (c * 0.03 + (OL.ROWS - r) * 0.015) + 's'); el.classList.add('exit'); }));
@@ -167,7 +168,7 @@ const SweetEngine = (() => {
     const cost = buy ? OL.BUY_COST * bet : oCost();
     if (cost > Casino.balance) { oAuto = false; ap.cancel(); setOControls(false); return msg($('swMsg'), 'Недостаточно средств', 'lose'); }
     oBusy = true; setOControls(true); setBalance(Casino.balance - cost);
-    $('swFs').style.display = 'none';
+    $('swFs').style.display = 'none'; fsBar.hide();
     let r = await oSpinOnce(bet, buy ? { forceScatters: 4 } : { ante });
     let total = r.total;
     if (r.fs) {
@@ -175,10 +176,10 @@ const SweetEngine = (() => {
       $('swFs').style.display = 'block';
       while (left > 0) {
         await Casino.whenActive('sweet');                     // ушли со слота — фриспины ждут возвращения
-        left--; n++; $('swFs').textContent = `⚡ Фриспины: осталось ${left} · выиграно ${fmt(total)} ₽`;
+        left--; n++; $('swFs').textContent = `⚡ Фриспины: осталось ${left} · выиграно ${fmt(total)} ₽`; fsBar.show(n, n + left);
         r = await oSpinOnce(bet, { free: true, carry }); carry = r.newCarry; total += r.total;
         if (r.fs) { left += r.fs; msg($('swMsg'), `+${r.fs} фриспинов!`, 'win'); await od(1200); }
-        $('swFs').textContent = `⚡ Фриспины: осталось ${left} · выиграно ${fmt(total)} ₽`; await od(600);
+        $('swFs').textContent = `⚡ Фриспины: осталось ${left} · выиграно ${fmt(total)} ₽`; fsBar.show(n, n + left); await od(600);
       }
       msg($('swMsg'), `Бонус окончен: ${n} вращений, итого ${fmt(total)} ₽ (×${fmt(total / bet)})`, total ? 'win' : 'lose');
     }
