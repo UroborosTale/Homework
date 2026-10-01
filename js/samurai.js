@@ -129,10 +129,11 @@ const SamuraiEngine = (() => {
     msg($('smMsg'), r.total ? `Выигрыш: ${fmt(r.total)} ₽${r.total >= SE.MAX_WIN * bet ? ' (максимум!)' : ''}` : 'Без выигрыша', r.total ? 'win' : 'lose');
     return r;
   }
+  const fsBar = SlotUI.fsProgress($('smFs'));
   async function round(buy) {
     if (busy) return; const bet = +$('smBet').value, cost = buy ? SE.BUY_COST * bet : bet;
     if (cost > Casino.balance) { auto = false; ap.cancel(); setOff(false); return msg($('smMsg'), 'Недостаточно средств', 'lose'); }
-    busy = true; setOff(true); setBalance(Casino.balance - cost); $('smFs').style.display = 'none'; $('samurai').classList.remove('sm-fs');
+    busy = true; setOff(true); setBalance(Casino.balance - cost); $('smFs').style.display = 'none'; fsBar.hide(); $('samurai').classList.remove('sm-fs');
     let r = await spinOnce(bet, { forceScatters: buy ? 4 : 0 }), total = r.total;
     if (r.fs) {
       let left = r.fs, n = 0, m = 1; $('samurai').classList.add('sm-fs'); multBadge(1);
@@ -140,10 +141,10 @@ const SamuraiEngine = (() => {
       $('smFs').style.display = 'flex';
       while (left > 0) {
         await Casino.whenActive('samurai');                     // ушли со слота — фриспины ждут возвращения
-        left--; n++; $('smFsLeft').textContent = left; Anim.countTo($('smFsWon'), fmt(total), 400);
+        left--; n++; $('smFsLeft').textContent = left; fsBar.show(n, n + left); Anim.countTo($('smFsWon'), fmt(total), 400);
         r = await spinOnce(bet, { free: true, mult: m }); m = r.mult; multBadge(m); total += r.total;
         if (r.fs) { left += r.fs; msg($('smMsg'), `+${r.fs} фриспинов!`, 'win'); await d(1200); }
-        $('smFsLeft').textContent = left; Anim.countTo($('smFsWon'), fmt(total), 400); await d(450);
+        $('smFsLeft').textContent = left; fsBar.show(n, n + left); Anim.countTo($('smFsWon'), fmt(total), 400); await d(450);
       }
       msg($('smMsg'), `Бонус окончен: ${n} вращений, множитель дошёл до ×${m}, итого ${fmt(total)} ₽ (×${fmt(total / bet)})`, total ? 'win' : 'lose');
       $('samurai').classList.remove('sm-fs');

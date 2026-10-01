@@ -100,6 +100,9 @@ const HoldWinEngine = (() => {
   const unlock = () => { $('hwSpin').disabled = false; $('hwLines').disabled = $('hwBet').disabled = false; };
 
   // ---- Бонус Hold & Win
+  const coinBar = SlotUI.progress($('hwRespins'), { cls: 'pbcoin' });
+  const coinProgress = board => { const n = board.flat().filter(Boolean).length, all = board.flat().length;
+    coinBar.set(n, all, n >= all ? '🏆 Поле заполнено — GRAND!' : `🪙 Монет: <b>${n}</b> из ${all} — заполните всё поле для GRAND`); };
   async function bonus(grid) {
     const h = HE.holdAndWin(grid), sec = $('holdwin'), cells = ui.cells;
     sec.classList.add('hw-bonus'); $('hwRespins').style.display = 'flex';
@@ -107,7 +110,7 @@ const HoldWinEngine = (() => {
     // только монеты остаются, остальные клетки пустеют
     grid.forEach((col, r) => col.forEach((c, w) => { const el = cells[r][w]; if (c.s === 'C') el.classList.add('locked'); else { el.className = 'sc empty'; el.innerHTML = ''; } }));
     const setLeft = n => { const el = $('hwLeft'); el.textContent = n; el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); };
-    setLeft(3); await sleep(1400);
+    setLeft(3); coinProgress(grid.map(col => col.map(c => c.s === 'C' ? c : null))); await sleep(1400);
     for (const st of h.steps) {
       const empties = cells.flat().filter(el => el.classList.contains('empty'));
       empties.forEach(el => el.classList.add('respin')); await sleep(750);
@@ -116,7 +119,7 @@ const HoldWinEngine = (() => {
         const el = cells[r][w]; fill(el, st.board[r][w]); el.classList.add('locked', 'land');
         setTimeout(() => el.classList.remove('land'), 700);
       }
-      setLeft(st.left); await sleep(st.added.length ? 900 : 550);
+      setLeft(st.left); coinProgress(st.board); await sleep(st.added.length ? 900 : 550);
     }
     if (h.full) { msg($('hwMsg'), '🏆 ВСЁ ПОЛЕ ЗАПОЛНЕНО — GRAND!', 'win'); $('hwJGRAND').parentElement.classList.add('won'); await sleep(1400); }
     // сбор монет: по одной подсвечиваем и прибавляем к сумме
@@ -128,7 +131,7 @@ const HoldWinEngine = (() => {
     }
     if (h.full) { acc += HE.JP.GRAND * totalBet; Anim.countTo($('hwCollectSum'), fmt(acc), 800); await sleep(900); }
     await sleep(700);
-    sec.classList.remove('hw-bonus'); $('hwRespins').style.display = 'none'; $('hwCollect').style.display = 'none'; $('hwJGRAND').parentElement.classList.remove('won');
+    sec.classList.remove('hw-bonus'); $('hwRespins').style.display = 'none'; coinBar.hide(); $('hwCollect').style.display = 'none'; $('hwJGRAND').parentElement.classList.remove('won');
     cells.flat().forEach(el => el.classList.remove('locked', 'collect'));
     return acc;
   }

@@ -87,8 +87,9 @@ const LegacyEngine = (() => {
   let busy = false, auto = false, freeLeft = 0, fsSum = 0, expands = [];
   const lock = () => { $('lgSpin').disabled = true; $('lgLines').disabled = $('lgBet').disabled = true; };
   const unlock = () => { $('lgSpin').disabled = false; $('lgLines').disabled = $('lgBet').disabled = false; };
+  const fsBar = SlotUI.fsProgress($('lgFs'));
   function banner() {
-    const b = $('lgFs'); b.style.display = freeLeft > 0 || fsSum ? 'flex' : 'none';
+    const b = $('lgFs'); b.style.display = freeLeft > 0 || fsSum ? 'flex' : 'none'; fsBar.sync(freeLeft, b.style.display === 'flex');
     b.innerHTML = `<span>📖 Фриспины: <b>${freeLeft}</b></span><span class="lgexp">Расширяются: ${expands.map(k => `<i>${icon(k)}</i>`).join('')}</span><span>Выиграно: <b>${fmt(fsSum)}</b> ₽</span>`;
   }
   // выбор нового расширяющегося символа — «вращение» книги

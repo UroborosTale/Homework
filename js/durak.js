@@ -88,6 +88,7 @@
   function onHostData(id, m) {
     if (!m || typeof m !== 'object') return;
     if (m.t === 'hello') {
+      if (m.game) return net.send(id, { t: 'err', msg: 'Это комната дурака', fatal: true });
       if (seats.some(s => s.id === id)) return;                // повторное приветствие
       if (st && st.phase === 'play') return net.send(id, { t: 'err', msg: 'Партия уже идёт — подождите следующей' });
       if (seats.length >= cfg.seats) { const b = seats.findIndex(s => s.kind === 'bot'); if (b < 0) return net.send(id, { t: 'err', msg: 'Мест нет' }); seats.splice(b, 1); }
@@ -106,6 +107,7 @@
   // ---------------- клиент: сеть ----------------
   function onClientData(m) {
     if (!m || typeof m !== 'object') return;
+    if (m.game) { SlotUI.toast('Это комната другой игры'); reset(); return note('Этот код — комната другой игры', 'lose'); }
     if (m.t === 'lobby') { cfg = m.cfg; seats = m.seats; me = m.you; if (!V || V.phase !== 'play') showRoom(); }
     else if (m.t === 'view') { cfg = m.cfg; seats = m.seats; gameId = m.gameId; applyView(m.v); }
     else if (m.t === 'err') SlotUI.toast(m.msg);
@@ -282,5 +284,5 @@
   // ---------------- вход по ссылке ?room=CODE ----------------
   const m = /[?&]room=([A-Z0-9]{5})\b/.exec(location.search);
   screen('dkLobby');
-  if (m) { $('dkCode').value = m[1]; setTimeout(() => { Casino.openTab('durak'); joinRoom(m[1]); }, 300); }
+  if (m && (!location.hash || location.hash === '#durak')) { $('dkCode').value = m[1]; setTimeout(() => { Casino.openTab('durak'); joinRoom(m[1]); }, 300); }
 })();

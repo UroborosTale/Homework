@@ -109,6 +109,7 @@ const Olympus = (() => {
       if (x.s === 'orb') el.textContent = '×' + x.v; else el.innerHTML = Art.html('olympus', x.s) || OL.SYMS[x.s].e;
     }));
   }
+  const fsBar = SlotUI.fsProgress($('olyFs').parentElement);
   async function exitGrid() {                        // старые символы уходят вниз перед новым спином
     if (Anim.reduce()) return;
     oCells.forEach((col, c) => col.forEach((el, r) => { el.style.setProperty('--d', (c * 0.03 + (OL.ROWS - r) * 0.015) + 's'); el.classList.add('exit'); }));
@@ -165,7 +166,7 @@ const Olympus = (() => {
     const cost = buy ? OL.BUY_COST * bet : oCost();
     if (cost > Casino.balance) { oAuto = false; ap.cancel(); setOControls(false); return msg($('olyMsg'), 'Недостаточно средств', 'lose'); }
     oBusy = true; setOControls(true); setBalance(Casino.balance - cost);
-    $('olyFs').style.display = 'none';
+    $('olyFs').style.display = 'none'; fsBar.hide();
     let r = await oSpinOnce(bet, buy ? { forceScatters: 4 } : { ante });
     let total = r.total;
     if (r.fs) {
@@ -173,10 +174,10 @@ const Olympus = (() => {
       $('olyFs').style.display = 'block';
       while (left > 0) {
         await Casino.whenActive('olympus');                     // ушли со слота — фриспины ждут возвращения
-        left--; n++; $('olyFs').textContent = `⚡ Фриспины: осталось ${left} · выиграно ${fmt(total)} ₽`;
+        left--; n++; $('olyFs').textContent = `⚡ Фриспины: осталось ${left} · выиграно ${fmt(total)} ₽`; fsBar.show(n, n + left);
         r = await oSpinOnce(bet, { free: true, carry }); carry = r.newCarry; total += r.total;
         if (r.fs) { left += r.fs; msg($('olyMsg'), `+${r.fs} фриспинов!`, 'win'); await od(1200); }
-        $('olyFs').textContent = `⚡ Фриспины: осталось ${left} · выиграно ${fmt(total)} ₽`; await od(600);
+        $('olyFs').textContent = `⚡ Фриспины: осталось ${left} · выиграно ${fmt(total)} ₽`; fsBar.show(n, n + left); await od(600);
       }
       msg($('olyMsg'), `Бонус окончен: ${n} вращений, итого ${fmt(total)} ₽ (×${fmt(total / bet)})`, total ? 'win' : 'lose');
     }
