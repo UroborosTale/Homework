@@ -482,6 +482,66 @@
   <div class="paytable">Туз — самая младшая карта, король — старшая. Угадайте, будет ли следующая карта выше (или равна) либо ниже (или равна). Множитель зависит от шанса (RTP 97%) и перемножается с каждым верным ответом. Забрать можно в любой момент; ошибка сжигает ставку. Можно 3 раза пропустить карту.</div>
 </section>
 
+<!-- ДУРАК -->
+<section id="durak" data-logo="ДУРАК ОНЛАЙН">
+  <div id="dkLobby" class="dkpanel">
+    <div class="dkform">
+      <label>Ваше имя <input id="dkName" maxlength="14"></label>
+      <label>Игра <select id="dkMode"><option value="podkidnoy">Подкидной</option><option value="perevodnoy">Переводной</option></select></label>
+      <label>Игроков <select id="dkSeats"><option>2</option><option>3</option><option selected>4</option><option>5</option><option>6</option></select></label>
+      <label>Ставка, ₽ <input type="number" id="dkStake" value="1000" min="0" step="100"></label>
+    </div>
+    <div class="dkbtns">
+      <button class="btn primary" id="dkSolo">🤖 Играть с ботами</button>
+      <button class="btn primary" id="dkCreate">🌐 Создать онлайн-комнату</button>
+    </div>
+    <div class="dkjoin"><input id="dkCode" maxlength="5" placeholder="КОД"><button class="btn" id="dkJoin">Войти в комнату</button></div>
+    <div class="msg" id="dkNote"></div>
+    <p class="dkhelp">Создайте комнату и отправьте друзьям код или ссылку — свободные места можно занять ботами. Все ставят одинаковую сумму; дурак теряет ставку, остальные делят банк. Колода 36 карт.</p>
+  </div>
+
+  <div id="dkRoom" class="dkpanel" style="display:none">
+    <div class="dkcode">Код комнаты: <b id="dkRoomCode">—</b> <button class="btn" id="dkCopy">📋 Скопировать ссылку</button></div>
+    <div class="dknet" id="dkNetKind"></div>
+    <ul class="dkseats" id="dkRoomList"></ul>
+    <div class="dkinfo" id="dkRoomInfo"></div>
+    <div class="dkbtns">
+      <button class="btn" id="dkAddBot">+ Добавить бота</button>
+      <button class="btn primary" id="dkStart">▶ Начать игру</button>
+      <button class="btn" id="dkLeave">Выйти</button>
+    </div>
+  </div>
+
+  <div id="dkGame" style="display:none">
+    <div class="dkmode" id="dkMode2"></div>
+    <div class="dktable">
+      <div class="dkopps" id="dkOpps"></div>
+      <div class="dkmid">
+        <div class="dkdeckbox"><div class="dkdeck" id="dkDeck"></div><div class="dkdeckn"><span class="dktb" id="dkTrumpBadge"></span> <span id="dkDeckN"></span></div></div>
+        <div class="dkplay" id="dkTable"></div>
+      </div>
+      <div class="dklast" id="dkLast"></div>
+      <div class="dkover" id="dkOver" style="display:none">
+        <div class="dkoverbox"><h3 id="dkResult"></h3><ol id="dkOrder"></ol>
+          <div class="dkbtns"><button class="btn primary" id="dkAgain">Ещё партию</button><span id="dkWait" class="dkinfo">Ждём, когда хозяин начнёт новую партию…</span><button class="btn" id="dkToLobby">В лобби</button></div></div>
+      </div>
+    </div>
+    <div class="msg" id="dkMsg"></div>
+    <div class="dkhand" id="dkHand"></div>
+    <div class="controls">
+      <button class="btn primary" id="dkPass">Бито</button>
+      <button class="btn" id="dkTake">Беру</button>
+      <button class="btn" id="dkTransfer">↪ Перевести</button>
+    </div>
+  </div>
+  <details class="paytable"><summary>Правила</summary>
+    <p>36 карт (от шестёрки до туза). Козырь — открытая карта под колодой. Первым ходит игрок с младшим козырем. Защитник бьёт каждую карту старшей той же масти или козырем; если не может или не хочет — берёт все карты со стола.<br>
+       Подкидывать могут все, кроме защитника, — карты того же достоинства, что уже на столе; всего не больше 6 и не больше, чем карт у защитника. Когда все карты побиты и никто не подкидывает — «бито». После хода все добирают до 6 карт: сначала ходивший, защитник последним.<br>
+       <b>Переводной:</b> пока ни одна карта не побита, защитник может положить карту того же достоинства и перевести атаку на следующего игрока (если у того хватает карт).<br>
+       Проигрывает тот, у кого остались карты, когда колода кончилась и остальные вышли.</p>
+  </details>
+</section>
+
 <!-- РУЛЕТКА -->
 <section id="roulette">
   <div class="roulette-top">
@@ -572,6 +632,9 @@
 <script src="js/scratch.js"></script>
 <script src="js/dice.js"></script>
 <script src="js/hilo.js"></script>
+<script src="js/durak-engine.js"></script>
+<script src="js/durak-net.js"></script>
+<script src="js/durak.js"></script>
 <script src="js/slotextras.js"></script>
 <script src="js/catalog.js"></script>
 </body>

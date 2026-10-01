@@ -653,3 +653,63 @@
     background: #1f3326; border: 1px solid var(--gold); color: #fff; font-weight: 700; box-shadow: 0 10px 30px #000a; transition: transform .35s cubic-bezier(.3, 1.4, .5, 1); pointer-events: none; }
   #toast.show { animation: toast 3.2s ease forwards; }
   @keyframes toast { 0% { transform: translateX(-50%) translateY(120px); } 10%, 85% { transform: translateX(-50%) translateY(0); } 100% { transform: translateX(-50%) translateY(120px); } }
+
+  /* ===== Дурак ===== */
+  #durak { background: radial-gradient(ellipse at top, #22324a, #0b121c); border-color: #4a6fa5; }
+  #durak::before { background-image: linear-gradient(#ffffff, #bbdefb 50%, #1565c0); filter: drop-shadow(0 2px 4px #000); -webkit-text-stroke: 1.5px #0a2a5a; }
+  .dkpanel { max-width: 620px; margin: 0 auto; padding: 18px; border-radius: 16px; background: #0007; border: 1px solid #4a6fa5; }
+  .dkform { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .dkform label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); }
+  .dkform input, .dkform select, .dkjoin input { padding: 9px; border-radius: 8px; border: 1px solid #2c4a6a; background: #0b1510; color: #fff; font-size: 16px; }
+  .dkbtns { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 14px; align-items: center; }
+  .dkjoin { display: flex; gap: 8px; justify-content: center; margin-top: 12px; }
+  .dkjoin input { width: 110px; text-align: center; text-transform: uppercase; letter-spacing: 4px; font-weight: 800; }
+  .dkhelp, .dkinfo { color: var(--muted); font-size: 13px; text-align: center; }
+  .dkcode { text-align: center; font-size: 18px; } .dkcode b { font: 900 32px monospace; letter-spacing: 6px; color: #ffd54f; margin: 0 8px; }
+  .dknet { text-align: center; color: #ffb74d; font-size: 13px; margin-top: 6px; }
+  .dkseats { list-style: none; padding: 0; margin: 14px 0; display: grid; gap: 6px; }
+  .dkseats li { padding: 8px 12px; border-radius: 10px; background: #ffffff10; display: flex; align-items: center; gap: 8px; }
+  .dkseats li.empty { color: var(--muted); border: 1px dashed #ffffff33; background: none; }
+  .dkseats .dkkick { margin-left: auto; padding: 2px 8px; }
+  .dkmode { text-align: center; color: var(--muted); font-size: 13px; margin-bottom: 6px; }
+  .dktable { position: relative; border-radius: 20px; padding: 14px; min-height: 330px; background: radial-gradient(ellipse at 50% 40%, #1f8a4c, #0c5c30 60%, #063a1e);
+    border: 10px solid #6d3b12; box-shadow: inset 0 0 0 2px #e8c35a88, inset 0 0 40px #0009, 0 10px 26px #000a; }
+  .dkopps { display: flex; justify-content: space-around; gap: 8px; flex-wrap: wrap; }
+  .dkopp { text-align: center; padding: 6px 10px; border-radius: 12px; min-width: 110px; transition: background .3s, box-shadow .3s; }
+  .dkopp.att { background: #ffd54f22; box-shadow: 0 0 0 2px #ffd54f88; } .dkopp.def { background: #ff525222; box-shadow: 0 0 0 2px #ff525288; } .dkopp.out { opacity: .45; }
+  .dkfan { position: relative; height: 54px; width: 110px; margin: 0 auto; }
+  .dkfan i { position: absolute; left: 50%; top: 4px; width: 32px; height: 46px; margin-left: -16px; border-radius: 4px; border: 2px solid #fff;
+    background: linear-gradient(135deg, #1a237e, #283593); transform: translateX(calc(var(--k) * 7px)) rotate(calc(var(--k) * 5deg)); transform-origin: 50% 120%; box-shadow: 0 1px 3px #0008; }
+  .dkname { font-weight: 800; font-size: 14px; } .dkcnt { font-size: 12px; color: #cfe8d8; } .dkcnt b { color: #ffd54f; }
+  .dkmid { display: flex; align-items: center; gap: 16px; margin: 16px 0 8px; }
+  .dkdeckbox { width: 120px; flex: 0 0 auto; text-align: center; }
+  .dkdeck { position: relative; height: 110px; }
+  .dkdeck .card { position: absolute; left: 22px; top: 8px; width: 64px; height: 92px; font-size: 15px; animation: none; }
+  .dkdeck .dktrump { transform: rotate(90deg) translateY(-14px); transform-origin: 50% 50%; }
+  .dkdeck .dkpile { left: 8px; top: 4px; box-shadow: 2px 2px 0 #fff, 4px 4px 0 #1a237e, 6px 6px 8px #0008; }
+  .dkdeckn { font-size: 12px; color: #cfe8d8; margin-top: 4px; }
+  .dktb { display: inline-block; font-size: 18px; color: #111; background: #fff; border-radius: 6px; padding: 0 5px; } .dktb.red { color: #c62828; }
+  .dkplay { flex: 1; display: flex; flex-wrap: wrap; gap: 14px; min-height: 120px; align-items: center; justify-content: center; }
+  .dkpair { position: relative; width: 76px; height: 108px; }
+  .dkpair .card { position: absolute; left: 0; top: 0; }
+  .dkpair .dkdef { left: 14px; top: 18px; transform: rotate(12deg); animation: defin .35s cubic-bezier(.3, 1.4, .5, 1); }
+  @keyframes defin { from { transform: translate(-30px, 60px) rotate(-20deg); opacity: 0; } }
+  .dkpair.target { cursor: pointer; } .dkpair.target .card:first-child { box-shadow: 0 0 0 3px #ffd54f, 0 0 18px #ffd54f; }
+  .dkempty { color: #cfe8d8aa; font-size: 15px; }
+  .dklast { text-align: center; color: #e8f5e9; font-size: 14px; min-height: 20px; text-shadow: 0 1px 2px #000; }
+  .dkhand { display: flex; justify-content: center; padding: 14px 10px 6px; min-height: 130px; perspective: 800px; }
+  .dkhand .card { margin: 0 -14px; transform: rotate(calc(var(--k) * 2.5deg)) translateY(calc(var(--k) * var(--k) * .8px)); transform-origin: 50% 160%; transition: transform .2s, box-shadow .2s, filter .2s; cursor: pointer; filter: brightness(.82); }
+  .dkhand .card.play { filter: none; }
+  .dkhand .card.play:hover { transform: rotate(calc(var(--k) * 2.5deg)) translateY(-22px); z-index: 5; box-shadow: 0 10px 18px #000a, 0 0 0 2px #ffd54f; }
+  .dkhand .card.sel { transform: rotate(0) translateY(-30px) !important; z-index: 6; box-shadow: 0 0 0 3px #ffd54f, 0 0 22px #ffd54f; }
+  .dkover { position: absolute; inset: 0; align-items: center; justify-content: center; background: #000a; border-radius: 10px; z-index: 5; }
+  .dkoverbox { text-align: center; padding: 20px 26px; border-radius: 16px; background: linear-gradient(#1f3326, #122019); border: 2px solid var(--gold); animation: fxpop .4s cubic-bezier(.3, 1.5, .5, 1); }
+  .dkoverbox h3.win { color: #69f0ae; } .dkoverbox h3.lose { color: #ff8a80; }
+  .dkoverbox ol { list-style: none; padding: 0; text-align: left; display: inline-block; } .dkoverbox li.lose { color: #ff8a80; font-weight: 800; }
+  @media (max-width: 560px) { .dkform { grid-template-columns: 1fr; } .dkhand .card { margin: 0 -20px; } .dkmid { flex-direction: column; } }
+  /* Дурак: анимируем только новые карты (стол и рука перерисовываются при каждом ходе) */
+  #durak .card:not(.dealt) { animation: none; }
+  #durak .dkpair .dkdef { animation: none; }
+  #durak .dkpair .dkdef.newdef { animation: defin .35s cubic-bezier(.3, 1.4, .5, 1); }
+  #durak .dkpair .card.dealt { animation: tablein .35s cubic-bezier(.3, 1.3, .5, 1); }
+  @keyframes tablein { from { transform: translateY(-40px) scale(.85); opacity: 0; } }
