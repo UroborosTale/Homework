@@ -151,7 +151,7 @@ const EgyptEngine = (() => {
     cycleWins(r.wins);
     if (free && freeLeft === 0) { await sleep(1200); msg($('egMsg'), `Бонус окончен! Итого во фриспинах: ${fmt(fsSum)} ₽`, 'win'); fsSum = 0; banner(); }
     busy = false; if (!auto) unlock();
-    if (freeLeft > 0) { await sleep(started ? 2200 : 1300); doSpin(); }
+    if (freeLeft > 0) { await sleep(started ? 2200 : 1300); await Casino.whenActive('egypt'); doSpin(); }
     else if (auto && ap.after(r.total, tot)) { await sleep(r.total ? 1500 : 450); if (auto) doSpin(); }
   }
   $('egSpin').onclick = () => { auto = false; ap.cancel(); doSpin(); };

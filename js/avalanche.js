@@ -138,7 +138,7 @@ const AvalancheEngine = (() => {
     if (free && freeLeft === 0) { msg($('gzMsg'), `Free Falls окончены: ${fmt(fsSum)} ₽`, 'win'); Anim.winFx(fsSum, tot); fsSum = 0; await sleep(1200); banner(); }
     else if (!free && r.total && !r.fs) Anim.winFx(r.total, tot);
     busy = false;
-    if (freeLeft > 0) { await sleep(700); doSpin(); return; }
+    if (freeLeft > 0) { await sleep(700); await Casino.whenActive('avalanche'); doSpin(); return; }
     multBar(false, 0);
     if (!auto) unlock();
     if (auto && ap.after(r.total, tot)) { await sleep(r.total ? 1100 : 350); if (auto) doSpin(); }

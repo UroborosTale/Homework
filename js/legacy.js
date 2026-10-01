@@ -139,7 +139,7 @@ const LegacyEngine = (() => {
       Anim.winFx(fsSum, tot); fsSum = 0; expands = []; banner();
     } else if (!free && r.total && !r.book.fs) Anim.winFx(r.total, tot);
     busy = false;
-    if (freeLeft > 0) { await sleep(1100); doSpin(); return; }
+    if (freeLeft > 0) { await sleep(1100); await Casino.whenActive('legacy'); doSpin(); return; }
     if (!auto) unlock();
     if (auto && ap.after(r.total, tot)) { await sleep(r.total ? 1500 : 450); if (auto) doSpin(); }
   }

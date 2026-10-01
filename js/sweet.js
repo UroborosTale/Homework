@@ -174,6 +174,7 @@ const SweetEngine = (() => {
       let left = r.fs, carry = 0, n = 0; msg($('swMsg'), `⚡ ${left} бесплатных вращений!`, 'win'); await od(1600);
       $('swFs').style.display = 'block';
       while (left > 0) {
+        await Casino.whenActive('sweet');                     // ушли со слота — фриспины ждут возвращения
         left--; n++; $('swFs').textContent = `⚡ Фриспины: осталось ${left} · выиграно ${fmt(total)} ₽`;
         r = await oSpinOnce(bet, { free: true, carry }); carry = r.newCarry; total += r.total;
         if (r.fs) { left += r.fs; msg($('swMsg'), `+${r.fs} фриспинов!`, 'win'); await od(1200); }

@@ -273,6 +273,11 @@
     net = null; role = 'none'; st = null; V = null; seats = []; code = ''; prevHand = new Set(); prevTable = 0; prevDef = new Set(); screen('dkLobby');
   }
 
+  // ушли со вкладки дурака — выходим из комнаты (хозяин закрывает её, гостю место занимает бот)
+  document.addEventListener('casino:tab', e => {
+    if (e.detail !== 'durak' && role !== 'none') { leave(); SlotUI.toast('Вы вышли из комнаты дурака'); }
+  });
+
   // ---------------- вход по ссылке ?room=CODE ----------------
   const m = /[?&]room=([A-Z0-9]{5})\b/.exec(location.search);
   screen('dkLobby');
