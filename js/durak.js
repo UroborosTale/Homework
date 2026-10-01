@@ -185,6 +185,7 @@
     if (!v.table.length) tbl.innerHTML = `<div class="dkempty">${v.phase === 'over' ? '' : v.attacker === me ? 'Ваш ход — выберите карту' : `Ходит ${v.names[v.attacker]}`}</div>`;
     // моя рука
     const hand = sortHand(v.hands[me] || []), now = new Set(hand.map(key));
+    $('dkHand').style.setProperty('--n', hand.length);
     $('dkHand').replaceChildren(...hand.map((c, k) => {
       const el = cardEl(c); el.dataset.k = key(c); el.style.setProperty('--k', k - hand.length / 2);
       if (!first && !prevHand.has(key(c))) el.classList.add('dealt');
