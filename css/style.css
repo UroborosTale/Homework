@@ -713,3 +713,96 @@
   #durak .dkpair .dkdef.newdef { animation: defin .35s cubic-bezier(.3, 1.4, .5, 1); }
   #durak .dkpair .card.dealt { animation: tablein .35s cubic-bezier(.3, 1.3, .5, 1); }
   @keyframes tablein { from { transform: translateY(-40px) scale(.85); opacity: 0; } }
+
+  /* ---------- Телефоны ---------- */
+  button, .cell, .gcard, .mcell, .chip { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+  .balance small.virt { font-size: inherit; }
+  .paytable { overflow-x: auto; }
+  @media (hover: none) {                                   /* на тач-экранах hover «залипает» после тапа */
+    .cell:hover, #roulette .cell:hover, #sicbo .sbgrid .cell:hover { transform: none; filter: none; }
+    .gcard:hover { transform: none; box-shadow: none; outline: none; }
+  }
+  @media (max-width: 600px) {
+    header { position: sticky; top: 0; z-index: 60; padding: 8px 12px; gap: 6px; flex-wrap: nowrap; backdrop-filter: blur(8px); background: rgba(8, 18, 12, .88); }
+    h1 { font-size: 17px; white-space: nowrap; }
+    .balance { font-size: 15px; white-space: nowrap; display: flex; align-items: center; gap: 6px; }
+    .balance small.virt { display: none; }
+    nav { padding: 8px 8px; gap: 8px; align-items: center; flex-wrap: nowrap; }
+    nav button { padding: 8px 12px; font-size: 14px; white-space: nowrap; flex: none; }
+    #curGame { font-size: 16px !important; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    main { padding: 0 8px 20px; }
+    section { padding: 12px 10px; border-radius: 12px; }
+    section[data-logo]::before { font-size: 24px; letter-spacing: 2px; }
+    .btn { padding: 10px 14px; font-size: 15px; min-height: 42px; }
+    .controls { gap: 8px; }
+    .controls label { font-size: 15px; }
+    input, select { font-size: 16px; }                      /* иначе iOS приближает страницу при фокусе */
+    .msg { font-size: 16px; margin: 8px 0; }
+    footer { padding: 14px 12px; font-size: 12px; }
+    .chip { width: 44px; height: 44px; font-size: 12px; }
+    #reset { min-height: 0; padding: 4px 8px !important; font-size: 12px !important; }
+    .blabel { display: none; }
+    .balance::before { content: '💰'; }
+    #olympus .olywrap::before, #olympus .olywrap::after { display: none; }
+
+    /* дурак: карты в руке сжимаются, чтобы влезть в ширину экрана */
+    .dkhand { padding: 12px 4px 4px; min-height: 112px; }
+    .dkhand .card { width: 62px; height: 88px; font-size: 16px; padding: 4px; flex: none;
+      margin: 0 min(-12px, calc(((100vw - 64px - 62px) / max(var(--n, 6) - 1, 1) - 62px) / 2)); }
+    .dkhand .card .c { font-size: 26px; }
+    .dkhand .card { transform: rotate(calc(var(--k) * 30deg / max(var(--n, 6), 6))) translateY(calc(var(--k) * var(--k) * 30px / max(var(--n, 6) * var(--n, 6), 36))); }
+
+    /* каталог: две колонки */
+    .cgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .gcard { padding: 12px; min-height: 160px; gap: 4px; }
+    .gcard .gicon { font-size: 34px; }
+    .gcard .gicon svg.sym { width: 42px; height: 42px; }
+    .gcard .gtitle { font-size: 15px; }
+    .gcard .gdesc { font-size: 12px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    .gcard .gtags i { font-size: 10px; padding: 2px 6px; }
+    .cgrid.recent .gcard { min-height: 120px; }
+    .catchips { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin: 0 -10px; padding: 0 10px 2px; }
+    .catchips::-webkit-scrollbar { display: none; }
+    .catchips > * { flex: none; }
+
+    /* таблицы выплат */
+    .paytable td, .paytable th { padding: 3px 6px; font-size: 13px; }
+    table svg.sym { width: 24px; height: 24px; }
+
+    /* рулетка */
+    #roulette .wheel-wrap { width: 250px; height: 250px; }
+    .result-ball { width: 64px; height: 64px; font-size: 28px; }
+    .roulette-top { gap: 12px; }
+    .board, #roulette .board { grid-template-columns: 26px repeat(12, minmax(0, 1fr)); gap: 2px; padding: 3px; border-width: 2px; }
+    .cell { font-size: 12px; padding: 8px 0; }
+    .cell .stake { font-size: 9px; padding: 0 3px; }
+    .outside .cell { font-size: 12px; padding: 8px 2px; }
+    .outside.six .cell { font-size: 11px; }
+
+    /* Sic Bo */
+    .dice { gap: 10px; }
+    .pdie.big { width: 64px; height: 64px; padding: 8px; }
+    .sb6 { grid-template-columns: repeat(3, 1fr); }
+    .sb7 .cell { font-size: 13px; padding: 6px 0; }
+    .sbgrid .cell small { font-size: 10px; }
+
+    /* блэкджек и баккара */
+    #blackjack .table, #baccarat .table { padding: 14px 10px 34px; border-width: 6px; border-radius: 0 0 90px 90px / 0 0 46px 46px; }
+    #blackjack .table::after, #baccarat .table::after { font-size: 8px; letter-spacing: 1px; bottom: 10px; padding: 0 24px; }
+    #blackjack .table::before, #baccarat .table::before { width: 48px; height: 36px; right: 10px; top: 10px; }
+    #blackjack .card, #baccarat .card { width: 58px; height: 82px; font-size: 16px; padding: 4px; }
+    #blackjack .card .c, #baccarat .card .c { font-size: 26px; }
+    #blackjack .hand, #baccarat .hand { gap: 5px; min-height: 86px; }
+    .bjspot { width: 64px; height: 64px; right: 18px; bottom: 40px; }
+
+    /* окна и уведомления */
+    .modal { padding: 10px; }
+    .mbox { padding: 14px; border-radius: 14px; max-height: calc(100vh - 20px); overflow-y: auto; }
+    #toast { width: max-content; max-width: calc(100vw - 24px); bottom: 14px; text-align: center; }
+  }
+  @media (max-width: 360px) {
+    h1 { font-size: 15px; } .balance { font-size: 14px; }
+    .board, #roulette .board { grid-template-columns: 22px repeat(12, minmax(0, 1fr)); }
+    .cell { font-size: 11px; }
+    .gcard .gdesc { -webkit-line-clamp: 2; }
+  }
