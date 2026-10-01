@@ -952,5 +952,6 @@
     .ntray { width: 30px; } .nbar-ck { width: 22px; height: 4px; }
     .pdie.nd { width: 34px; height: 34px; padding: 4px; }
     .sewrap { gap: 10px; } .sefield { flex-basis: 100%; }
+    .sewrap.playing .opp { order: -1; } .sewrap.playing .mine { max-width: 250px; }
     .segrid { grid-template-columns: 14px repeat(10, 1fr); padding: 4px; }
   }

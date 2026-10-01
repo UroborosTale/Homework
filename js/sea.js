@@ -43,7 +43,7 @@
         grid(MG, (x, y) => {
           const i = shipCell(v.myShips, x, y), sh = v.myShips[i], s = v.oppShots.find(o => o.x === x && o.y === y);
           const cls = ['sec'];
-          if (sh) cls.push('ship', part(sh, x, y)); if (sh && sh.sunk) cls.push('sunk'); if (i === selShip) cls.push('selship');
+          if (sh) cls.push('ship', part(sh, x, y)); if (sh && sh.sunk) cls.push('sunk'); if (i >= 0 && i === selShip) cls.push('selship');
           if (s) cls.push(s.hit ? 'hit' : 'miss'); if (s && !s.auto && v.lastShot && v.lastShot.p !== v.me && v.lastShot.x === x && v.lastShot.y === y && prevOpp !== oppShotKey) cls.push('fresh');
           return `<i class="${cls.join(' ')}" data-x="${x}" data-y="${y}"></i>`;
         }, false);
@@ -59,6 +59,7 @@
         }, aim);
         prevShots = myShotKey; prevOpp = oppShotKey;
         OF.classList.toggle('dim', setup);
+        board.querySelector('.sewrap').classList.toggle('playing', v.phase === 'play');
         shuffle.style.display = canEdit ? '' : 'none'; ready.style.display = canEdit ? '' : 'none';
         rotate.style.display = canEdit ? '' : 'none'; rotate.disabled = selShip < 0;
         let hint = '', cls = '';

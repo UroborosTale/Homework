@@ -6,7 +6,7 @@ const Duel = (() => {
   const { msg, fmt, setBalance } = Casino;
   const clean = s => String(s || '').replace(/[<>&"]/g, '').trim().slice(0, 14) || 'Игрок';
   const randomName = () => ['Игрок', 'Лис', 'Тигр', 'Сокол', 'Волк', 'Кот', 'Ёж'][Math.floor(Math.random() * 7)] + Math.floor(10 + Math.random() * 89);
-  const LEVELS = [[1, 'Новичок'], [2, 'Любитель'], [3, 'Мастер']];
+  const LEVELS = [[1, 'Новичок ★'], [2, 'Любитель ★★'], [3, 'Мастер ★★★']];
 
   const games = {};                                     // id → api (для отладки и тестов)
   function create(G) {
@@ -67,7 +67,7 @@ const Duel = (() => {
     q('d-solo').onclick = () => {
       readCfg(); if (cfg.stake > Casino.balance) return note('Недостаточно средств для ставки', 'lose');
       role = 'host'; net = null; code = '';
-      seats = [{ name: myName, kind: 'host' }, { name: '🤖 Бот (' + LEVELS[cfg.level - 1][1].toLowerCase() + ')', kind: 'bot' }];
+      seats = [{ name: myName, kind: 'host' }, { name: '🤖 Бот ' + '★'.repeat(cfg.level), kind: 'bot' }];
       startGame();
     };
     q('d-create').onclick = async () => {
@@ -191,7 +191,7 @@ const Duel = (() => {
       [0, 1].forEach(i => {
         const el = q('d-pl' + i), seat = i === 0 ? me : 1 - me, s = seats[seat] || { name: v.names[seat], kind: 'human' };
         el.className = `duel-pl d-pl${i}` + (v.phase !== 'over' && turn === seat ? ' turn' : '') + (v.phase === 'over' && v.winner === seat ? ' won' : '');
-        el.innerHTML = `<b>${s.kind === 'bot' ? '' : '👤 '}${v.names[seat]}${i === 0 ? ' (вы)' : ''}</b><small>${G.playerInfo ? G.playerInfo(v, seat) : ''}</small>`;
+        el.innerHTML = `<b>${s.kind === 'bot' ? '' : '👤 '}${v.names[seat]}</b><small>${i === 0 ? 'вы · ' : ''}${G.playerInfo ? G.playerInfo(v, seat) : ''}</small>`;
       });
       q('d-bank').textContent = cfg.stake ? `банк ${fmt(cfg.stake * 2)} ₽` : '';
       q('d-last').textContent = v.last || '';
