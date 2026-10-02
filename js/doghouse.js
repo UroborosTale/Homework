@@ -77,7 +77,7 @@ const DogEngine = (() => {
     const sc = grids[0].flat().filter(x => x.s === 'S').length;
     const stickyOut = free ? grids[grids.length - 1].flatMap((col, r) => col.map((x, i) => x.s === 'W' ? [r, i, x.m] : null).filter(Boolean)) : [];
     const ways = grids[0].reduce((a, c) => a * c.length, 1);
-    return { heights, grids, steps, total, scatters: sc, fs: sc >= 3 ? FS[Math.min(sc, 6)] : 0, sticky: [], ways };
+    return { heights, grids, steps, total, scatters: sc, fs: sc >= 3 ? FS[Math.min(sc, 6)] : 0, sticky: [], stickyOut, ways };
   }
   function simulate(n, { buy = false } = {}) {
     let cost = 0, won = 0, trig = 0;
@@ -100,14 +100,14 @@ const DogEngine = (() => {
   const gridEl = $('dgGrid'), cols = [];                    // cols[reel] = массив DOM-ячеек
   for (let r = 0; r < DE.REELS; r++) { const c = document.createElement('div'); c.className = 'dgcol'; gridEl.appendChild(c); cols.push([]); }
   // drop: анимация падения; prev — предыдущее поле (тогда падают только сдвинувшиеся и новые клетки)
-  function render(grid, drop, prev) {
+  function render(grid, drop, prev, extra) {
     const dy = drop ? (prev ? Anim.dropDiff(prev, grid) : grid.map(col => col.map(() => col.length + 1))) : null;
     grid.forEach((col, r) => {
       const host = gridEl.children[r]; host.replaceChildren(); cols[r] = [];
       col.forEach((x, i) => {
         const d = document.createElement('div'), dd = dy ? dy[r][i] : 0;
         d.className = 'dc' + (x.s === 'W' ? ' wild' : x.s === 'S' ? ' scat' : '') + ('AKQJ'.includes(x.s) ? ' letter' : '') + (dd ? ' drop' : '');
-        if (dd) { d.style.setProperty('--dy', dd); d.style.setProperty('--d', (prev ? r * 0.012 : r * 0.05 + (col.length - i) * 0.025) + 's'); }
+        if (dd) { d.style.setProperty('--dy', dd); d.style.setProperty('--d', (prev ? r * 0.012 : r * 0.05 + (col.length - i) * 0.025 + (extra ? extra[r] : 0)) + 's'); }
         d.innerHTML = x.s === 'W' ? `${Art.html('dog', 'W')}${x.m > 1 ? `<b class="wm">×${x.m}</b>` : ''}` : 'AKQJ'.includes(x.s) ? x.s : (Art.html('dog', x.s) || SYM[x.s].e);
         host.appendChild(d); cols[r].push(d);
       });
@@ -125,7 +125,7 @@ const DogEngine = (() => {
   $('dgPay').innerHTML = '<table><tr><th></th><th>3</th><th>4</th><th>5</th><th>6</th></tr>' +
     Object.entries(SYM).filter(([, s]) => s.pay).map(([k, s]) => `<tr><td>${'AKQJ'.includes(k) ? k : Art.html('dog', k)}</td>${s.pay.map(p => `<td>×${Math.round(p * 1000) / 1000}</td>`).join('')}</tr>`).join('') +
     '</table><small>множитель ставки за каждый способ (число способов = произведение символов на барабанах)</small>';
-  const updCost = () => { $('dgCost').textContent = $('dgBet').value; $('dgBuy').textContent = `Купить бонус (${DE.BUY_COST * $('dgBet').value} ₽)`; };
+  const updCost = () => { $('dgCost').textContent = $('dgBet').value; };
   $('dgBet').onchange = updCost; updCost();
 
   let busy = false, auto = false, turbo = false;
@@ -135,7 +135,9 @@ const DogEngine = (() => {
 
   async function playSpin(r) {
     Anim.countTo($('dgWin'), 0, 200);
-    await exitGrid(); render(r.grids[0], true); await d(700);
+    await exitGrid();
+    const T = SlotFX.teaseDrop([...gridEl.children], r.grids[0], x => x.s === 'S', 2, turbo);
+    render(r.grids[0], true, null, T.extraS); await d(700); await sleep(T.waitMs);
     let acc = 0;
     for (let i = 0; i < r.steps.length; i++) {
       const wins = r.steps[i]; if (!wins.length) break;
@@ -147,26 +149,30 @@ const DogEngine = (() => {
       render(r.grids[i + 1], true, r.grids[i]); await d(600);
     }
   }
-  async function spinOnce(bet, opts) {
+  async function spinOnce(bet, opts, g = 1) {              // g — множитель выбранных фриспинов
     const r = DE.spin(bet, opts); await playSpin(r);
+    r.total = Math.round(r.total * g * 100) / 100;
     if (r.total > 0) setBalance(Casino.balance + r.total);
     const capped = r.total >= DE.MAX_WIN * bet;
     msg($('dgMsg'), r.total ? `Выигрыш: ${fmt(r.total)} ₽${capped ? ' (максимум!)' : ''}` : 'Без выигрыша', r.total ? 'win' : 'lose');
     return r;
   }
+  const SUPER = 320, fsTable = n => { const h = Math.ceil(n / 2), t = Math.ceil(n / 3); return [[1, 1], [h / n, Math.floor(n / h * 9.8) / 10], [t / n, Math.floor(n / t * 9.6) / 10]]; };
   async function round(buy) {
-    if (busy) return; const bet = +$('dgBet').value, cost = buy ? DE.BUY_COST * bet : bet;
+    if (busy) return; const bet = +$('dgBet').value, cost = buy ? (buy === 'super' ? SUPER : DE.BUY_COST) * bet : bet;
     if (cost > Casino.balance) { auto = false; ap.cancel(); setOff(false); return msg($('dgMsg'), 'Недостаточно средств', 'lose'); }
-    busy = true; setOff(true); setBalance(Casino.balance - cost); $('dgFs').style.display = 'none'; fsBar.hide();
+    busy = true; setOff(true); setBalance(Casino.balance - cost); SlotFX.jackpot.bet(cost); $('dgFs').style.display = 'none'; fsBar.hide();
     let r = await spinOnce(bet, { forceScatters: buy ? 3 : 0 }), total = r.total;
     if (r.fs) {
-      let left = r.fs, n = 0; const heights = DE.randHeights();
-      msg($('dgMsg'), `🐾 ${left} бесплатных вращений! Дикие 🏠 с множителями ×2/×3 липнут до конца вращения`, 'win'); await d(1800);
+      const sup = buy === 'super', o = sup ? { spins: r.fs, g: 1 } : await SlotFX.fsChoice(r.fs, fsTable(r.fs), { auto });
+      let left = o.spins, n = 0, sticky = []; const heights = DE.randHeights();
+      msg($('dgMsg'), sup ? `🐾 ${left} фриспинов! Первый дикий 🏠 останется на месте до конца бонуса` : `🐾 ${left} бесплатных вращений${o.g !== 1 ? ` · выигрыши ×${o.g}` : ''}! Дикие 🏠 с множителями ×2/×3 липнут до конца вращения`, 'win'); await d(1800);
       $('dgFs').style.display = 'block';
       while (left > 0) {
         await Casino.whenActive('doghouse');                     // ушли со слота — фриспины ждут возвращения
         left--; n++; $('dgFs').textContent = `🐾 Фриспины: осталось ${left} · выиграно ${fmt(total)} ₽`; fsBar.show(n, n + left);
-        r = await spinOnce(bet, { free: true, heights }); total += r.total;
+        r = await spinOnce(bet, { free: true, heights, sticky }, o.g); total += r.total;
+        if (sup && !sticky.length && r.stickyOut.length) { const [a, b] = r.stickyOut[0]; sticky = [[a, b, 2]]; msg($('dgMsg'), '🏠 Дикий ×2 закреплён до конца бонуса!', 'win'); await d(900); }
         if (r.fs) { left += r.fs; msg($('dgMsg'), `+${r.fs} фриспинов!`, 'win'); await d(1200); }
         $('dgFs').textContent = `🐾 Фриспины: осталось ${left} · выиграно ${fmt(total)} ₽`; fsBar.show(n, n + left); await d(500);
       }
@@ -177,7 +183,11 @@ const DogEngine = (() => {
     if (auto && ap.after(total, bet)) { await sleep(total > 0 ? 900 : 300); if (auto) round(false); }
   }
   $('dgSpin').onclick = () => { auto = false; ap.cancel(); round(false); };
-  $('dgBuy').onclick = () => { if (!busy && confirm(`Купить бонус за ${DE.BUY_COST * $('dgBet').value} ₽?`)) round(true); };
+  const bm = SlotFX.buyMenu($('dgBuy'), { bet: () => +$('dgBet').value, busy: () => busy,
+    items: [{ key: 'bonus', name: 'Бонус', desc: '7+ фриспинов с липкими дикими ×2/×3 — можно меньше спинов с множителем', cost: DE.BUY_COST },
+            { key: 'super', name: '🔥 Супер-бонус', desc: 'Первый выпавший дикий 🏠 ×2 остаётся на месте до конца бонуса', cost: SUPER }],
+    onBuy(k) { auto = false; ap.cancel(); round(k); } });
+  $('dgBet').addEventListener('change', bm.paint);
   const ap = SlotUI.auto($('dgAuto'), { start: () => { auto = true; if (!busy) round(false); }, stop: () => { auto = false; if (!busy) setOff(false); } });
   $('dgTurbo').onclick = () => { turbo = !turbo; $('doghouse').classList.toggle('turbo', turbo); $('dgTurbo').textContent = 'Турбо: ' + (turbo ? 'вкл' : 'выкл'); };
 })();

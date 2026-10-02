@@ -94,7 +94,9 @@ const EgyptEngine = (() => {
   const upd = () => $('egTotal').textContent = total();
   $('egLines').onchange = $('egBet').onchange = upd; upd();
 
-  let busy = false, auto = false, cycle = 0, freeLeft = 0, fsSum = 0, expandSym = null;
+  let busy = false, auto = false, cycle = 0, freeLeft = 0, fsSum = 0, expandSym = null, fsG = 1;
+  const FS_TABLE = [[1, 1], [0.5, 2], [0.3, 3]], BUY = 21, SUPER = 42;
+  const choose = () => SlotFX.fsChoice(EE.FS, FS_TABLE, { auto });
   const clear = () => { cycle++; svg.style.transition = 'opacity .22s'; svg.style.opacity = 0; setTimeout(() => { svg.innerHTML = ''; svg.style.opacity = 1; }, 230); cells.flat().forEach(c => c.classList.remove('hit')); };
   function drawLine(li, n) {
     const W = 560, H = 340, cw = W / 5, rh = H / 3;
@@ -111,15 +113,11 @@ const EgyptEngine = (() => {
   const fsBar = SlotUI.fsProgress($('egFs'));
   function banner() {
     const b = $('egFs'); b.style.display = freeLeft > 0 || fsSum ? 'block' : 'none'; fsBar.sync(freeLeft, b.style.display === 'block');
-    b.textContent = `📖 ФРИСПИНЫ: осталось ${freeLeft} · расширяется ${expandSym ? SYM[expandSym].e : ''} · выиграно ${fmt(fsSum)} ₽`;
+    b.textContent = `📖 ФРИСПИНЫ: осталось ${freeLeft} · расширяется ${expandSym ? SYM[expandSym].e : ''}${fsG !== 1 ? ` · выигрыши ×${fsG}` : ''} · выиграно ${fmt(fsSum)} ₽`;
   }
   async function animate(g) {
     const cols = [...grid5.querySelectorAll('.rcol')], keys = Object.keys(SYM);
-    await Promise.all(cols.map((col, r) => Anim.reelSpin(col, {
-      count: 10 + r * 4, ms: 900 + r * 260, delay: r * 90, final: g[r],
-      rand: () => keys[rnd(keys.length)], fill: fillEl,
-      commit: () => g[r].forEach((k, w) => put(r, w, k)),
-    })));
+    await SlotFX.spinReels({ cols, grid: g, rand: () => keys[rnd(keys.length)], fill: fillEl, put, tease: { is: k => k === 'B', at: 2 } });
   }
   const lock = () => { $('egSpin').disabled = true; $('egLines').disabled = $('egBet').disabled = true; };
   const unlock = () => { $('egSpin').disabled = false; $('egLines').disabled = $('egBet').disabled = false; };
@@ -127,7 +125,7 @@ const EgyptEngine = (() => {
     if (busy) return; const free = freeLeft > 0, lines = +$('egLines').value, lineBet = +$('egBet').value, tot = total();
     if (!free) {
       if (tot > Casino.balance) { auto = false; ap.cancel(); unlock(); return msg($('egMsg'), 'Недостаточно средств', 'lose'); }
-      setBalance(Casino.balance - tot);
+      setBalance(Casino.balance - tot); SlotFX.jackpot.bet(tot);
     } else { freeLeft--; }
     busy = true; lock();
     clear(); banner(); if (!auto) msg($('egMsg'), free ? 'Бесплатное вращение…' : 'Крутим…');
@@ -142,19 +140,36 @@ const EgyptEngine = (() => {
     if (r.book.win) { text.push(`📖 ×${r.book.count}: +${r.book.win}`); r.book.cells.forEach(([a, b]) => cells[a][b].classList.add('hit')); }
     let started = false;
     if (r.book.fs) {
-      if (!free) { freeLeft = EE.FS; fsSum = 0; expandSym = EE.randomExpand(); started = true; text.push(`${EE.FS} фриспинов! Расширяется ${SYM[expandSym].e}`); }
+      if (!free) { started = true; text.push('📖 Бонус: фриспины!'); }
       else { freeLeft += EE.FS; text.push(`+${EE.FS} фриспинов!`); }
     }
-    if (r.total) { setBalance(Casino.balance + r.total); Anim.winFx(r.total, tot); }
-    if (free) fsSum += r.total;
+    const pay = free ? Math.round(r.total * fsG) : r.total;
+    if (free && fsG !== 1 && r.total) text.push(`×${fsG}`);
+    if (pay) { setBalance(Casino.balance + pay); Anim.winFx(pay, tot); }
+    if (free) fsSum += pay;
     banner();
-    msg($('egMsg'), r.total ? `${text.join(' · ')} — выигрыш ${fmt(r.total)} ₽` : (text.join(' · ') || 'Не повезло, крутите ещё'), r.total ? 'win' : 'lose');
+    msg($('egMsg'), pay ? `${text.join(' · ')} — выигрыш ${fmt(pay)} ₽` : (text.join(' · ') || 'Не повезло, крутите ещё'), pay ? 'win' : 'lose');
     cycleWins(r.wins);
-    if (free && freeLeft === 0) { await sleep(1200); msg($('egMsg'), `Бонус окончен! Итого во фриспинах: ${fmt(fsSum)} ₽`, 'win'); fsSum = 0; banner(); }
+    if (free && freeLeft === 0) { await sleep(1200); msg($('egMsg'), `Бонус окончен! Итого во фриспинах: ${fmt(fsSum)} ₽`, 'win'); fsSum = 0; fsG = 1; banner(); }
+    if (started) { await sleep(1200); await startFs(await choose()); }
     busy = false; if (!auto) unlock();
     if (freeLeft > 0) { await sleep(started ? 2200 : 1300); await Casino.whenActive('egypt'); doSpin(); }
-    else if (auto && ap.after(r.total, tot)) { await sleep(r.total ? 1500 : 450); if (auto) doSpin(); }
+    else if (auto && ap.after(pay, tot)) { await sleep(pay ? 1500 : 450); if (auto) doSpin(); }
   }
+  async function startFs(o) {                              // o — выбранный вариант фриспинов
+    freeLeft = o.spins; fsG = o.g; fsSum = 0; expandSym = EE.randomExpand(); banner();
+    msg($('egMsg'), `📖 ${o.spins} фриспинов${o.g !== 1 ? ` с множителем ×${o.g}` : ''}! Расширяется ${SYM[expandSym].e}`, 'win');
+  }
+  const buyBtn = document.createElement('button'); buyBtn.className = 'btn buybtn'; $('egAuto').after(buyBtn);
+  const bm = SlotFX.buyMenu(buyBtn, { bet: total, busy: () => busy || freeLeft > 0,
+    items: [{ key: 'bonus', name: 'Бонус', desc: '10 фриспинов с расширяющимся символом — или 5×2, 3×3', cost: BUY },
+            { key: 'super', name: '🔥 Супер-бонус', desc: '10 фриспинов, все выигрыши ×2', cost: SUPER }],
+    async onBuy(k, price) {
+      auto = false; ap.cancel(); setBalance(Casino.balance - price); SlotFX.jackpot.bet(price); busy = true; lock();
+      await startFs(k === 'super' ? { spins: 10, g: 2 } : await choose());
+      await sleep(1500); busy = false; doSpin();
+    } });
+  $('egLines').addEventListener('change', bm.paint); $('egBet').addEventListener('change', bm.paint);
   $('egSpin').onclick = () => { auto = false; ap.cancel(); doSpin(); };
   const ap = SlotUI.auto($('egAuto'), { start: () => { auto = true; if (!busy) doSpin(); }, stop: () => { auto = false; if (!busy) unlock(); } });
 })();

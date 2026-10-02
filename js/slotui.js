@@ -1,7 +1,7 @@
 // Общий интерфейс линейного слота 5×3: сетка, прокрутка барабанов, линии выигрыша, таблица выплат
 const SlotUI = (() => {
   const COLORS = ['#ff5252', '#40c4ff', '#69f0ae', '#ffd740', '#e040fb', '#ff6e40', '#18ffff', '#b2ff59', '#ff4081', '#7c4dff'];
-  function create({ grid, svg, lines, fill, rand, reels = 5, rows = 3 }) {
+  function create({ grid, svg, lines, fill, rand, reels = 5, rows = 3, tease }) {
     const { rnd, sleep } = Casino;
     const cells = [];
     for (let r = 0; r < reels; r++) {
@@ -30,12 +30,8 @@ const SlotUI = (() => {
       }
     }
     const stop = () => { cycle++; };
-    function animate(g) {
-      const cols = [...grid.querySelectorAll('.rcol')];
-      return Promise.all(cols.map((col, r) => Anim.reelSpin(col, {
-        count: 10 + r * 4, ms: 900 + r * 260, delay: r * 90, final: g[r], rand, fill,
-        commit: () => g[r].forEach((it, w) => put(r, w, it)),
-      })));
+    function animate(g) {                                   // прокрутка с интригой (SlotFX.spinReels)
+      return SlotFX.spinReels({ cols: [...grid.querySelectorAll('.rcol')], grid: g, rand, fill, put, tease });
     }
     return { cells, put, show, clear, drawLine, cycleWins, animate, stop };
   }

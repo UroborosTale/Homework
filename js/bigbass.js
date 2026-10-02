@@ -100,7 +100,9 @@ const BassEngine = (() => {
   const upd = () => $('bbTotal').textContent = total();
   $('bbLines').onchange = $('bbBet').onchange = upd; upd();
 
-  let busy = false, auto = false, cycle = 0, freeLeft = 0, coll = 0, lvl = 0, fsSum = 0;
+  let busy = false, auto = false, cycle = 0, freeLeft = 0, coll = 0, lvl = 0, fsSum = 0, fsG = 1;
+  const FS_TABLE = [[1.5, 0.6], [1, 1], [0.5, 2.3]], BUY = 12, SUPER = 32;
+  const choose = n => SlotFX.fsChoice(n, FS_TABLE, { auto });
   const clear = () => { cycle++; svg.style.transition = 'opacity .22s'; svg.style.opacity = 0; setTimeout(() => { svg.innerHTML = ''; svg.style.opacity = 1; }, 230); cells.flat().forEach(c => c.classList.remove('hit')); };
   function drawLine(li, n) {
     const W = 560, H = 340, cw = W / 5, rh = H / 3;
@@ -123,15 +125,12 @@ const BassEngine = (() => {
   }
   function banner() {
     const b = $('bbFs'); b.style.display = freeLeft > 0 || fsSum ? 'block' : 'none'; fsBar.sync(freeLeft, b.style.display === 'block'); fishProgress(b.style.display === 'block');
-    b.textContent = `🎣 ФРИСПИНЫ: осталось ${freeLeft} · рыбаков собрано ${coll} · множитель рыбы ×${BE.fsLevel(coll).mult} · выиграно ${fmt(fsSum)} ₽`;
+    b.textContent = `🎣 ФРИСПИНЫ: осталось ${freeLeft} · рыбаков собрано ${coll} · множитель рыбы ×${BE.fsLevel(coll).mult}${fsG !== 1 ? ` · выигрыши ×${fsG}` : ''} · выиграно ${fmt(fsSum)} ₽`;
   }
   async function animate(g) {
     const cols = [...grid5.querySelectorAll('.rcol')], keys = ['R', 'T', 'F', 'D', 'A', 'K', 'Q', 'J', 'S', 'W', 'M'];
-    await Promise.all(cols.map((col, r) => Anim.reelSpin(col, {
-      count: 10 + r * 4, ms: 900 + r * 260, delay: r * 90, final: g[r],
-      rand: () => { const k = keys[rnd(keys.length)]; return k === 'M' ? { s: 'M', v: [2, 3, 5, 10][rnd(4)] } : { s: k }; }, fill: fillEl,
-      commit: () => g[r].forEach((c, w) => put(r, w, c)),
-    })));
+    await SlotFX.spinReels({ cols, grid: g, fill: fillEl, put, tease: { is: c => c.s === 'S', at: 2 },
+      rand: () => { const k = keys[rnd(keys.length)]; return k === 'M' ? { s: 'M', v: [2, 3, 5, 10][rnd(4)] } : { s: k }; } });
   }
   const lock = () => { $('bbSpin').disabled = true; $('bbLines').disabled = $('bbBet').disabled = true; };
   const unlock = () => { $('bbSpin').disabled = false; $('bbLines').disabled = $('bbBet').disabled = false; };
@@ -139,7 +138,7 @@ const BassEngine = (() => {
     if (busy) return; const free = freeLeft > 0, lines = +$('bbLines').value, lineBet = +$('bbBet').value, tot = total();
     if (!free) {
       if (tot > Casino.balance) { auto = false; ap.cancel(); unlock(); return msg($('bbMsg'), 'Недостаточно средств', 'lose'); }
-      setBalance(Casino.balance - tot);
+      setBalance(Casino.balance - tot); SlotFX.jackpot.bet(tot);
     } else freeLeft--;
     busy = true; lock();
     clear(); banner(); if (!auto) msg($('bbMsg'), free ? 'Бесплатное вращение…' : 'Забрасываем удочку…');
@@ -156,17 +155,34 @@ const BassEngine = (() => {
       coll += r.wilds; const nl = BE.fsLevel(coll).lvl;
       if (nl > lvl) { freeLeft += BE.RETRIGGER * (nl - lvl); text.push(`Уровень ${nl}! Рыба ×${BE.fsLevel(coll).mult}, +${BE.RETRIGGER} вращений`); lvl = nl; }
       if (r.fs) { freeLeft += BE.RETRIGGER; text.push(`+${BE.RETRIGGER} фриспинов (⚓)`); }
-    } else if (r.fs) { freeLeft = r.fs; coll = 0; lvl = 0; fsSum = 0; started = true; text.push(`${r.fs} фриспинов!`); }
-    if (r.total) { setBalance(Casino.balance + r.total); Anim.winFx(r.total, tot); }
-    if (free) fsSum += r.total;
+    } else if (r.fs) { started = r.fs; text.push('⚓ Бонус: фриспины!'); }
+    const pay = free ? Math.round(r.total * fsG) : r.total;
+    if (free && fsG !== 1 && r.total) text.push(`×${fsG}`);
+    if (pay) { setBalance(Casino.balance + pay); Anim.winFx(pay, tot); }
+    if (free) fsSum += pay;
     banner();
-    msg($('bbMsg'), r.total ? `${text.join(' · ')} — выигрыш ${fmt(r.total)} ₽` : (text.join(' · ') || 'Не повезло, забрасывайте снова'), r.total ? 'win' : 'lose');
+    msg($('bbMsg'), pay ? `${text.join(' · ')} — выигрыш ${fmt(pay)} ₽` : (text.join(' · ') || 'Не повезло, забрасывайте снова'), pay ? 'win' : 'lose');
     cycleWins(r.wins);
-    if (free && freeLeft === 0) { await sleep(1200); msg($('bbMsg'), `Бонус окончен! Итого во фриспинах: ${fmt(fsSum)} ₽`, 'win'); fsSum = 0; coll = 0; lvl = 0; banner(); }
+    if (free && freeLeft === 0) { await sleep(1200); msg($('bbMsg'), `Бонус окончен! Итого во фриспинах: ${fmt(fsSum)} ₽`, 'win'); fsSum = 0; coll = 0; lvl = 0; fsG = 1; banner(); }
+    if (started) { await sleep(1200); startFs(await choose(started)); }
     busy = false; if (!auto) unlock();
     if (freeLeft > 0) { await sleep(started ? 2200 : 1400); await Casino.whenActive('bigbass'); doSpin(); }
-    else if (auto && ap.after(r.total, tot)) { await sleep(r.total ? 1500 : 450); if (auto) doSpin(); }
+    else if (auto && ap.after(pay, tot)) { await sleep(pay ? 1500 : 450); if (auto) doSpin(); }
   }
+  function startFs(o, coll0 = 0) {
+    freeLeft = o.spins; fsG = o.g; coll = coll0; lvl = BE.fsLevel(coll).lvl; fsSum = 0; banner();
+    msg($('bbMsg'), `🎣 ${o.spins} фриспинов${o.g !== 1 ? ` · выигрыши ×${o.g}` : ''}${coll ? ` · рыба сразу ×${BE.fsLevel(coll).mult}` : ''}!`, 'win');
+  }
+  const buyBtn = document.createElement('button'); buyBtn.className = 'btn buybtn'; $('bbAuto').after(buyBtn);
+  const bm = SlotFX.buyMenu(buyBtn, { bet: total, busy: () => busy || freeLeft > 0,
+    items: [{ key: 'bonus', name: 'Бонус', desc: '10 фриспинов — или 15×0.6, 5×2.3', cost: BUY },
+            { key: 'super', name: '🔥 Супер-бонус', desc: '10 фриспинов, рыба сразу ×3 (2-й уровень, уже 8 рыбаков)', cost: SUPER }],
+    async onBuy(k, price) {
+      auto = false; ap.cancel(); setBalance(Casino.balance - price); SlotFX.jackpot.bet(price); busy = true; lock();
+      if (k === 'super') startFs({ spins: 10, g: 1 }, 8); else startFs(await choose(10));
+      await sleep(1500); busy = false; doSpin();
+    } });
+  $('bbLines').addEventListener('change', bm.paint); $('bbBet').addEventListener('change', bm.paint);
   $('bbSpin').onclick = () => { auto = false; ap.cancel(); doSpin(); };
   const ap = SlotUI.auto($('bbAuto'), { start: () => { auto = true; if (!busy) doSpin(); }, stop: () => { auto = false; if (!busy) unlock(); } });
 })();

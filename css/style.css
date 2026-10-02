@@ -955,3 +955,87 @@
     .sewrap.playing .opp { order: -1; } .sewrap.playing .mine { max-width: 250px; }
     .segrid { grid-template-columns: 14px repeat(10, 1fr); padding: 4px; }
   }
+
+  /* ---------- Анимации выигрышных символов ---------- */
+  .hit svg.sym { transform-origin: 50% 60%; animation: sa-pulse .9s ease-in-out infinite; }
+  .hit svg.sym[data-a="flash"]  { animation: sa-flash .8s ease-in-out infinite; }
+  .hit svg.sym[data-a="bounce"] { animation: sa-bounce .7s cubic-bezier(.3, 1.6, .5, 1) infinite; transform-origin: 50% 100%; }
+  .hit svg.sym[data-a="swing"]  { animation: sa-swing 1s ease-in-out infinite; transform-origin: 50% 8%; }
+  .hit svg.sym[data-a="spin"]   { animation: sa-spin 1.1s linear infinite; }
+  .hit svg.sym[data-a="shake"]  { animation: sa-shake .5s linear infinite; }
+  .hit svg.sym[data-a="glow"]   { animation: sa-glow 1s ease-in-out infinite; }
+  .hit svg.sym[data-a="wiggle"] { animation: sa-wiggle .7s ease-in-out infinite; }
+  .hit svg.sym[data-a="jelly"]  { animation: sa-jelly .8s ease-in-out infinite; transform-origin: 50% 100%; }
+  .hit svg.sym[data-a="zap"]    { animation: sa-zap 1s steps(1, end) infinite; }
+  @keyframes sa-pulse { 50% { transform: scale(1.12); } }
+  @keyframes sa-flash { 0%, 100% { filter: drop-shadow(0 2px 2px #0007); transform: scale(1); } 40% { filter: brightness(1.8) drop-shadow(0 0 10px #fff) drop-shadow(0 0 18px #ffd54f); transform: scale(1.15); } }
+  @keyframes sa-bounce { 0%, 100% { transform: translateY(0) scale(1, 1); } 15% { transform: translateY(0) scale(1.12, .86); } 50% { transform: translateY(-16%) scale(.95, 1.06); } }
+  @keyframes sa-swing { 0%, 100% { transform: rotate(-14deg); } 50% { transform: rotate(14deg); } }
+  @keyframes sa-spin { from { transform: perspective(200px) rotateY(0); } to { transform: perspective(200px) rotateY(360deg); } }
+  @keyframes sa-shake { 0%, 100% { transform: translate(0, 0) rotate(0); } 20% { transform: translate(-4%, 1%) rotate(-6deg); } 40% { transform: translate(4%, -1%) rotate(6deg); } 60% { transform: translate(-3%, 0) rotate(-4deg) scale(1.08); } 80% { transform: translate(3%, 1%) rotate(4deg); } }
+  @keyframes sa-glow { 0%, 100% { filter: drop-shadow(0 0 2px #fff8); transform: scale(1); } 50% { filter: drop-shadow(0 0 10px #fff) drop-shadow(0 0 22px #ffeb3b); transform: scale(1.12); } }
+  @keyframes sa-wiggle { 0%, 100% { transform: rotate(0) skewX(0); } 25% { transform: rotate(-8deg) skewX(8deg); } 75% { transform: rotate(8deg) skewX(-8deg); } }
+  @keyframes sa-jelly { 0%, 100% { transform: scale(1, 1); } 30% { transform: scale(1.18, .82); } 50% { transform: scale(.86, 1.14); } 70% { transform: scale(1.06, .95); } }
+  @keyframes sa-zap { 0%, 100% { filter: drop-shadow(0 2px 2px #0007); transform: none; } 8% { filter: brightness(2.4) drop-shadow(0 0 14px #b3e5fc) drop-shadow(0 0 26px #fff); transform: scale(1.2) rotate(-6deg); }
+    14% { filter: brightness(1); transform: scale(1.05); } 20% { filter: brightness(2.2) drop-shadow(0 0 18px #e1f5fe); transform: scale(1.16) rotate(5deg); } 30% { filter: none; transform: none; } }
+
+  /* ---------- Интрига на барабанах ---------- */
+  .rcol.tease, .olycol.tease, .gzcol.tease, .dgcol.tease { position: relative; z-index: 2; border-radius: 10px;
+    box-shadow: 0 0 0 3px #ffd54f, 0 0 26px 8px #ffb300, inset 0 0 30px #ffd54faa; animation: teasepulse .5s ease-in-out infinite alternate; }
+  .rcol.teasehit, .olycol.teasehit, .gzcol.teasehit, .dgcol.teasehit { animation: teasehit .8s ease-out; border-radius: 10px; }
+  @keyframes teasepulse { from { box-shadow: 0 0 0 3px #ffd54f, 0 0 18px 4px #ffb300, inset 0 0 20px #ffd54f77; } to { box-shadow: 0 0 0 4px #fff59d, 0 0 38px 14px #ff9100, inset 0 0 40px #ffd54fcc; } }
+  @keyframes teasehit { 0% { box-shadow: 0 0 0 6px #fff, 0 0 60px 26px #ffeb3b; } 100% { box-shadow: none; } }
+  section.teasing .slotframe, section.teasing .olygrid, section.teasing .gzgrid, section.teasing .dggrid { animation: teaseframe .35s ease-in-out infinite alternate; }
+  @keyframes teaseframe { to { filter: brightness(1.15) saturate(1.2); } }
+
+  /* ---------- Окна выбора фриспинов и покупки ---------- */
+  .fxmodal .mbox { max-width: 560px; text-align: center; }
+  .fxnote { color: var(--muted); margin: 0 0 12px; font-size: 14px; }
+  .buycards { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+  .fscards { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; } .fscard { flex: 1 1 110px; max-width: 170px; }
+  .fscard { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 14px 8px; border-radius: 14px; cursor: pointer; color: #fff;
+    border: 2px solid #ffffff33; background: linear-gradient(160deg, #4a148c, #1a237e); transition: transform .15s, box-shadow .15s; }
+  .fscard:nth-child(2) { background: linear-gradient(160deg, #880e4f, #4a148c); } .fscard:nth-child(3) { background: linear-gradient(160deg, #bf360c, #880e4f); }
+  .fscard:nth-child(4) { background: linear-gradient(160deg, #b71c1c, #3e0000); }
+  .fscard:hover { transform: translateY(-4px); box-shadow: 0 0 0 2px #ffd54f, 0 10px 24px #000a; }
+  .fscard.def { box-shadow: 0 0 0 2px #ffd54f88; }
+  .fsn { font: 900 42px Georgia, serif; color: #ffd54f; line-height: 1; text-shadow: 0 3px 6px #000; }
+  .fsx { font-style: normal; font: 900 22px sans-serif; color: #fff; margin-top: 4px; }
+  .fscard small { color: #e1bee7; } .fsvol { font-size: 12px; }
+  .fxtimer { margin-top: 12px; color: var(--muted); font-size: 13px; }
+  .buycard { display: flex; flex-direction: column; gap: 6px; padding: 14px; border-radius: 14px; border: 2px solid #ffffff33; background: linear-gradient(160deg, #1b5e20, #0d2b12); }
+  .buycard.super { background: linear-gradient(160deg, #e65100, #6a1b9a); border-color: #ffd54f; box-shadow: 0 0 20px #ffb30066; }
+  .bcname { font: 900 20px Georgia, serif; color: #ffd54f; } .bcdesc { font-size: 13px; color: #e0e0e0; min-height: 34px; }
+  .bcprice { font: 800 22px sans-serif; } .bcprice small { font-size: 12px; color: #ffe0b2; }
+  .btn.buybtn { background: linear-gradient(#ff9800, #e65100); color: #fff; border-color: #ffb74d; font-weight: 800; }
+
+  /* ---------- Прогрессивный джекпот ---------- */
+  .jpbox { display: flex; align-items: center; gap: 4px; padding: 4px 12px; border-radius: 16px; font-weight: 900; color: #fff;
+    background: linear-gradient(90deg, #6a1b9a, #c2185b); border: 1px solid #ffd54f; box-shadow: 0 0 12px #e040fb66; white-space: nowrap; }
+  .jpbox .jpval { color: #ffeb3b; font-variant-numeric: tabular-nums; }
+  .jpbox.tick { animation: jptick .5s ease; } @keyframes jptick { 40% { box-shadow: 0 0 22px #ffeb3b; transform: scale(1.05); } }
+  header { gap: 10px; } header .jpbox { margin-left: auto; }
+  .jpbanner { position: relative; overflow: hidden; text-align: center; padding: 16px; margin-bottom: 14px; border-radius: 16px; border: 2px solid #ffd54f;
+    background: radial-gradient(ellipse at 50% 0%, #e040fb66, transparent 70%), linear-gradient(135deg, #4a148c, #880e4f 50%, #1a237e); box-shadow: 0 0 24px #e040fb55; }
+  .jpbanner::after { content: ''; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 35%, #ffffff33 50%, transparent 65%); background-size: 250% 100%; animation: pbshine 3.5s linear infinite; pointer-events: none; }
+  .jpbt { font: 900 16px sans-serif; letter-spacing: 2px; color: #ffd54f; }
+  .jpba { font: 900 clamp(34px, 9vw, 56px) Georgia, serif; color: #fff; text-shadow: 0 0 16px #ffeb3b, 0 3px 6px #000; font-variant-numeric: tabular-nums; }
+  .jpbs { font-size: 13px; color: #f3e5f5; } .jpbl { font-size: 12px; color: #ce93d8; margin-top: 4px; }
+  #jpWin { position: fixed; inset: 0; z-index: 990; display: none; align-items: center; justify-content: center; background: radial-gradient(circle, #4a148ccc, #000e); }
+  #jpWin.show { display: flex; animation: fxin .3s ease-out; }
+  .jpwbox { text-align: center; animation: fxpop .6s cubic-bezier(.3, 1.6, .5, 1); padding: 16px; }
+  .jpwt { font: 900 clamp(34px, 10vw, 72px) Georgia, serif; background: linear-gradient(#fff, #ffeb3b 50%, #ff6f00); -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(0 0 20px #e040fb); animation: jpglow 1s ease-in-out infinite alternate; }
+  @keyframes jpglow { to { filter: drop-shadow(0 0 40px #ffeb3b); transform: scale(1.05); } }
+  .jpwa { font: 900 clamp(30px, 9vw, 60px) sans-serif; color: #fff; text-shadow: 0 0 20px #ffd54f; }
+  .jpwbox small { color: #e1bee7; }
+  @media (max-width: 600px) {
+    header .jpbox { padding: 3px 8px; font-size: 13px; }
+    header h1 .htext { display: none; }
+    .fsn { font-size: 34px; } .fscards { gap: 8px; } .fscard { padding: 10px 4px; flex-basis: 120px; }
+  }
+  @media (prefers-reduced-motion: reduce) { .hit svg.sym, .rcol.tease, .jpbanner::after { animation: none !important; } }
+  .fsx.long { font-size: 13px; line-height: 1.3; }
+  .jpcoin { position: absolute; top: -50px; font-style: normal; pointer-events: none; animation: jpfall linear infinite; z-index: -1; }
+  @keyframes jpfall { to { transform: translateY(110vh) rotate(540deg); } }
+  #jpWin { overflow: hidden; } .jpwbox { position: relative; z-index: 1; }

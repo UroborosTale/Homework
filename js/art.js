@@ -188,9 +188,24 @@ const Art = (() => {
       <circle cx="50" cy="50" r="15" fill="url(#gRed)" stroke="#fff" stroke-width="2"/><ellipse cx="36" cy="30" rx="10" ry="5" fill="#fff" opacity=".45" transform="rotate(-30 36 30)"/>`,
   };
   const sets = { olympus, sweet, bass, dog, egypt, fruit, west, stone, legacy, samurai };
+  // как символ «оживает» при выигрыше: flash — вспышка, bounce — прыжок, swing — качание, spin — вращение монетой,
+  // shake — тряска, glow — сияние, wiggle — виляние (рыбы, звери), jelly — желе, zap — удар молнии
+  const ANIM = {
+    fruit: { 7: 'flash', C: 'bounce', L: 'bounce', O: 'bounce', G: 'jelly', B: 'swing', S: 'spin', D: 'flash', W: 'shake', F: 'glow', $: 'spin' },
+    olympus: { crown: 'shake', hour: 'swing', ring: 'spin', cup: 'bounce', red: 'flash', purple: 'flash', yellow: 'flash', green: 'flash', blue: 'flash', scatter: 'zap' },
+    sweet: { lolly: 'spin', candy: 'bounce', cake: 'jelly', donut: 'spin', apple: 'bounce', peach: 'jelly', grape: 'jelly', melon: 'bounce', banana: 'swing', scatter: 'glow' },
+    bass: { R: 'swing', T: 'bounce', F: 'bounce', D: 'wiggle', W: 'shake', S: 'swing', M: 'wiggle' },
+    dog: { D: 'wiggle', P: 'wiggle', H: 'bounce', B: 'spin', W: 'shake', S: 'glow' },
+    egypt: { X: 'shake', S: 'wiggle', F: 'swing', U: 'swing', B: 'glow' },
+    west: { G: 'shake', H: 'bounce', B: 'bounce', S: 'swing', W: 'spin', C: 'spin' },
+    stone: { gold: 'flash', grey: 'flash', teal: 'flash', red: 'flash', purple: 'flash', blue: 'flash', W: 'glow', F: 'spin' },
+    legacy: { P: 'shake', N: 'wiggle', H: 'flash', S: 'wiggle', B: 'glow' },
+    samurai: { helm: 'flash', sword: 'zap', fan: 'swing', lantern: 'swing', W: 'wiggle', S: 'glow' },
+  };
   function html(game, key) {
     const inner = sets[game] && sets[game][key];
-    return inner ? `<svg class="sym" viewBox="0 0 100 100" aria-hidden="true">${inner}</svg>` : null;
+    const a = (ANIM[game] && ANIM[game][key]) || 'pulse';
+    return inner ? `<svg class="sym" data-a="${a}" viewBox="0 0 100 100" aria-hidden="true">${inner}</svg>` : null;
   }
   return { html, sets };
 })();

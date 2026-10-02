@@ -102,7 +102,11 @@ const SlotEngine = (() => {
   const updTotal = () => $('slotTotal').textContent = slotTotal();
   $('slotLines').onchange = $('slotBet').onchange = updTotal; updTotal();
 
-  let slotBusy = false, autoOn = false, freeSpins = 0, fsWin = 0, cycleId = 0, gamble = null;
+  let slotBusy = false, autoOn = false, freeSpins = 0, fsWin = 0, cycleId = 0, gamble = null, fsG = 1;
+  // варианты фриспинов: [доля спинов, множитель к ×3]; покупка бонуса
+  const FS_TABLE = [[1.5, 2 / 3], [1, 1], [0.5, 2], [0.3, 10 / 3]], BUY = 24, SUPER = 47;
+  const fsMult = () => Math.round(SE.FS_MULT * fsG);
+  const choose = n => SlotFX.fsChoice(n, FS_TABLE, { auto: autoOn, show: g => '×' + Math.round(SE.FS_MULT * g) });
 
   function clearWins() {
     cycleId++; svg.style.transition = 'opacity .22s'; svg.style.opacity = 0; setTimeout(() => { svg.innerHTML = ''; svg.style.opacity = 1; }, 230);
@@ -128,15 +132,12 @@ const SlotEngine = (() => {
   function updFsBanner() {
     const b = $('fsBanner');
     b.style.display = freeSpins > 0 || fsWin > 0 ? 'block' : 'none'; fsBar.sync(freeSpins, b.style.display === 'block');
-    b.textContent = `🎁 БЕСПЛАТНЫЕ ВРАЩЕНИЯ: осталось ${freeSpins} · множитель ×${SE.FS_MULT} · выиграно ${fmt(fsWin)} ₽`;
+    b.textContent = `🎁 БЕСПЛАТНЫЕ ВРАЩЕНИЯ: осталось ${freeSpins} · множитель ×${fsMult()} · выиграно ${fmt(fsWin)} ₽`;
   }
   async function animateSpin(grid) {
     const cols = [...slotGrid.querySelectorAll('.rcol')], keys = Object.keys(SYM);
-    await Promise.all(cols.map((col, r) => Anim.reelSpin(col, {
-      count: 10 + r * 4, ms: 900 + r * 260, delay: r * 90, final: grid[r],
-      rand: () => keys[rnd(keys.length)], fill: (el, k) => { el.innerHTML = sym(k); },
-      commit: () => grid[r].forEach((k, w) => cells[r][w].innerHTML = sym(k)),
-    })));
+    await SlotFX.spinReels({ cols, grid, rand: () => keys[rnd(keys.length)], fill: (el, k) => { el.innerHTML = sym(k); },
+      put: (r, w, k) => cells[r][w].innerHTML = sym(k), tease: { is: k => k === 'F', at: 2 } });
   }
 
   // В авто-режиме кнопки не «мигают» между спинами: блокировка снимается только при остановке
@@ -146,20 +147,20 @@ const SlotEngine = (() => {
     if (slotBusy) return;
     const isFree = freeSpins > 0, lines = +$('slotLines').value, lineBet = +$('slotBet').value, total = slotTotal();
     if (gamble) takeGamble();
-    if (!isFree) { if (total > Casino.balance) { autoOn = false; ap.cancel(); unlock(); return msg($('slotMsg'), 'Недостаточно средств', 'lose'); } setBalance(Casino.balance - total); }
+    if (!isFree) { if (total > Casino.balance) { autoOn = false; ap.cancel(); unlock(); return msg($('slotMsg'), 'Недостаточно средств', 'lose'); } setBalance(Casino.balance - total); SlotFX.jackpot.bet(total); }
     else freeSpins--;
     slotBusy = true; lock();
     clearWins(); updFsBanner(); if (!autoOn) msg($('slotMsg'), isFree ? 'Бесплатное вращение…' : 'Крутим…');
     const grid = SE.spinGrid();
     await animateSpin(grid);
-    const res = SE.evaluate(grid, lines, lineBet), mult = isFree ? SE.FS_MULT : 1;
-    let win = res.lineWin * mult + res.scatterWin, text = [];
+    const res = SE.evaluate(grid, lines, lineBet), mult = isFree ? fsMult() : 1;
+    let win = Math.round(res.lineWin * mult + res.scatterWin * (isFree ? fsG : 1)), text = [], pending = 0;
     if (res.wins.length) text.push(`Линий: ${res.wins.length}`);
     if (mult > 1 && res.lineWin) text.push(`×${mult}`);
     if (res.scatterWin) { text.push(`🎁 ×${res.scatters}: +${res.scatterWin}`); res.scatterCells.forEach(([r, w]) => cells[r][w].classList.add('hit')); }
     if (res.freeSpins) {
-      const add = isFree ? SE.RETRIGGER : res.freeSpins; freeSpins += add;
-      text.push(`+${add} бесплатных вращений!`);
+      if (isFree) { freeSpins += SE.RETRIGGER; text.push(`+${SE.RETRIGGER} бесплатных вращений!`); }
+      else { pending = res.freeSpins; text.push('🎁 Бонус: фриспины!'); }
     }
     if (win) { setBalance(Casino.balance + win); if (isFree) fsWin += win; Anim.winFx(win, total); }
     updFsBanner();
@@ -167,8 +168,9 @@ const SlotEngine = (() => {
     cycleWins(res);
     if (res.bonus) { res.bonusCells.forEach(([r, w]) => cells[r][w].classList.add('hit')); await sleep(900); await chestBonus(total); }
     if (isFree && freeSpins === 0) {
-      msg($('slotMsg'), `Бесплатные вращения окончены! Итого выиграно: ${fmt(fsWin)} ₽`, 'win'); fsWin = 0; await sleep(1500); updFsBanner();
+      msg($('slotMsg'), `Бесплатные вращения окончены! Итого выиграно: ${fmt(fsWin)} ₽`, 'win'); fsWin = 0; fsG = 1; await sleep(1500); updFsBanner();
     }
+    if (pending) { await sleep(1200); const o = await choose(pending); freeSpins = o.spins; fsG = o.g; fsWin = 0; updFsBanner(); msg($('slotMsg'), `🎁 ${o.spins} фриспинов с множителем ×${fsMult()}!`, 'win'); }
     slotBusy = false; if (!autoOn) unlock();
     if (win && !isFree && !res.bonus) offerGamble(win);
     else if (!isFree) hideGambleBtns();
@@ -176,6 +178,19 @@ const SlotEngine = (() => {
     else if (autoOn && !gamble && ap.after(win, total)) { await sleep(win ? 1500 : 450); if (autoOn) doSpin(); }
   }
   $('spin').onclick = () => { autoOn = false; ap.cancel(); doSpin(); };
+  // покупка бонуса
+  const buyBtn = document.createElement('button'); buyBtn.className = 'btn buybtn'; $('auto').after(buyBtn);
+  const bm = SlotFX.buyMenu(buyBtn, { bet: slotTotal, busy: () => slotBusy || freeSpins > 0 || !!gamble,
+    items: [{ key: 'bonus', name: 'Бонус', desc: '10 фриспинов — выбор: 15×2, 10×3, 5×6 или 3×10', cost: BUY },
+            { key: 'super', name: '🔥 Супер-бонус', desc: '10 фриспинов с множителем ×6 вместо ×3', cost: SUPER }],
+    async onBuy(k, price) {
+      autoOn = false; ap.cancel(); hideGambleBtns(); setBalance(Casino.balance - price); SlotFX.jackpot.bet(price);
+      slotBusy = true; lock();
+      if (k === 'super') { freeSpins = 10; fsG = 2; } else { const o = await choose(10); freeSpins = o.spins; fsG = o.g; }
+      fsWin = 0; updFsBanner(); msg($('slotMsg'), `🎁 Бонус куплен: ${freeSpins} фриспинов ×${fsMult()}!`, 'win');
+      await sleep(900); slotBusy = false; doSpin();
+    } });
+  $('slotLines').addEventListener('change', bm.paint); $('slotBet').addEventListener('change', bm.paint);
   const ap = SlotUI.auto($('auto'), { start: () => { autoOn = true; if (!slotBusy) doSpin(); }, stop: () => { autoOn = false; if (!slotBusy) unlock(); } });
 
   /* --- Риск-игра --- */
