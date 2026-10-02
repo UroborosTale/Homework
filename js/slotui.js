@@ -119,17 +119,19 @@ const SlotUI = (() => {
   // Прогресс фриспинов по счётчику «осталось»: сам считает сыгранные и докупленные вращения.
   // sync(left, active) — active=false (бонус закончился) прячет полосу и сбрасывает счёт
   function fsProgress(anchor, opts) {
-    const bar = progress(anchor, { cls: 'pbfs', ...opts }); let done = 0, total = 0, prev = 0;
-    const draw = () => bar.set(done, total, `Фриспин <b>${Math.min(done, total)}</b> из <b>${total}</b>`, []);
+    const bar = progress(anchor, { cls: 'pbfs', ...opts }); let done = 0, total = 0, prev = 0, on = false;
+    const sec = anchor.closest('section'), emit = t => { if (sec) sec.dispatchEvent(new CustomEvent(t, { bubbles: true })); };
+    const draw = () => { if (!on) { on = true; emit('slot:fsstart'); } bar.set(done, total, `Фриспин <b>${Math.min(done, total)}</b> из <b>${total}</b>`, []); };
+    const off = () => { if (on) { on = false; emit('slot:fsend'); } };
     return {
       el: bar.el,
       sync(left, active = true) {
-        if (!active) { done = total = prev = 0; bar.hide(); return; }
+        if (!active) { done = total = prev = 0; bar.hide(); off(); return; }
         if (left > prev) total += left - prev; else done += prev - left;
         prev = left; if (total) draw();
       },
       show(n, totalNow) { done = n; total = totalNow; prev = totalNow - n; draw(); },
-      hide() { done = total = prev = 0; bar.hide(); },
+      hide() { done = total = prev = 0; bar.hide(); off(); },
     };
   }
   return { create, payTable, COLORS, auto, toast, progress, fsProgress };

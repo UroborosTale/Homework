@@ -1131,3 +1131,76 @@
   .bjtotal { font-weight: 700; } .bjside { max-width: 90px; }
   #blackjack .phands { justify-content: center; }
   @media (max-width: 600px) { #blackjack .phands { gap: 6px; } #blackjack .phand { padding: 4px; } #blackjack .phand .hand-label { font-size: 12px; } }
+
+  /* ---------- Визуал слотов: общий слой эффектов ---------- */
+  .vfxframe { position: relative; }
+  .vfxlayer { position: absolute; inset: 0; pointer-events: none; z-index: 6; overflow: visible; }
+  .fshine { position: absolute; inset: 0; border-radius: inherit; overflow: hidden; pointer-events: none; z-index: 5; }
+  .fshine::before { content: ''; position: absolute; top: -20%; bottom: -20%; width: 35%; left: -60%; transform: skewX(-20deg);
+    background: linear-gradient(90deg, transparent, #ffffff26, #ffffff4d, #ffffff26, transparent); animation: fshine 7s ease-in-out infinite; }
+  @keyframes fshine { 0%, 70% { left: -60%; } 100% { left: 130%; } }
+
+  /* приземление барабанов: символы отскакивают, рамка вздрагивает */
+  .rcol.landed .sc { animation: land .38s cubic-bezier(.3, 1.6, .5, 1); }
+  @keyframes land { 0% { transform: translateY(-7%) scaleY(1.06); } 45% { transform: translateY(2%) scaleY(.94); } 100% { transform: none; } }
+  .slotframe.thud { animation: thud .22s ease-out; }
+  @keyframes thud { 40% { transform: translateY(2px); } }
+  .rcol.rolling { box-shadow: inset 0 14px 14px -10px #000a, inset 0 -14px 14px -10px #000a; border-radius: 10px; }
+
+  /* символы: глянец и объём */
+  .sc, .oc, .dc { position: relative; }
+  .sc::after { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+    background: linear-gradient(160deg, #ffffff66 0%, #ffffff10 32%, transparent 48%, #00000014 100%); }
+  .sc { box-shadow: inset 0 -4px 0 #0000001f, inset 0 2px 0 #ffffffb0, 0 3px 6px #0005; }
+  .sc.letter, .oc.letter, .dc.letter { font-family: Georgia, 'Times New Roman', serif; font-weight: 900; color: #8a3f00;
+    text-shadow: 0 1px 0 #fff6c8, 0 2px 0 #f2b33a, 0 3px 0 #b86e00, 0 4px 0 #7a4200, 0 6px 8px #0007; }
+
+  /* выигрыш: остальные символы приглушаются, выигрышные подсвечены */
+  :is(.slotframe, .olygrid, .dggrid, .gzframe, .kitframe):has(.hit) :is(.sc, .oc, .dc):not(.hit):not(.underblock) { filter: brightness(.45) saturate(.6); transition: filter .25s; }
+  :is(.sc, .oc, .dc) { transition: filter .25s, transform .2s, box-shadow .2s; }
+  .linesvg polyline { stroke-dasharray: 2400; stroke-dashoffset: 2400; animation: drawline .55s ease-out forwards; filter: drop-shadow(0 0 4px #fff) drop-shadow(0 0 8px currentColor); stroke-width: 7; }
+  @keyframes drawline { to { stroke-dashoffset: 0; } }
+
+  /* частицы */
+  .vfxp { position: absolute; width: 8px; height: 8px; margin: -4px; border-radius: 50%; pointer-events: none; animation: vfxp .75s cubic-bezier(.2, .7, .3, 1) forwards; }
+  .vfxp.spark { background: radial-gradient(circle, #fff, hsl(calc(var(--h) * 1deg) 100% 70%) 45%, transparent 70%); box-shadow: 0 0 8px #fff8; width: 10px; height: 10px; margin: -5px; }
+  .vfxp.pop { border-radius: 2px; background: hsl(calc(var(--h) * 1deg) 90% 65%); width: 7px; height: 7px; }
+  @keyframes vfxp { 0% { transform: translate(0, 0) scale(1.3); opacity: 1; } 100% { transform: translate(var(--x), var(--y)) scale(.2) rotate(200deg); opacity: 0; } }
+
+  /* всплывающая сумма выигрыша */
+  .winpop { position: absolute; left: 50%; top: 46%; transform: translate(-50%, -50%); font: 900 clamp(22px, 6vw, 36px) Georgia, serif; white-space: nowrap;
+    color: #fff; -webkit-text-stroke: 1.5px #5a2e00; text-shadow: 0 3px 0 #a56a00, 0 0 18px #ffd54f, 0 6px 14px #000; animation: winpop 1.8s cubic-bezier(.2, .9, .3, 1) forwards; z-index: 7; }
+  .winpop.mid { font-size: clamp(30px, 8vw, 48px); background: linear-gradient(#fffbe0, #ffd54f 55%, #ff8f00); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .winpop.big { font-size: clamp(36px, 10vw, 60px); background: linear-gradient(#ffffff, #ffeb3b 40%, #ff6d00 80%); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 0 16px #ff9100); }
+  .winpop.out { animation: winout .3s forwards; }
+  @keyframes winpop { 0% { transform: translate(-50%, -20%) scale(.3); opacity: 0; } 18% { transform: translate(-50%, -50%) scale(1.15); opacity: 1; } 30% { transform: translate(-50%, -50%) scale(1); }
+    80% { transform: translate(-50%, -75%) scale(1); opacity: 1; } 100% { transform: translate(-50%, -110%) scale(.9); opacity: 0; } }
+  @keyframes winout { to { opacity: 0; transform: translate(-50%, -120%) scale(.8); } }
+  .vfxframe.winflash { animation: winflash .6s ease-out; }
+  @keyframes winflash { 0% { box-shadow: 0 0 0 4px #fff, 0 0 60px 20px #ffd54f; } 100% {} }
+
+  /* фриспины: рамка переливается, заставки */
+  section.fsmode .vfxframe, section.kit-fs .vfxframe { animation: fsglow 1.6s ease-in-out infinite alternate; }
+  @keyframes fsglow { from { box-shadow: 0 0 18px 2px #e040fb88, 0 0 0 3px #e040fb; } to { box-shadow: 0 0 36px 10px #ffd54faa, 0 0 0 3px #ffd54f; } }
+  .fsplash { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 8; border-radius: inherit;
+    background: radial-gradient(circle, #000a, #0000 75%); animation: fsplash 2.4s ease forwards; text-align: center; }
+  .fsplash b { font: 900 clamp(34px, 11vw, 64px) Georgia, serif; letter-spacing: 2px; background: linear-gradient(#fff, #ffeb3b 45%, #ff6f00); -webkit-background-clip: text; background-clip: text; color: transparent;
+    -webkit-text-stroke: 1.5px #4a1a00; filter: drop-shadow(0 0 18px #e040fb) drop-shadow(0 4px 6px #000); }
+  .fsplash.end b { font-size: clamp(30px, 9vw, 54px); filter: drop-shadow(0 0 18px #ffd54f) drop-shadow(0 4px 6px #000); }
+  .fsplash small { font: 800 16px sans-serif; color: #fff; text-shadow: 0 2px 4px #000; letter-spacing: 1px; }
+  @keyframes fsplash { 0% { opacity: 0; transform: scale(.4) rotate(-6deg); } 15% { opacity: 1; transform: scale(1.08); } 25% { transform: scale(1); } 80% { opacity: 1; } 100% { opacity: 0; transform: scale(1.15); } }
+
+  /* кнопка «Крутить»: блик и ожидание во время спина */
+  :is(#slots, #olympus, #sweet, #egypt, #bigbass, #doghouse, #holdwin, #avalanche, #legacy, #samurai, .kit) .btn.primary { position: relative; overflow: hidden; box-shadow: 0 4px 0 #a56a00, 0 6px 14px #0006; }
+  :is(#slots, #olympus, #sweet, #egypt, #bigbass, #doghouse, #holdwin, #avalanche, #legacy, #samurai, .kit) .btn.primary::after { content: ''; position: absolute; top: 0; bottom: 0; width: 40%; left: -60%; transform: skewX(-20deg);
+    background: linear-gradient(90deg, transparent, #ffffff99, transparent); animation: btnshine 3.2s ease-in-out infinite; }
+  :is(#slots, #olympus, #sweet, #egypt, #bigbass, #doghouse, #holdwin, #avalanche, #legacy, #samurai, .kit) .btn.primary:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 #a56a00; }
+  :is(#slots, #olympus, #sweet, #egypt, #bigbass, #doghouse, #holdwin, #avalanche, #legacy, #samurai, .kit) .btn.primary:disabled { opacity: .7; animation: btnwait 1s ease-in-out infinite alternate; }
+  @keyframes btnshine { 0%, 60% { left: -60%; } 100% { left: 130%; } }
+  @keyframes btnwait { to { filter: brightness(.8); } }
+
+  @media (prefers-reduced-motion: reduce) {
+    .fshine::before, .rcol.landed .sc, .slotframe.thud, .linesvg polyline, .winpop, .fsplash, section.fsmode .vfxframe, .btn.primary::after { animation: none !important; }
+    .linesvg polyline { stroke-dashoffset: 0; }
+  }
+  .kit-drop .kitgrid { overflow: hidden; border-radius: 10px; }

@@ -41,7 +41,12 @@ const Anim = (() => {
         else y = over * (1 - easeInOut((t - t1) / (1 - t1)));                 // возврат на место
         setY(y);
         if (t < 1) requestAnimationFrame(frame);
-        else { strip.remove(); col.classList.remove('rolling'); resolve(); }
+        else {
+          strip.remove(); col.classList.remove('rolling');
+          col.classList.remove('landed'); void col.offsetWidth; col.classList.add('landed');          // отскок символов при остановке
+          const fr = col.closest('.slotframe'); if (fr) { fr.classList.remove('thud'); void fr.offsetWidth; fr.classList.add('thud'); }
+          resolve();
+        }
       };
       requestAnimationFrame(frame);
     });
