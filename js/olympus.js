@@ -100,12 +100,12 @@ const Olympus = (() => {
     oGrid.appendChild(col);
   }
   // drop: false — просто показать; true — анимация падения. prev — предыдущее поле: тогда падают только сдвинувшиеся и новые клетки
-  function oRender(g, drop, prev) {
+  function oRender(g, drop, prev, extra) {
     const dy = drop ? (prev ? Anim.dropDiff(prev, g) : g.map(col => col.map(() => OL.ROWS + 1))) : null;
     g.forEach((col, c) => col.forEach((x, r) => {
       const el = oCells[c][r], d = dy ? dy[c][r] : 0;
       el.className = 'oc' + (x.s === 'orb' ? ' orb' : x.s === 'scatter' ? ' scatter' : '') + (d ? ' drop' : '');
-      if (d) { el.style.setProperty('--dy', d); el.style.setProperty('--d', (prev ? c * 0.012 : c * 0.05 + (OL.ROWS - r) * 0.025) + 's'); }
+      if (d) { el.style.setProperty('--dy', d); el.style.setProperty('--d', (prev ? c * 0.012 : c * 0.05 + (OL.ROWS - r) * 0.025 + (extra ? extra[c] : 0)) + 's'); }
       if (x.s === 'orb') el.textContent = '×' + x.v; else el.innerHTML = Art.html('olympus', x.s) || OL.SYMS[x.s].e;
     }));
   }
@@ -121,7 +121,7 @@ const Olympus = (() => {
     Object.entries(OL.SYMS).filter(([, s]) => s.pay).map(([k, s]) => `<tr><td>${Art.html('olympus', k)}</td>${s.pay.map(p => `<td>×${p}</td>`).join('')}</tr>`).join('') +
     '</table><small>множители от ставки</small>';
   const oCost = () => +$('olyBet').value * ($('olyAnte').checked ? OL.ANTE : 1);
-  const updOCost = () => { $('olyCost').textContent = oCost(); $('olyBuy').textContent = `Купить бонус (${OL.BUY_COST * $('olyBet').value} ₽)`; };
+  const updOCost = () => { $('olyCost').textContent = oCost(); };
   $('olyBet').onchange = $('olyAnte').onchange = updOCost; updOCost();
 
   let oBusy = false, oAuto = false, oTurbo = false;
@@ -132,7 +132,9 @@ const Olympus = (() => {
   async function playSpin(r, bet, carry) {         // проигрывает анимацию одного спина, возвращает ничего
     let acc = 0, shown = carry + orbSumOf(r.grids[0]);
     Anim.countTo($('olyWin'), 0, 200); $('olyMult').textContent = '×' + shown;
-    await exitGrid(); oRender(r.grids[0], true); await od(700);
+    await exitGrid();
+    const T = SlotFX.teaseDrop(oCells.map(c => c[0].parentElement), r.grids[0], x => x.s === 'scatter', 3, oTurbo);
+    oRender(r.grids[0], true, null, T.extraS); await od(700); await sleep(T.waitMs);
     for (let i = 0; i < r.steps.length; i++) {
       const cl = r.steps[i]; if (!cl.length) break;
       cl.forEach(c => c.cells.forEach(([a, b]) => oCells[a][b].classList.add('hit')));
@@ -152,30 +154,34 @@ const Olympus = (() => {
     }
   }
 
-  async function oSpinOnce(bet, opts) {              // одно вращение + начисление
+  async function oSpinOnce(bet, opts, g = 1) {       // одно вращение + начисление; g — множитель выбранных фриспинов
     const r = OL.spin(bet, opts);
     await playSpin(r, bet, opts.carry || 0);
+    r.total = Math.round(r.total * g * 100) / 100;
     if (r.total > 0) setBalance(Casino.balance + r.total);
-    if (r.scWin) msg($('olyMsg'), `⚡ ×${r.scatters}: +${fmt(r.scWin)} ₽`, 'win');
+    if (r.scWin) msg($('olyMsg'), `⚡ ×${r.scatters}: +${fmt(r.scWin * g)} ₽`, 'win');
     else if (!r.total) msg($('olyMsg'), 'Без выигрыша', 'lose');
-    else msg($('olyMsg'), `Выигрыш: ${fmt(r.total)} ₽`, 'win');
+    else msg($('olyMsg'), `Выигрыш: ${fmt(r.total)} ₽${g !== 1 ? ` (×${g})` : ''}`, 'win');
     return r;
   }
+  const FS_TABLE = [[1, 1], [2 / 3, 2.1], [7 / 15, 4.1]], SUPER = 140;
   async function oRound(buy) {
     if (oBusy) return; const bet = +$('olyBet').value, ante = $('olyAnte').checked;
-    const cost = buy ? OL.BUY_COST * bet : oCost();
+    const cost = buy ? (buy === 'super' ? SUPER : OL.BUY_COST) * bet : oCost();
     if (cost > Casino.balance) { oAuto = false; ap.cancel(); setOControls(false); return msg($('olyMsg'), 'Недостаточно средств', 'lose'); }
-    oBusy = true; setOControls(true); setBalance(Casino.balance - cost);
+    oBusy = true; setOControls(true); setBalance(Casino.balance - cost); SlotFX.jackpot.bet(cost);
     $('olyFs').style.display = 'none'; fsBar.hide();
     let r = await oSpinOnce(bet, buy ? { forceScatters: 4 } : { ante });
     let total = r.total;
     if (r.fs) {
-      let left = r.fs, carry = 0, n = 0; msg($('olyMsg'), `⚡ ${left} бесплатных вращений!`, 'win'); await od(1600);
+      const o = buy === 'super' ? { spins: r.fs, g: 1 } : await SlotFX.fsChoice(r.fs, FS_TABLE, { auto: oAuto });
+      let left = o.spins, carry = buy === 'super' ? 10 : 0, n = 0;
+      msg($('olyMsg'), `⚡ ${left} бесплатных вращений${o.g !== 1 ? ` · выигрыши ×${o.g}` : ''}${carry ? ` · множитель сразу ×${carry}` : ''}!`, 'win'); await od(1600);
       $('olyFs').style.display = 'block';
       while (left > 0) {
         await Casino.whenActive('olympus');                     // ушли со слота — фриспины ждут возвращения
         left--; n++; $('olyFs').textContent = `⚡ Фриспины: осталось ${left} · выиграно ${fmt(total)} ₽`; fsBar.show(n, n + left);
-        r = await oSpinOnce(bet, { free: true, carry }); carry = r.newCarry; total += r.total;
+        r = await oSpinOnce(bet, { free: true, carry }, o.g); carry = r.newCarry; total += r.total;
         if (r.fs) { left += r.fs; msg($('olyMsg'), `+${r.fs} фриспинов!`, 'win'); await od(1200); }
         $('olyFs').textContent = `⚡ Фриспины: осталось ${left} · выиграно ${fmt(total)} ₽`; fsBar.show(n, n + left); await od(600);
       }
@@ -186,7 +192,11 @@ const Olympus = (() => {
     if (oAuto && ap.after(total, bet)) { await sleep(total > 0 ? 900 : 300); if (oAuto) oRound(false); }
   }
   $('olySpin').onclick = () => { oAuto = false; ap.cancel(); oRound(false); };
-  $('olyBuy').onclick = () => { if (!oBusy && confirm(`Купить бонус за ${OL.BUY_COST * $('olyBet').value} ₽?`)) oRound(true); };
+  const bm = SlotFX.buyMenu($('olyBuy'), { bet: () => +$('olyBet').value, busy: () => oBusy,
+    items: [{ key: 'bonus', name: 'Бонус', desc: '15 фриспинов — или 10×2.1, 7×4.1', cost: OL.BUY_COST },
+            { key: 'super', name: '🔥 Супер-бонус', desc: '15 фриспинов, множитель сразу ×10 и растёт дальше', cost: SUPER }],
+    onBuy(k) { oAuto = false; ap.cancel(); oRound(k); } });
+  $('olyBet').addEventListener('change', bm.paint);
   const ap = SlotUI.auto($('olyAuto'), { start: () => { oAuto = true; if (!oBusy) oRound(false); }, stop: () => { oAuto = false; if (!oBusy) setOControls(false); } });
   $('olyTurbo').onclick = () => { oTurbo = !oTurbo; $('olympus').classList.toggle('turbo', oTurbo); $('olyTurbo').textContent = 'Турбо: ' + (oTurbo ? 'вкл' : 'выкл'); };
 

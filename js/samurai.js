@@ -74,14 +74,14 @@ const SamuraiEngine = (() => {
   const gridEl = $('smGrid'), cols = [];
   for (let r = 0; r < SE.REELS; r++) { const c = document.createElement('div'); c.className = 'dgcol'; gridEl.appendChild(c); cols.push([]); }
   const face = s => LOW.includes(s) ? SYM[s].e : (Art.html('samurai', s) || SYM[s].e);
-  function render(grid, drop, prev) {
+  function render(grid, drop, prev, extra) {
     const dy = drop ? (prev ? Anim.dropDiff(prev, grid) : grid.map(col => col.map(() => col.length + 1))) : null;
     grid.forEach((col, r) => {
       const host = gridEl.children[r]; host.replaceChildren(); cols[r] = [];
       col.forEach((x, i) => {
         const d = document.createElement('div'), dd = dy ? dy[r][i] : 0;
         d.className = 'dc' + (x.s === 'W' ? ' wild' : x.s === 'S' ? ' scat' : '') + (LOW.includes(x.s) ? ' letter' : '') + (dd ? ' drop' : '');
-        if (dd) { d.style.setProperty('--dy', dd); d.style.setProperty('--d', (prev ? r * 0.012 : r * 0.05 + (col.length - i) * 0.025) + 's'); }
+        if (dd) { d.style.setProperty('--dy', dd); d.style.setProperty('--d', (prev ? r * 0.012 : r * 0.05 + (col.length - i) * 0.025 + (extra ? extra[r] : 0)) + 's'); }
         d.innerHTML = face(x.s); host.appendChild(d); cols[r].push(d);
       });
     });
@@ -92,7 +92,7 @@ const SamuraiEngine = (() => {
   $('smPay').innerHTML = '<table><tr><th></th><th>3</th><th>4</th><th>5</th><th>6</th></tr>' +
     Object.entries(SYM).filter(([, s]) => s.pay).map(([k, s]) => `<tr><td>${LOW.includes(k) ? `<b class="smlow">${s.e}</b>` : Art.html('samurai', k)}</td>${s.pay.map(p => `<td>×${p}</td>`).join('')}</tr>`).join('') +
     '</table><small>множитель ставки за каждый способ</small>';
-  const updCost = () => { $('smCost').textContent = $('smBet').value; $('smBuy').textContent = `Купить бонус (${SE.BUY_COST * $('smBet').value} ₽)`; };
+  const updCost = () => { $('smCost').textContent = $('smBet').value; };
   $('smBet').onchange = updCost; updCost();
 
   let busy = false, auto = false, turbo = false;
@@ -109,7 +109,9 @@ const SamuraiEngine = (() => {
   }
   async function playSpin(r, free) {
     Anim.countTo($('smWin'), 0, 200);
-    await exitGrid(); render(r.grids[0], true); await d(700);
+    await exitGrid();
+    const T = SlotFX.teaseDrop([...gridEl.children], r.grids[0], x => x.s === 'S', 3, turbo);
+    render(r.grids[0], true, null, T.extraS); await d(700); await sleep(T.waitMs);
     let acc = 0;
     for (let i = 0; i < r.steps.length; i++) {
       const { wins, mult } = r.steps[i]; if (!wins.length) break;
@@ -123,26 +125,29 @@ const SamuraiEngine = (() => {
       render(r.grids[i + 1], true, r.grids[i]); await d(600);
     }
   }
-  async function spinOnce(bet, opts) {
+  async function spinOnce(bet, opts, g = 1) {              // g — множитель выбранных фриспинов
     const r = SE.spin(bet, opts); await playSpin(r, !!opts.free);
+    r.total = Math.round(r.total * g * 100) / 100;
     if (r.total > 0) setBalance(Casino.balance + r.total);
     msg($('smMsg'), r.total ? `Выигрыш: ${fmt(r.total)} ₽${r.total >= SE.MAX_WIN * bet ? ' (максимум!)' : ''}` : 'Без выигрыша', r.total ? 'win' : 'lose');
     return r;
   }
   const fsBar = SlotUI.fsProgress($('smFs'));
+  const FS_TABLE = [[1, 1], [2 / 3, 2], [5 / 12, 4.5]], SUPER = 140;
   async function round(buy) {
-    if (busy) return; const bet = +$('smBet').value, cost = buy ? SE.BUY_COST * bet : bet;
+    if (busy) return; const bet = +$('smBet').value, cost = buy ? (buy === 'super' ? SUPER : SE.BUY_COST) * bet : bet;
     if (cost > Casino.balance) { auto = false; ap.cancel(); setOff(false); return msg($('smMsg'), 'Недостаточно средств', 'lose'); }
-    busy = true; setOff(true); setBalance(Casino.balance - cost); $('smFs').style.display = 'none'; fsBar.hide(); $('samurai').classList.remove('sm-fs');
+    busy = true; setOff(true); setBalance(Casino.balance - cost); SlotFX.jackpot.bet(cost); $('smFs').style.display = 'none'; fsBar.hide(); $('samurai').classList.remove('sm-fs');
     let r = await spinOnce(bet, { forceScatters: buy ? 4 : 0 }), total = r.total;
     if (r.fs) {
-      let left = r.fs, n = 0, m = 1; $('samurai').classList.add('sm-fs'); multBadge(1);
-      msg($('smMsg'), `🔴 ${left} бесплатных вращений! Множитель растёт с каждой лавиной и не сбрасывается`, 'win'); await d(1800);
+      const o = buy === 'super' ? { spins: r.fs, g: 1 } : await SlotFX.fsChoice(r.fs, FS_TABLE, { auto });
+      let left = o.spins, n = 0, m = buy === 'super' ? 5 : 1; $('samurai').classList.add('sm-fs'); multBadge(m);
+      msg($('smMsg'), `🔴 ${left} бесплатных вращений${o.g !== 1 ? ` · выигрыши ×${o.g}` : ''}! Множитель ${m > 1 ? `начинается с ×${m}, ` : ''}растёт с каждой лавиной и не сбрасывается`, 'win'); await d(1800);
       $('smFs').style.display = 'flex';
       while (left > 0) {
         await Casino.whenActive('samurai');                     // ушли со слота — фриспины ждут возвращения
         left--; n++; $('smFsLeft').textContent = left; fsBar.show(n, n + left); Anim.countTo($('smFsWon'), fmt(total), 400);
-        r = await spinOnce(bet, { free: true, mult: m }); m = r.mult; multBadge(m); total += r.total;
+        r = await spinOnce(bet, { free: true, mult: m }, o.g); m = r.mult; multBadge(m); total += r.total;
         if (r.fs) { left += r.fs; msg($('smMsg'), `+${r.fs} фриспинов!`, 'win'); await d(1200); }
         $('smFsLeft').textContent = left; fsBar.show(n, n + left); Anim.countTo($('smFsWon'), fmt(total), 400); await d(450);
       }
@@ -154,7 +159,11 @@ const SamuraiEngine = (() => {
     if (auto && ap.after(total, bet)) { await sleep(total > 0 ? 900 : 300); if (auto) round(false); }
   }
   $('smSpin').onclick = () => { auto = false; ap.cancel(); round(false); };
-  $('smBuy').onclick = () => { if (!busy && confirm(`Купить бонус за ${SE.BUY_COST * $('smBet').value} ₽?`)) round(true); };
+  const bm = SlotFX.buyMenu($('smBuy'), { bet: () => +$('smBet').value, busy: () => busy,
+    items: [{ key: 'bonus', name: 'Бонус', desc: '12+ фриспинов с растущим множителем — или меньше спинов ×2 / ×4.5', cost: SE.BUY_COST },
+            { key: 'super', name: '🔥 Супер-бонус', desc: 'Фриспины, множитель сразу ×5 и растёт дальше', cost: SUPER }],
+    onBuy(k) { auto = false; ap.cancel(); round(k); } });
+  $('smBet').addEventListener('change', bm.paint);
   const ap = SlotUI.auto($('smAuto'), { start: () => { auto = true; if (!busy) round(false); }, stop: () => { auto = false; if (!busy) setOff(false); } });
   $('smTurbo').onclick = () => { turbo = !turbo; $('samurai').classList.toggle('turbo', turbo); $('smTurbo').textContent = 'Турбо: ' + (turbo ? 'вкл' : 'выкл'); };
 })();

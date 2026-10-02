@@ -56,7 +56,7 @@ const SweetEngine = (() => {
   const scatters = g => g.flat().filter(x => x.s === 'scatter').length;
 
   // Одно вращение: цепочка тумблов. carry — накопленный множитель фриспинов (или 0 в базовой игре)
-  function spin(bet, { ante = false, free = false, carry = 0, forceScatters = 0 } = {}) {
+  function spin(bet, { ante = false, free = false, carry = 0, forceScatters = 0, orbX = 1 } = {}) {
     let grid = newGrid({ scatter: true, ante, orb: free });
     if (forceScatters) {                          // покупка бонуса: гарантированно 4 скаттера
       const pos = []; while (pos.length < forceScatters) { const p = [Math.floor(Math.random() * COLS), Math.floor(Math.random() * ROWS)]; if (!pos.some(q => q[0] === p[0] && q[1] === p[1])) pos.push(p); }
@@ -71,7 +71,7 @@ const SweetEngine = (() => {
       grid = tumble(grid, cl, free); grids.push(grid); orbSum += orbsIn(grid);
     }
     const sc = scatters(grids[0]);
-    const mult = free ? orbSum : 0;
+    const mult = free ? orbSum * orbX : 0;
     const lineWin = base > 0 ? base * (mult > 0 ? mult : 1) : 0;
     const scWin = sc >= 4 ? SCATTER_PAY[Math.min(sc, 6)] * bet : 0;
     return { grids, steps, base, orbSum, mult, lineWin, scatters: sc, scWin, total: lineWin + scWin,
@@ -102,12 +102,12 @@ const SweetEngine = (() => {
     oGrid.appendChild(col);
   }
   // drop: false — просто показать; true — анимация падения. prev — предыдущее поле: тогда падают только сдвинувшиеся и новые клетки
-  function oRender(g, drop, prev) {
+  function oRender(g, drop, prev, extra) {
     const dy = drop ? (prev ? Anim.dropDiff(prev, g) : g.map(col => col.map(() => OL.ROWS + 1))) : null;
     g.forEach((col, c) => col.forEach((x, r) => {
       const el = oCells[c][r], d = dy ? dy[c][r] : 0;
       el.className = 'oc' + (x.s === 'orb' ? ' orb' : x.s === 'scatter' ? ' scatter' : '') + (d ? ' drop' : '');
-      if (d) { el.style.setProperty('--dy', d); el.style.setProperty('--d', (prev ? c * 0.012 : c * 0.05 + (OL.ROWS - r) * 0.025) + 's'); }
+      if (d) { el.style.setProperty('--dy', d); el.style.setProperty('--d', (prev ? c * 0.012 : c * 0.05 + (OL.ROWS - r) * 0.025 + (extra ? extra[c] : 0)) + 's'); }
       if (x.s === 'orb') el.textContent = '×' + x.v; else el.innerHTML = Art.html('sweet', x.s) || OL.SYMS[x.s].e;
     }));
   }
@@ -123,7 +123,7 @@ const SweetEngine = (() => {
     Object.entries(OL.SYMS).filter(([, s]) => s.pay).map(([k, s]) => `<tr><td>${Art.html('sweet', k)}</td>${s.pay.map(p => `<td>×${p}</td>`).join('')}</tr>`).join('') +
     '</table><small>множители от ставки</small>';
   const oCost = () => +$('swBet').value * ($('swAnte').checked ? OL.ANTE : 1);
-  const updOCost = () => { $('swCost').textContent = oCost(); $('swBuy').textContent = `Купить бонус (${OL.BUY_COST * $('swBet').value} ₽)`; };
+  const updOCost = () => { $('swCost').textContent = oCost(); };
   $('swBet').onchange = $('swAnte').onchange = updOCost; updOCost();
 
   let oBusy = false, oAuto = false, oTurbo = false;
@@ -134,7 +134,9 @@ const SweetEngine = (() => {
   async function playSpin(r, bet, carry) {         // проигрывает анимацию одного спина, возвращает ничего
     let acc = 0, shown = carry + orbSumOf(r.grids[0]);
     Anim.countTo($('swWin'), 0, 200); $('swMult').textContent = '×' + shown;
-    await exitGrid(); oRender(r.grids[0], true); await od(700);
+    await exitGrid();
+    const T = SlotFX.teaseDrop(oCells.map(c => c[0].parentElement), r.grids[0], x => x.s === 'scatter', 3, oTurbo);
+    oRender(r.grids[0], true, null, T.extraS); await od(700); await sleep(T.waitMs);
     for (let i = 0; i < r.steps.length; i++) {
       const cl = r.steps[i]; if (!cl.length) break;
       cl.forEach(c => c.cells.forEach(([a, b]) => oCells[a][b].classList.add('hit')));
@@ -154,30 +156,34 @@ const SweetEngine = (() => {
     }
   }
 
-  async function oSpinOnce(bet, opts) {              // одно вращение + начисление
+  async function oSpinOnce(bet, opts, g = 1) {       // g — множитель выбранных фриспинов
     const r = OL.spin(bet, opts);
     await playSpin(r, bet, opts.carry || 0);
+    r.total = Math.round(r.total * g * 100) / 100; r.scWin *= g;
     if (r.total > 0) setBalance(Casino.balance + r.total);
     if (r.scWin) msg($('swMsg'), `⚡ ×${r.scatters}: +${fmt(r.scWin)} ₽`, 'win');
     else if (!r.total) msg($('swMsg'), 'Без выигрыша', 'lose');
     else msg($('swMsg'), `Выигрыш: ${fmt(r.total)} ₽`, 'win');
     return r;
   }
+  const FS_TABLE = [[1, 1], [0.6, 1.6], [0.4, 2.6]], SUPER = 130;
   async function oRound(buy) {
     if (oBusy) return; const bet = +$('swBet').value, ante = $('swAnte').checked;
-    const cost = buy ? OL.BUY_COST * bet : oCost();
+    const cost = buy ? (buy === 'super' ? SUPER : OL.BUY_COST) * bet : oCost();
     if (cost > Casino.balance) { oAuto = false; ap.cancel(); setOControls(false); return msg($('swMsg'), 'Недостаточно средств', 'lose'); }
-    oBusy = true; setOControls(true); setBalance(Casino.balance - cost);
+    oBusy = true; setOControls(true); setBalance(Casino.balance - cost); SlotFX.jackpot.bet(cost);
     $('swFs').style.display = 'none'; fsBar.hide();
     let r = await oSpinOnce(bet, buy ? { forceScatters: 4 } : { ante });
     let total = r.total;
     if (r.fs) {
-      let left = r.fs, carry = 0, n = 0; msg($('swMsg'), `⚡ ${left} бесплатных вращений!`, 'win'); await od(1600);
+      const o = buy === 'super' ? { spins: r.fs, g: 1 } : await SlotFX.fsChoice(r.fs, FS_TABLE, { auto: oAuto }), orbX = buy === 'super' ? 2 : 1;
+      let left = o.spins, carry = 0, n = 0;
+      msg($('swMsg'), `⚡ ${left} бесплатных вращений${o.g !== 1 ? ` · выигрыши ×${o.g}` : ''}${orbX > 1 ? ' · все бомбы ×2' : ''}!`, 'win'); await od(1600);
       $('swFs').style.display = 'block';
       while (left > 0) {
         await Casino.whenActive('sweet');                     // ушли со слота — фриспины ждут возвращения
         left--; n++; $('swFs').textContent = `⚡ Фриспины: осталось ${left} · выиграно ${fmt(total)} ₽`; fsBar.show(n, n + left);
-        r = await oSpinOnce(bet, { free: true, carry }); carry = r.newCarry; total += r.total;
+        r = await oSpinOnce(bet, { free: true, carry, orbX }, o.g); carry = r.newCarry; total += r.total;
         if (r.fs) { left += r.fs; msg($('swMsg'), `+${r.fs} фриспинов!`, 'win'); await od(1200); }
         $('swFs').textContent = `⚡ Фриспины: осталось ${left} · выиграно ${fmt(total)} ₽`; fsBar.show(n, n + left); await od(600);
       }
@@ -188,7 +194,11 @@ const SweetEngine = (() => {
     if (oAuto && ap.after(total, bet)) { await sleep(total > 0 ? 900 : 300); if (oAuto) oRound(false); }
   }
   $('swSpin').onclick = () => { oAuto = false; ap.cancel(); oRound(false); };
-  $('swBuy').onclick = () => { if (!oBusy && confirm(`Купить бонус за ${OL.BUY_COST * $('swBet').value} ₽?`)) oRound(true); };
+  const bm = SlotFX.buyMenu($('swBuy'), { bet: () => +$('swBet').value, busy: () => oBusy,
+    items: [{ key: 'bonus', name: 'Бонус', desc: '10 фриспинов с бомбами — или 6×1.6, 4×2.6', cost: OL.BUY_COST },
+            { key: 'super', name: '🔥 Супер-бонус', desc: '10 фриспинов, все бомбы-множители ×2', cost: SUPER }],
+    onBuy(k) { oAuto = false; ap.cancel(); oRound(k); } });
+  $('swBet').addEventListener('change', bm.paint);
   const ap = SlotUI.auto($('swAuto'), { start: () => { oAuto = true; if (!oBusy) oRound(false); }, stop: () => { oAuto = false; if (!oBusy) setOControls(false); } });
   $('swTurbo').onclick = () => { oTurbo = !oTurbo; $('sweet').classList.toggle('turbo', oTurbo); $('swTurbo').textContent = 'Турбо: ' + (oTurbo ? 'вкл' : 'выкл'); };
 

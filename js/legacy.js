@@ -75,7 +75,7 @@ const LegacyEngine = (() => {
     if (LOW.includes(k)) el.textContent = SYM[k].e; else el.innerHTML = Art.html('legacy', k) || SYM[k].e;
   }
   const keys = Object.keys(SYM);
-  const ui = SlotUI.create({ grid: $('lgGrid'), svg: $('lgSvg'), lines: LE.LINES, fill, rand: () => keys[Casino.rnd(keys.length)] });
+  const ui = SlotUI.create({ grid: $('lgGrid'), svg: $('lgSvg'), lines: LE.LINES, fill, rand: () => keys[Casino.rnd(keys.length)], tease: { is: k => k === 'B', at: 2 } });
   ui.show(LE.spin(10, 1).grid);
   for (let i = 1; i <= 10; i++) $('lgLines').add(new Option(i, i)); $('lgLines').value = 10;
   [1, 2, 5, 10, 25, 50].forEach(v => $('lgBet').add(new Option(v, v)));
@@ -84,13 +84,15 @@ const LegacyEngine = (() => {
   const upd = () => $('lgTotal').textContent = total();
   $('lgLines').onchange = $('lgBet').onchange = upd; upd();
 
-  let busy = false, auto = false, freeLeft = 0, fsSum = 0, expands = [];
+  let busy = false, auto = false, freeLeft = 0, fsSum = 0, expands = [], fsG = 1;
+  const FS_TABLE = [[1, 1], [0.5, 2.2], [0.3, 3.6]], BUY = 26, SUPER = 55;
+  const choose = () => SlotFX.fsChoice(LE.FS, FS_TABLE, { auto });
   const lock = () => { $('lgSpin').disabled = true; $('lgLines').disabled = $('lgBet').disabled = true; };
   const unlock = () => { $('lgSpin').disabled = false; $('lgLines').disabled = $('lgBet').disabled = false; };
   const fsBar = SlotUI.fsProgress($('lgFs'));
   function banner() {
     const b = $('lgFs'); b.style.display = freeLeft > 0 || fsSum ? 'flex' : 'none'; fsBar.sync(freeLeft, b.style.display === 'flex');
-    b.innerHTML = `<span>📖 Фриспины: <b>${freeLeft}</b></span><span class="lgexp">Расширяются: ${expands.map(k => `<i>${icon(k)}</i>`).join('')}</span><span>Выиграно: <b>${fmt(fsSum)}</b> ₽</span>`;
+    b.innerHTML = `<span>📖 Фриспины: <b>${freeLeft}</b></span><span class="lgexp">Расширяются: ${expands.map(k => `<i>${icon(k)}</i>`).join('')}</span>${fsG !== 1 ? `<span>Выигрыши <b>×${fsG}</b></span>` : ''}<span>Выиграно: <b>${fmt(fsSum)}</b> ₽</span>`;
   }
   // выбор нового расширяющегося символа — «вращение» книги
   async function pickExpand() {
@@ -105,7 +107,7 @@ const LegacyEngine = (() => {
     if (busy) return; const free = freeLeft > 0, lines = +$('lgLines').value, lineBet = +$('lgBet').value, tot = total();
     if (!free) {
       if (tot > Casino.balance) { auto = false; ap.cancel(); unlock(); return msg($('lgMsg'), 'Недостаточно средств', 'lose'); }
-      setBalance(Casino.balance - tot);
+      setBalance(Casino.balance - tot); SlotFX.jackpot.bet(tot);
     } else freeLeft--;
     busy = true; lock(); ui.clear(); banner();
     if (!auto && !free) msg($('lgMsg'), 'Крутим…');
@@ -125,25 +127,41 @@ const LegacyEngine = (() => {
     const text = [];
     if (r.wins.length) text.push(`Линий: ${r.wins.length}`);
     if (r.book.win) { text.push(`📖 ×${r.book.count}: +${r.book.win}`); r.book.cells.forEach(([a, b]) => ui.cells[a][b].classList.add('hit')); }
-    if (r.total) setBalance(Casino.balance + r.total);
-    if (free) fsSum += r.total;
-    msg($('lgMsg'), r.total ? `${text.join(' · ')} — выигрыш ${fmt(r.total)} ₽` : 'Не повезло, крутите ещё', r.total ? 'win' : 'lose');
+    const pay = free ? Math.round(r.total * fsG) : r.total;
+    if (free && fsG !== 1 && r.total) text.push(`×${fsG}`);
+    if (pay) setBalance(Casino.balance + pay);
+    if (free) fsSum += pay;
+    msg($('lgMsg'), pay ? `${text.join(' · ')} — выигрыш ${fmt(pay)} ₽` : 'Не повезло, крутите ещё', pay ? 'win' : 'lose');
     if (!r.expansions.length) ui.cycleWins(r.wins);
     if (r.book.fs) {
       await sleep(1200);
-      if (!free) { freeLeft = LE.FS; fsSum = 0; expands = []; msg($('lgMsg'), `📖 ${LE.FS} фриспинов! Выбираем расширяющийся символ…`, 'win'); }
-      else { freeLeft += LE.FS; msg($('lgMsg'), `📖 +${LE.FS} фриспинов и ещё один расширяющийся символ!`, 'win'); }
-      banner(); await pickExpand();
+      if (!free) { const o = await choose(); await startFs(o, 1); }
+      else { freeLeft += LE.FS; msg($('lgMsg'), `📖 +${LE.FS} фриспинов и ещё один расширяющийся символ!`, 'win'); banner(); await pickExpand(); }
     }
     if (free && freeLeft === 0) {
       await sleep(1000); msg($('lgMsg'), `Бонус окончен! Итого во фриспинах: ${fmt(fsSum)} ₽`, 'win');
-      Anim.winFx(fsSum, tot); fsSum = 0; expands = []; banner();
+      Anim.winFx(fsSum, tot); fsSum = 0; expands = []; fsG = 1; banner();
     } else if (!free && r.total && !r.book.fs) Anim.winFx(r.total, tot);
     busy = false;
     if (freeLeft > 0) { await sleep(1100); await Casino.whenActive('legacy'); doSpin(); return; }
     if (!auto) unlock();
-    if (auto && ap.after(r.total, tot)) { await sleep(r.total ? 1500 : 450); if (auto) doSpin(); }
+    if (auto && ap.after(pay, tot)) { await sleep(pay ? 1500 : 450); if (auto) doSpin(); }
   }
+  async function startFs(o, nExp) {                         // nExp — сколько расширяющихся символов выбрать сразу
+    freeLeft = o.spins; fsG = o.g; fsSum = 0; expands = []; banner();
+    msg($('lgMsg'), `📖 ${o.spins} фриспинов${o.g !== 1 ? ` · выигрыши ×${o.g}` : ''}! Выбираем расширяющийся символ…`, 'win');
+    for (let i = 0; i < nExp; i++) await pickExpand();
+  }
+  const buyBtn = document.createElement('button'); buyBtn.className = 'btn buybtn'; $('lgAuto').after(buyBtn);
+  const bm = SlotFX.buyMenu(buyBtn, { bet: total, busy: () => busy || freeLeft > 0,
+    items: [{ key: 'bonus', name: 'Бонус', desc: '10 фриспинов с расширяющимся символом — или 5×2.2, 3×3.6', cost: BUY },
+            { key: 'super', name: '🔥 Супер-бонус', desc: '10 фриспинов, сразу 3 расширяющихся символа', cost: SUPER }],
+    async onBuy(k, price) {
+      auto = false; ap.cancel(); setBalance(Casino.balance - price); SlotFX.jackpot.bet(price); busy = true; lock();
+      if (k === 'super') await startFs({ spins: 10, g: 1 }, 3); else await startFs(await choose(), 1);
+      await sleep(600); busy = false; doSpin();
+    } });
+  $('lgLines').addEventListener('change', bm.paint); $('lgBet').addEventListener('change', bm.paint);
   $('lgSpin').onclick = () => { auto = false; ap.cancel(); doSpin(); };
   const ap = SlotUI.auto($('lgAuto'), { start: () => { auto = true; if (!busy) doSpin(); }, stop: () => { auto = false; if (!busy) unlock(); } });
 })();

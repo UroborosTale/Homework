@@ -8,7 +8,7 @@
 </head>
 <body>
 <header>
-  <h1>🎰 Мини-казино</h1>
+  <h1>🎰 <span class="htext">Мини-казино</span></h1>
   <div class="balance"><span class="blabel">Баланс:</span> <span id="balance">500000</span> ₽ <small class="virt">(виртуальные)</small>
     <button class="btn" id="reset" style="padding:4px 10px;font-size:13px">Сброс</button></div>
 </header>
@@ -89,7 +89,7 @@
     <button class="btn primary" id="olySpin">КРУТИТЬ ⚡</button>
     <button class="btn" id="olyAuto">Авто: выкл</button>
     <button class="btn" id="olyTurbo">Турбо: выкл</button>
-    <button class="btn" id="olyBuy">Купить бонус (×100)</button>
+    <button class="btn buybtn" id="olyBuy">Купить бонус</button>
   </div>
   <details class="paytable"><summary>Таблица выплат и правила</summary>
     <div id="olyPay"></div>
@@ -120,7 +120,7 @@
     <button class="btn primary" id="swSpin">КРУТИТЬ 🍭</button>
     <button class="btn" id="swAuto">Авто: выкл</button>
     <button class="btn" id="swTurbo">Турбо: выкл</button>
-    <button class="btn" id="swBuy">Купить бонус (×100)</button>
+    <button class="btn buybtn" id="swBuy">Купить бонус</button>
   </div>
   <details class="paytable"><summary>Таблица выплат и правила</summary>
     <div id="swPay"></div>
@@ -265,7 +265,7 @@
     <button class="btn primary" id="dgSpin">КРУТИТЬ 🐕</button>
     <button class="btn" id="dgAuto">Авто: выкл</button>
     <button class="btn" id="dgTurbo">Турбо: выкл</button>
-    <button class="btn" id="dgBuy">Купить бонус</button>
+    <button class="btn buybtn" id="dgBuy">Купить бонус</button>
   </div>
   <details class="paytable"><summary>Таблица выплат и правила</summary>
     <div id="dgPay"></div>
@@ -392,7 +392,7 @@
     <button class="btn primary" id="smSpin">КРУТИТЬ ⚔️</button>
     <button class="btn" id="smAuto">Авто: выкл</button>
     <button class="btn" id="smTurbo">Турбо: выкл</button>
-    <button class="btn" id="smBuy">Купить бонус</button>
+    <button class="btn buybtn" id="smBuy">Купить бонус</button>
   </div>
   <details class="paytable"><summary>Таблица выплат и правила</summary>
     <div id="smPay"></div>
@@ -616,6 +616,7 @@
 <script src="js/art.js"></script>
 <script src="js/anim.js"></script>
 <script src="js/slotui.js"></script>
+<script src="js/slotfx.js"></script>
 <script src="js/slots.js"></script>
 <script src="js/olympus.js"></script>
 <script src="js/sweet.js"></script>

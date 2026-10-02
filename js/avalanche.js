@@ -69,12 +69,12 @@ const AvalancheEngine = (() => {
     for (let w = 0; w < 3; w++) { const d = document.createElement('div'); d.className = 'oc'; col.appendChild(d); cells[r][w] = d; }
     gridEl.appendChild(col);
   }
-  function render(g, drop, prev) {
+  function render(g, drop, prev, extra) {                  // extra — доп. задержка падения колонок (интрига), с
     const dy = drop ? (prev ? Anim.dropDiff(prev, g) : g.map(col => col.map(() => 4))) : null;
     g.forEach((col, r) => col.forEach((x, w) => {
       const el = cells[r][w], d = dy ? dy[r][w] : 0;
       el.className = 'oc' + (x.s === 'F' ? ' scatter' : '') + (d ? ' drop' : '');
-      if (d) { el.style.setProperty('--dy', d); el.style.setProperty('--d', (prev ? r * 0.015 : r * 0.07 + (2 - w) * 0.04) + 's'); }
+      if (d) { el.style.setProperty('--dy', d); el.style.setProperty('--d', (prev ? r * 0.015 : r * 0.07 + (2 - w) * 0.04 + (extra ? extra[r] : 0)) + 's'); }
       el.innerHTML = Art.html('stone', x.s);
     }));
   }
@@ -98,15 +98,20 @@ const AvalancheEngine = (() => {
     const cw = 560 / 5, rh = 340 / 3;
     svg.innerHTML = wins.map(w => `<polyline class="wline" points="${AE.LINES[w.line].slice(0, w.count).map((row, r) => `${(r + .5) * cw},${(row + .5) * rh}`).join(' ')}" fill="none" stroke="${SlotUI.COLORS[w.line]}" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" opacity=".9"/>`).join('');
   }
-  let busy = false, auto = false, freeLeft = 0, fsSum = 0;
+  let busy = false, auto = false, freeLeft = 0, fsSum = 0, fsG = 1;
+  const FS_TABLE = [[1, 1], [0.5, 2], [0.3, 3.4]], BUY = 27, SUPER = 54;
+  const multsText = g => AE.FS_MULTS.map(m => '×' + Math.round(m * g * 10) / 10).join('/');
+  const choose = () => SlotFX.fsChoice(AE.FS, FS_TABLE, { auto, show: multsText });
   const lock = () => { $('gzSpin').disabled = $('gzBet').disabled = true; };
   const unlock = () => { $('gzSpin').disabled = $('gzBet').disabled = false; };
   const fsBar = SlotUI.fsProgress($('gzFs'));
-  function banner() { const b = $('gzFs'); b.style.display = freeLeft > 0 || fsSum ? 'block' : 'none'; fsBar.sync(freeLeft, b.style.display === 'block'); b.textContent = `🌀 FREE FALLS: осталось ${freeLeft} · множители ×3/×6/×9/×15 · выиграно ${fmt(fsSum)} ₽`; }
+  function banner() { const b = $('gzFs'); b.style.display = freeLeft > 0 || fsSum ? 'block' : 'none'; fsBar.sync(freeLeft, b.style.display === 'block'); b.textContent = `🌀 FREE FALLS: осталось ${freeLeft} · множители ${multsText(fsG)} · выиграно ${fmt(fsSum)} ₽`; }
 
   async function playSpin(r, free) {
     let acc = 0; Anim.countTo($('gzWin'), 0, 200); multBar(free, 0);
-    await exitGrid(); render(r.grids[0], true); await sleep(800);
+    await exitGrid();
+    const T = SlotFX.teaseDrop(cells.map(c => c[0].parentElement), r.grids[0], x => x.s === 'F', 2, $('avalanche').classList.contains('turbo'), c => c <= 2);
+    render(r.grids[0], true, null, T.extraS); await sleep(800 + T.waitMs);
     for (let i = 0; i < r.steps.length; i++) {
       const { wins, mult } = r.steps[i]; if (!wins.length) break;
       multBar(free, i);
@@ -122,28 +127,44 @@ const AvalancheEngine = (() => {
     if (busy) return; const free = freeLeft > 0, lineBet = +$('gzBet').value, tot = total();
     if (!free) {
       if (tot > Casino.balance) { auto = false; ap.cancel(); unlock(); return msg($('gzMsg'), 'Недостаточно средств', 'lose'); }
-      setBalance(Casino.balance - tot);
+      setBalance(Casino.balance - tot); SlotFX.jackpot.bet(tot);
     } else freeLeft--;
     busy = true; lock(); banner();
     if (!auto && !free) msg($('gzMsg'), 'Камни падают…');
     const r = AE.spin(lineBet, free);
     await playSpin(r, free);
-    if (r.total) setBalance(Casino.balance + r.total);
-    if (free) fsSum += r.total;
-    if (!r.total) msg($('gzMsg'), 'Без выигрыша', 'lose'); else msg($('gzMsg'), `Выигрыш: ${fmt(r.total)} ₽`, 'win');
+    const pay = free ? Math.round(r.total * fsG) : r.total;
+    if (pay) setBalance(Casino.balance + pay);
+    if (free) fsSum += pay;
+    if (!pay) msg($('gzMsg'), 'Без выигрыша', 'lose'); else msg($('gzMsg'), `Выигрыш: ${fmt(pay)} ₽${free && fsG !== 1 ? ` (×${fsG})` : ''}`, 'win');
     if (r.fs) {
       cells.flat().forEach((el, i) => { if (el.classList.contains('scatter')) el.classList.add('hit'); });
-      if (!free) { freeLeft = r.fs; fsSum = 0; } else freeLeft += r.fs;
-      msg($('gzMsg'), `🌀 ${free ? '+' : ''}${r.fs} FREE FALLS!`, 'win'); banner(); await sleep(1600);
+      if (!free) { msg($('gzMsg'), '🌀 Бонус: FREE FALLS!', 'win'); await sleep(1400); startFs(await choose()); }
+      else { freeLeft += r.fs; msg($('gzMsg'), `🌀 +${r.fs} FREE FALLS!`, 'win'); banner(); }
+      await sleep(1600);
     }
-    if (free && freeLeft === 0) { msg($('gzMsg'), `Free Falls окончены: ${fmt(fsSum)} ₽`, 'win'); Anim.winFx(fsSum, tot); fsSum = 0; await sleep(1200); banner(); }
-    else if (!free && r.total && !r.fs) Anim.winFx(r.total, tot);
+    if (free && freeLeft === 0) { msg($('gzMsg'), `Free Falls окончены: ${fmt(fsSum)} ₽`, 'win'); Anim.winFx(fsSum, tot); fsSum = 0; fsG = 1; await sleep(1200); banner(); }
+    else if (!free && pay && !r.fs) Anim.winFx(pay, tot);
     busy = false;
     if (freeLeft > 0) { await sleep(700); await Casino.whenActive('avalanche'); doSpin(); return; }
     multBar(false, 0);
     if (!auto) unlock();
-    if (auto && ap.after(r.total, tot)) { await sleep(r.total ? 1100 : 350); if (auto) doSpin(); }
+    if (auto && ap.after(pay, tot)) { await sleep(pay ? 1100 : 350); if (auto) doSpin(); }
   }
+  function startFs(o) {
+    freeLeft = o.spins; fsG = o.g; fsSum = 0; banner();
+    msg($('gzMsg'), `🌀 ${o.spins} FREE FALLS, множители ${multsText(fsG)}!`, 'win');
+  }
+  const buyBtn = document.createElement('button'); buyBtn.className = 'btn buybtn'; $('gzAuto').after(buyBtn);
+  const bm = SlotFX.buyMenu(buyBtn, { bet: total, busy: () => busy || freeLeft > 0,
+    items: [{ key: 'bonus', name: 'Бонус', desc: '10 Free Falls с множителями ×3…×15 — или 5 и 3 спина с большими', cost: BUY },
+            { key: 'super', name: '🔥 Супер-бонус', desc: '10 Free Falls с удвоенными множителями ×6/×12/×18/×30', cost: SUPER }],
+    async onBuy(k, price) {
+      auto = false; ap.cancel(); setBalance(Casino.balance - price); SlotFX.jackpot.bet(price); busy = true; lock();
+      startFs(k === 'super' ? { spins: 10, g: 2 } : await choose());
+      await sleep(1500); busy = false; doSpin();
+    } });
+  $('gzBet').addEventListener('change', bm.paint);
   $('gzSpin').onclick = () => { auto = false; ap.cancel(); doSpin(); };
   const ap = SlotUI.auto($('gzAuto'), { start: () => { auto = true; if (!busy) doSpin(); }, stop: () => { auto = false; if (!busy) unlock(); } });
 })();

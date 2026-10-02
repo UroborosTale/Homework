@@ -45,13 +45,13 @@ const HoldWinEngine = (() => {
   }
   // Бонус Hold & Win: монеты фиксируются, 3 респина, каждая новая монета сбрасывает счётчик на 3.
   // Возвращает шаги для анимации: [{ board, added:[[r,w]], left }]
-  function holdAndWin(startGrid) {
-    let board = startGrid.map(col => col.map(c => c.s === 'C' ? { ...c } : null)), left = RESPINS;
+  function holdAndWin(startGrid, respins = RESPINS) {
+    let board = startGrid.map(col => col.map(c => c.s === 'C' ? { ...c } : null)), left = respins;
     const steps = [];
     while (left > 0 && board.flat().some(c => !c)) {
       const added = [];
       board = board.map((col, r) => col.map((c, w) => { if (c) return c; if (Math.random() < P_COIN) { added.push([r, w]); return coin(); } return null; }));
-      left = added.length ? RESPINS : left - 1;
+      left = added.length ? respins : left - 1;
       steps.push({ board: board.map(col => col.slice()), added, left });
     }
     const full = board.flat().every(Boolean);
@@ -66,7 +66,14 @@ const HoldWinEngine = (() => {
     }
     return { rtp: +(won / cost).toFixed(4), bonus: trig / n, grand };
   }
-  return { SYMS, LINES, JP, TRIGGER, RESPINS, spin, holdAndWin, simulate, coin };
+  // покупка бонуса: обычное поле, на котором ровно k монет
+  function buyGrid(k) {
+    const grid = spinGrid().map(col => col.map(c => c.s === 'C' ? { s: 'J' } : c)), pos = [];
+    while (pos.length < k) { const p = [rnd(5), rnd(3)]; if (!pos.some(q => q[0] === p[0] && q[1] === p[1])) pos.push(p); }
+    pos.forEach(([r, w]) => grid[r][w] = coin());
+    return grid;
+  }
+  return { SYMS, LINES, JP, TRIGGER, RESPINS, spin, holdAndWin, simulate, coin, buyGrid };
 })();
 
 (() => {
@@ -83,7 +90,7 @@ const HoldWinEngine = (() => {
   }
   const keys = ['G', 'H', 'B', 'S', 'A', 'K', 'Q', 'J', 'W', 'C'];
   const ui = SlotUI.create({ grid: $('hwGrid'), svg: $('hwSvg'), lines: HE.LINES, fill,
-    rand: () => { const k = keys[Casino.rnd(keys.length)]; return k === 'C' ? HE.coin() : { s: k }; } });
+    rand: () => { const k = keys[Casino.rnd(keys.length)]; return k === 'C' ? HE.coin() : { s: k }; }, tease: { is: c => c.s === 'C', at: 4 } });
   ui.show(HE.spin(10, 1).grid);
   for (let i = 1; i <= 10; i++) $('hwLines').add(new Option(i, i)); $('hwLines').value = 10;
   [1, 2, 5, 10, 25, 50].forEach(v => $('hwBet').add(new Option(v, v)));
@@ -103,14 +110,14 @@ const HoldWinEngine = (() => {
   const coinBar = SlotUI.progress($('hwRespins'), { cls: 'pbcoin' });
   const coinProgress = board => { const n = board.flat().filter(Boolean).length, all = board.flat().length;
     coinBar.set(n, all, n >= all ? '🏆 Поле заполнено — GRAND!' : `🪙 Монет: <b>${n}</b> из ${all} — заполните всё поле для GRAND`); };
-  async function bonus(grid) {
-    const h = HE.holdAndWin(grid), sec = $('holdwin'), cells = ui.cells;
+  async function bonus(grid, respins = HE.RESPINS) {
+    const h = HE.holdAndWin(grid, respins), sec = $('holdwin'), cells = ui.cells;
     sec.classList.add('hw-bonus'); $('hwRespins').style.display = 'flex';
-    msg($('hwMsg'), '💰 HOLD & WIN! Монеты зафиксированы — 3 респина', 'win');
+    msg($('hwMsg'), `💰 HOLD & WIN! Монеты зафиксированы — ${respins} респина`, 'win');
     // только монеты остаются, остальные клетки пустеют
     grid.forEach((col, r) => col.forEach((c, w) => { const el = cells[r][w]; if (c.s === 'C') el.classList.add('locked'); else { el.className = 'sc empty'; el.innerHTML = ''; } }));
     const setLeft = n => { const el = $('hwLeft'); el.textContent = n; el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); };
-    setLeft(3); coinProgress(grid.map(col => col.map(c => c.s === 'C' ? c : null))); await sleep(1400);
+    setLeft(respins); coinProgress(grid.map(col => col.map(c => c.s === 'C' ? c : null))); await sleep(1400);
     for (const st of h.steps) {
       const empties = cells.flat().filter(el => el.classList.contains('empty'));
       empties.forEach(el => el.classList.add('respin')); await sleep(750);
@@ -139,7 +146,7 @@ const HoldWinEngine = (() => {
   async function doSpin() {
     if (busy) return; const lines = +$('hwLines').value, lineBet = +$('hwBet').value, tot = total();
     if (tot > Casino.balance) { auto = false; ap.cancel(); unlock(); return msg($('hwMsg'), 'Недостаточно средств', 'lose'); }
-    setBalance(Casino.balance - tot); busy = true; lock(); ui.clear();
+    setBalance(Casino.balance - tot); SlotFX.jackpot.bet(tot); busy = true; lock(); ui.clear();
     if (!auto) msg($('hwMsg'), 'Крутим…');
     const r = HE.spin(lines, lineBet);
     await ui.animate(r.grid);
@@ -156,5 +163,20 @@ const HoldWinEngine = (() => {
     if (auto && ap.after(win, tot)) { await sleep(win ? 1500 : 450); if (auto) doSpin(); }
   }
   $('hwSpin').onclick = () => { auto = false; ap.cancel(); doSpin(); };
+  // покупка бонуса: сразу поле с монетами и респины
+  const BUY = 74, SUPER = 128;
+  const buyBtn = document.createElement('button'); buyBtn.className = 'btn buybtn'; $('hwAuto').after(buyBtn);
+  const bm = SlotFX.buyMenu(buyBtn, { bet: total, busy: () => busy,
+    items: [{ key: 'bonus', name: 'Бонус', desc: 'Hold & Win: 6 монет и 3 респина', cost: BUY },
+            { key: 'super', name: '🔥 Супер-бонус', desc: '8 монет и 4 респина — ближе к GRAND', cost: SUPER }],
+    async onBuy(k, price) {
+      auto = false; ap.cancel(); setBalance(Casino.balance - price); SlotFX.jackpot.bet(price); busy = true; lock(); ui.clear();
+      const sup = k === 'super', grid = HE.buyGrid(sup ? 8 : 6), tot = total();
+      await ui.animate(grid); await sleep(500);
+      const b = await bonus(grid, sup ? 4 : HE.RESPINS); setBalance(Casino.balance + b);
+      msg($('hwMsg'), `Бонус Hold & Win: ${fmt(b)} ₽ (×${fmt(b / tot)})`, 'win'); Anim.winFx(b, tot);
+      busy = false; unlock();
+    } });
+  $('hwLines').addEventListener('change', bm.paint); $('hwBet').addEventListener('change', bm.paint);
   const ap = SlotUI.auto($('hwAuto'), { start: () => { auto = true; if (!busy) doSpin(); }, stop: () => { auto = false; if (!busy) unlock(); } });
 })();
