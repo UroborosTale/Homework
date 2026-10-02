@@ -6,7 +6,7 @@
     slotBet: [100, 250, 500, 1000], egBet: [100, 250, 500, 1000], bbBet: [100, 250, 500, 1000], hwBet: [100, 250, 500, 1000],
     lgBet: [100, 250, 500, 1000], gzBet: [100, 250, 500, 1000], olyBet: [5000, 10000, 25000], swBet: [5000, 10000, 25000], dgBet: [5000, 10000, 25000],
   };
-  const ALL = [...Object.keys(BETS), 'smBet'];
+  const ALL = [...Object.keys(BETS), 'smBet', 'clusterBet', 'chicagoBet', 'piratesBet', 'dragonsBet', 'circusBet', 'diamondsBet'];
   for (const [id, extra] of Object.entries(BETS)) {
     const sel = $(id); const have = new Set([...sel.options].map(o => +o.value));
     extra.forEach(v => { if (!have.has(v)) sel.add(new Option(v, v)); });
@@ -32,7 +32,7 @@
     $(after).insertAdjacentElement('afterend', b);
   });
   // Пробел / Enter — главная кнопка активной игры (если фокус не в поле ввода)
-  const MAIN = { slots: 'spin', olympus: 'olySpin', sweet: 'swSpin', egypt: 'egSpin', bigbass: 'bbSpin', doghouse: 'dgSpin', holdwin: 'hwSpin', avalanche: 'gzSpin', legacy: 'lgSpin', samurai: 'smSpin' };
+  const MAIN = { slots: 'spin', olympus: 'olySpin', sweet: 'swSpin', egypt: 'egSpin', bigbass: 'bbSpin', doghouse: 'dgSpin', holdwin: 'hwSpin', avalanche: 'gzSpin', legacy: 'lgSpin', samurai: 'smSpin', cluster: 'clusterSpin', chicago: 'chicagoSpin', pirates: 'piratesSpin', dragons: 'dragonsSpin', circus: 'circusSpin', diamonds: 'diamondsSpin' };
   document.addEventListener('keydown', e => {
     if (e.key !== ' ' || e.repeat || /INPUT|SELECT|TEXTAREA|BUTTON/.test(e.target.tagName) || document.querySelector('.modal.show')) return;
     const sec = document.querySelector('main > section.active'); if (!sec || !MAIN[sec.id]) return;
