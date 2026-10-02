@@ -23,7 +23,9 @@ const Casino = (() => {
     balRaf = requestAnimationFrame(step);
   }
   function setBalance(v) {
+    const before = balance;
     balance = Math.max(0, Math.round(v * 100) / 100);
+    if (balance !== before) document.dispatchEvent(new CustomEvent('casino:balance', { detail: { delta: Math.round((balance - before) * 100) / 100 } }));
     paintBalance(balance);
     try { localStorage.setItem(KEY, balance); } catch (e) {}
   }
