@@ -1126,3 +1126,8 @@
   #diamonds .sc.hit, #chicago .sc.hit, #pirates .sc.hit, #dragons .sc.hit, #circus .sc.hit { background: radial-gradient(circle, #fff59d, #ffb300); box-shadow: 0 0 16px 4px #ffc107; }
   #diamonds .sc.hit { background: radial-gradient(circle, #e1bee7, #7b1fa2); }
   .kitblock .bigl { font: 900 clamp(48px, 16vw, 110px) Georgia, serif; color: #5d4037; text-shadow: 0 3px 0 #fff, 0 6px 10px #0006; }
+  /* блэкджек: боксы и побочные ставки */
+  .hside { font-size: 12px; font-weight: 800; color: #ffd54f; min-height: 16px; text-shadow: 0 1px 2px #000; }
+  .bjtotal { font-weight: 700; } .bjside { max-width: 90px; }
+  #blackjack .phands { justify-content: center; }
+  @media (max-width: 600px) { #blackjack .phands { gap: 6px; } #blackjack .phand { padding: 4px; } #blackjack .phand .hand-label { font-size: 12px; } }

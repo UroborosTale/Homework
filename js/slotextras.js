@@ -2,11 +2,14 @@
 (() => {
   const { $ } = Casino;
   // id селекта ставки → дополнительные (более крупные) ставки
+  // максимальная общая ставка — 50 000 ₽ (у линейных слотов здесь ставка на линию × 10 линий)
+  const LINE = [100, 250, 500, 1000, 2500, 5000], TOTAL = [5000, 10000, 25000, 50000];
   const BETS = {
-    slotBet: [100, 250, 500, 1000], egBet: [100, 250, 500, 1000], bbBet: [100, 250, 500, 1000], hwBet: [100, 250, 500, 1000],
-    lgBet: [100, 250, 500, 1000], gzBet: [100, 250, 500, 1000], olyBet: [5000, 10000, 25000], swBet: [5000, 10000, 25000], dgBet: [5000, 10000, 25000],
+    slotBet: LINE, egBet: LINE, bbBet: LINE, hwBet: LINE, lgBet: LINE, gzBet: LINE,
+    olyBet: TOTAL, swBet: TOTAL, dgBet: TOTAL, smBet: TOTAL,
+    clusterBet: TOTAL, chicagoBet: TOTAL, piratesBet: TOTAL, dragonsBet: TOTAL, circusBet: TOTAL, diamondsBet: TOTAL,
   };
-  const ALL = [...Object.keys(BETS), 'smBet', 'clusterBet', 'chicagoBet', 'piratesBet', 'dragonsBet', 'circusBet', 'diamondsBet'];
+  const ALL = Object.keys(BETS);
   for (const [id, extra] of Object.entries(BETS)) {
     const sel = $(id); const have = new Set([...sel.options].map(o => +o.value));
     extra.forEach(v => { if (!have.has(v)) sel.add(new Option(v, v)); });
