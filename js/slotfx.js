@@ -151,7 +151,7 @@ const SlotFX = (() => {
     const cat = document.getElementById('catRecent');
     if (cat && !document.getElementById('catJackpot')) cat.insertAdjacentHTML('beforebegin', `<div class="jpbanner" id="catJackpot">
       <div class="jpbt">💎 ПРОГРЕССИВНЫЙ ДЖЕКПОТ 💎</div><div class="jpba"><span class="jpval">0</span> ₽</div>
-      <div class="jpbs">Растёт с каждой ставки во всех 10 слотах. Шанс сорвать — с любого спина, чем больше ставка, тем выше шанс.</div><div class="jpbl" id="jpLast"></div></div>`);
+      <div class="jpbs">Растёт с каждой ставки во всех слотах. Шанс сорвать — с любого спина, чем больше ставка, тем выше шанс.</div><div class="jpbl" id="jpLast"></div></div>`);
     document.querySelectorAll('.jpval').forEach(el => el.textContent = money(jp.pool));
     paintJp(0);
   }

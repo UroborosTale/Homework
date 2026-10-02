@@ -207,5 +207,5 @@ const Art = (() => {
     const a = (ANIM[game] && ANIM[game][key]) || 'pulse';
     return inner ? `<svg class="sym" data-a="${a}" viewBox="0 0 100 100" aria-hidden="true">${inner}</svg>` : null;
   }
-  return { html, sets };
+  return { html, sets, anim: ANIM };
 })();
