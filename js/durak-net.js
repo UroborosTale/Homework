@@ -1,4 +1,5 @@
-// Сеть для дурака: комнаты по коду.
+// Сеть для онлайн-игр (дурак, шахматы, нарды, морской бой): комнаты по коду.
+// 0) свой ретранслятор в Яндекс Облаке (WebSocket, работает в России без VPN) — если указан в js/net-config.js;
 // 1) PeerJS (WebRTC) — браузеры связываются напрямую;
 // 2) запасной канал — публичный MQTT-брокер (сообщения идут через сервер, работает почти в любой сети);
 // 3) BroadcastChannel — только вкладки одного браузера (?net=local или если интернет-каналы недоступны).
@@ -6,8 +7,8 @@
 const DurakNet = (() => {
   const PREFIX = 'mkcasino-durak-v1-';
   const LIBS = {
-    peer: ['https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js', 'https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js'],
-    mqtt: ['https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js', 'https://unpkg.com/mqtt@5.10.1/dist/mqtt.min.js'],
+    peer: ['js/vendor/peerjs.min.js', 'https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js'],       // своя копия, CDN — запасной
+    mqtt: ['js/vendor/mqtt.min.js', 'https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js'],
   };
   const BROKERS = ['wss://broker.emqx.io:8084/mqtt', 'wss://broker.hivemq.com:8884/mqtt'];
   const ICE = { iceServers: [
@@ -138,6 +139,88 @@ const DurakNet = (() => {
     throw lastErr || new Error('Ретранслятор недоступен');
   }
 
+  // ---------- Ретранслятор в Яндекс Облаке (API Gateway WebSocket + функция) ----------
+  // Соединение живёт до 60 минут, поэтому и хозяин, и гость умеют незаметно переподключаться.
+  const relayUrl = () => (window.CASINO_NET && window.CASINO_NET.relay) || '';
+  function ycSocket(onMsg, onDrop) {
+    return withTimeout(new Promise((resolve, reject) => {
+      const ws = new WebSocket(relayUrl()); let opened = false;
+      ws.onopen = () => { opened = true; resolve(ws); };
+      ws.onerror = () => { if (!opened) reject(new Error('Сервер игр недоступен')); };
+      ws.onclose = () => { if (opened) onDrop(ws); };
+      ws.onmessage = e => { let m; try { m = JSON.parse(e.data); } catch (x) { return; } if (m && typeof m === 'object') onMsg(m, ws); };
+    }), 8000, 'Сервер игр не отвечает');
+  }
+  const ycSend = (ws, o) => { if (ws && ws.readyState === 1) ws.send(JSON.stringify(o)); };
+  // ждём ответ определённого вида на запрос
+  function ycAsk(state, req, okType) {
+    return withTimeout(new Promise((resolve, reject) => { state.wait = { okType, resolve, reject }; ycSend(state.ws, req); }), 8000, 'Сервер игр не отвечает')
+      .finally(() => { state.wait = null; });
+  }
+  function ycAnswer(state, m) {
+    const w = state.wait; if (!w) return false;
+    if (m.a === w.okType && !m.c) { w.resolve(m); return true; }
+    if (m.e) { w.reject(new Error(m.e === 'busy' ? 'Код занят' : m.e === 'noroom' ? 'Комната не найдена' : 'Ошибка сервера игр')); return true; }
+    return false;
+  }
+  async function ycHost(code, h) {
+    const st = { ws: null, wait: null, me: '', closed: false }, guests = new Map();   // стабильный id гостя → его текущее соединение
+    const byConn = c => { for (const [id, cur] of guests) if (cur === c) return id; return null; };
+    const leaveLater = new Map();
+    const onMsg = m => {
+      if (ycAnswer(st, m)) return;
+      if (m.a === 'joined' && m.c) {
+        const old = m.prev && byConn(m.prev);
+        if (old) { guests.set(old, m.c); clearTimeout(leaveLater.get(old)); return; }        // гость переподключился
+        const id = 'y:' + m.c; if (!guests.has(id)) { guests.set(id, m.c); h.onJoin(id); }
+      } else if (m.a === 'msg') { const id = byConn(m.c); if (id && !(m.m && m.m.__ping)) h.onData(id, m.m); }
+      else if (m.a === 'left' || m.a === 'gone') {
+        const id = byConn(m.c); if (!id) return;
+        clearTimeout(leaveLater.get(id));                                                   // ждём: вдруг это переподключение
+        leaveLater.set(id, setTimeout(() => { if (guests.get(id) === m.c) { guests.delete(id); h.onLeave(id); } }, 15000));
+      }
+    };
+    const connect = async prev => {
+      st.ws = await ycSocket(onMsg, ws => { if (!st.closed && ws === st.ws) reconnect(); });
+      const r = await ycAsk(st, { a: 'host', room: code, prev }, 'hosted'); st.me = r.me;
+      guests.forEach(c => ycSend(st.ws, { a: 'to', c, m: { __host: r.me } }));          // сообщаем гостям новое соединение хозяина
+    };
+    const reconnect = async () => { for (let i = 0; i < 6 && !st.closed; i++) { try { await connect(st.me); return; } catch (e) { await sleep(1500 * (i + 1)); } } };
+    await connect();
+    const hb = setInterval(() => { ycSend(st.ws, { a: 'ping' }); guests.forEach(c => ycSend(st.ws, { a: 'to', c, m: { __ping: 1 } })); }, 30000);
+    return {
+      send: (id, msg) => { const c = guests.get(id); if (c) ycSend(st.ws, { a: 'to', c, m: msg }); },
+      close: () => { st.closed = true; clearInterval(hb); guests.forEach(c => ycSend(st.ws, { a: 'to', c, m: { __bye: 1 } })); setTimeout(() => { try { st.ws.close(); } catch (e) {} }, 300); },
+    };
+  }
+  async function ycJoin(code, h) {
+    const st = { ws: null, wait: null, me: '', host: '', closed: false }; let lost = 0;
+    const onMsg = m => {
+      if (ycAnswer(st, m)) return;
+      if (m.a === 'msg') {
+        if (m.m && m.m.__host) { st.host = m.m.__host; clearTimeout(lost); return; }
+        if (m.c !== st.host) return;
+        if (m.m && m.m.__ping) return;
+        if (m.m && m.m.__bye) { finish(); return; }
+        h.onData(m.m);
+      } else if (m.a === 'bye') finish();
+      else if (m.a === 'gone' && m.c === st.host) { clearTimeout(lost); lost = setTimeout(finish, 15000); }   // хозяин мог переподключаться
+    };
+    const finish = () => { if (st.closed) return; st.closed = true; clearInterval(hb); try { st.ws.close(); } catch (e) {} h.onClose(); };
+    const connect = async prev => {
+      st.ws = await ycSocket(onMsg, ws => { if (!st.closed && ws === st.ws) reconnect(); });
+      const r = await ycAsk(st, { a: 'join', room: code, prev }, 'joined'); st.me = r.me; st.host = r.host;
+    };
+    const reconnect = async () => { for (let i = 0; i < 6 && !st.closed; i++) { try { await connect(st.me); return; } catch (e) { await sleep(1500 * (i + 1)); } } finish(); };
+    await connect();
+    const hb = setInterval(() => ycSend(st.ws, { a: 'to', c: st.host, m: { __ping: 1 } }), 30000);
+    addEventListener('pagehide', () => { try { st.ws.close(); } catch (e) {} });
+    return {
+      send: msg => ycSend(st.ws, { a: 'to', c: st.host, m: msg }),
+      close: () => { st.closed = true; clearInterval(hb); try { st.ws.close(); } catch (e) {} },
+    };
+  }
+
   // ---------- BroadcastChannel (вкладки одного браузера) ----------
   function localHost(code, h) {
     const ch = new BroadcastChannel('durak-' + code), clients = new Set();
@@ -168,24 +251,38 @@ const DurakNet = (() => {
   // ---------- общий интерфейс ----------
   // Хозяин: поднимает все доступные каналы. kinds — какие каналы работают.
   async function host(code, h) {
-    const parts = [], kinds = [];
-    if (!forceLocal()) {
+    const parts = [], kinds = []; let closed = false;
+    // запасные каналы: PeerJS и MQTT; busy — ошибка «Код занят» от любого из них
+    const extra = async () => {
       const [okPeer, okMqtt] = await Promise.all([loadPeer(), loadMqtt()]);
       const tries = await Promise.allSettled([okPeer ? peerHost(code, h) : Promise.reject(new Error('PeerJS не загрузился')), okMqtt ? mqttHost(code, h) : Promise.reject(new Error('MQTT не загрузился'))]);
-      if (tries[0].status === 'fulfilled') { parts.push(tries[0].value); kinds.push('peer'); }
-      if (tries[1].status === 'fulfilled') { parts.push(tries[1].value); kinds.push('relay'); }
-      if (!parts.length && tries[0].reason && /занят/.test(tries[0].reason.message)) throw tries[0].reason;
+      tries.forEach((t, i) => {
+        if (t.status !== 'fulfilled') return;
+        if (closed) { try { t.value.close(); } catch (e) {} return; }      // комнату уже закрыли, пока канал подключался
+        parts.push(t.value); kinds.push(i ? 'relay' : 'peer');
+      });
+      const busy = tries.find(t => t.status === 'rejected' && /занят/.test(t.reason.message));
+      return busy && busy.reason;
+    };
+    if (!forceLocal()) {
+      if (relayUrl()) { try { parts.push(await ycHost(code, h)); kinds.push('yc'); } catch (e) { if (/занят/.test(e.message)) throw e; } }
+      if (kinds.includes('yc')) extra().catch(() => {});                  // сервер игр работает — запасные каналы подключаются в фоне
+      else { const busy = await extra(); if (busy && !parts.length) throw busy; }
     }
     parts.push(localHost(code, h)); kinds.push('local');
     return {
-      kinds, kind: kinds.includes('peer') || kinds.includes('relay') ? 'online' : 'local',
+      kinds, kind: kinds.some(k => k !== 'local') ? 'online' : 'local',
       send: (id, msg) => parts.forEach(p => p.send(id, msg)),   // каждый канал отправляет только «своим» id
-      close: () => parts.forEach(p => { try { p.close(); } catch (e) {} }),
+      close: () => { closed = true; parts.forEach(p => { try { p.close(); } catch (e) {} }); },
     };
   }
-  // Гость: прямое соединение (2 попытки) → ретранслятор → вкладки этого браузера
+  // Гость: сервер игр в Яндекс Облаке → прямое соединение (2 попытки) → MQTT-ретранслятор → вкладки этого браузера
   async function join(code, h, onStage = () => {}) {
     const errs = [];
+    if (!forceLocal() && relayUrl()) {
+      onStage('Подключаюсь к серверу игр…');
+      try { const c = await ycJoin(code, h); return { ...c, kind: 'yc' }; } catch (e) { errs.push(e.message); }
+    }
     if (!forceLocal()) {
       if (await loadPeer()) for (let i = 0; i < 2; i++) {
         onStage(`Прямое соединение${i ? ' (ещё попытка)' : ''}…`);

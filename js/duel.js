@@ -89,7 +89,7 @@ const Duel = (() => {
       try {
         net = await DurakNet.join(c, { onData: onClientData, onClose: onHostGone }, s => note(s));
         role = 'client'; code = c; net.send({ t: 'hello', name: myName, game: G.id }); note('');
-        SlotUI.toast(net.kind === 'peer' ? 'Подключено напрямую' : net.kind === 'relay' ? 'Подключено через ретранслятор' : 'Подключено (вкладки этого браузера)');
+        SlotUI.toast(net.kind === 'yc' ? 'Подключено через сервер игр' : net.kind === 'peer' ? 'Подключено напрямую' : net.kind === 'relay' ? 'Подключено через ретранслятор' : 'Подключено (вкладки этого браузера)');
         q('d-rcode').textContent = code; screen('duel-room'); q('d-rinfo').textContent = 'Ждём, когда хозяин начнёт игру…';
         q('d-start').style.display = 'none'; q('d-seats').innerHTML = ''; q('d-netkind').textContent = '';
       } catch (e) { note(e.message || 'Не удалось подключиться', 'lose'); }
@@ -104,7 +104,7 @@ const Duel = (() => {
       q('d-rinfo').textContent = isHost() ? `${optText()}. Отправьте другу код или ссылку.` : `${optText()} · ждём, когда хозяин начнёт игру…`;
       const k = net && net.kinds;
       q('d-netkind').textContent = !net ? '' : net.kind === 'local' ? '⚠️ Онлайн-сервисы недоступны: комната работает только между вкладками этого браузера.'
-        : k && !k.includes('peer') ? 'ℹ️ Прямое соединение недоступно — игра пойдёт через ретранслятор (это нормально)' : '';
+        : k && k.includes('yc') ? '✅ Сервер игр подключён — друзья смогут войти без VPN' : k && !k.includes('peer') ? 'ℹ️ Прямое соединение недоступно — игра пойдёт через ретранслятор (это нормально)' : '';
     }
     q('d-copy').onclick = async () => { try { await navigator.clipboard.writeText(roomLink()); SlotUI.toast('Ссылка скопирована'); } catch (e) { prompt('Скопируйте ссылку:', roomLink()); } };
     q('d-leave').onclick = () => leave();
