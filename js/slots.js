@@ -226,7 +226,7 @@ const SlotEngine = (() => {
       gamble = null; lastWin = 0; $('gamblePanel').style.display = 'none'; $('spin').disabled = false;
     }
   }
-  $('gRed').onclick = () => guess('red'); $('gBlack').onclick = () => guess('black');
+  $('gmRed').onclick = () => guess('red'); $('gBlack').onclick = () => guess('black');
   $('gTake').onclick = takeGamble;
 
   /* --- Бонус «Сундуки» --- */

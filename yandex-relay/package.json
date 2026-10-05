@@ -1,0 +1,7 @@
+{
+  "name": "casino-relay",
+  "version": "1.0.0",
+  "description": "Ретранслятор онлайн-игр казино: Yandex API Gateway (WebSocket) + Cloud Functions + Object Storage",
+  "main": "index.js",
+  "license": "MIT"
+}

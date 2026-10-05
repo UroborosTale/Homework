@@ -42,3 +42,7 @@
 
 ## Публикация на GitHub Pages
 Репозиторий → Settings → Pages → Source: **GitHub Actions**. После слияния в `master` (или `main`) workflow `.github/workflows/pages.yml` опубликует сайт.
+
+## Онлайн-игры без VPN
+
+Дурак, шахматы, нарды и морской бой по сети могут работать через собственный сервер в Яндекс Облаке — без VPN и в бесплатных лимитах облака. Код сервера и пошаговая инструкция: [`yandex-relay/README.md`](yandex-relay/README.md). Адрес сервера указывается в `js/net-config.js`; пока он пустой, используются запасные каналы (PeerJS и MQTT, библиотеки лежат в `js/vendor`).

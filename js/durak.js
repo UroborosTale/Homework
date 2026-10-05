@@ -53,7 +53,7 @@
     try {
       net = await DurakNet.join(c, { onData: onClientData, onClose: onHostGone }, stage => note(stage));
       role = 'client'; code = c; net.send({ t: 'hello', name: myName }); note('');
-      SlotUI.toast(net.kind === 'peer' ? 'Подключено напрямую' : net.kind === 'relay' ? 'Подключено через ретранслятор' : 'Подключено (вкладки этого браузера)');
+      SlotUI.toast(net.kind === 'yc' ? 'Подключено через сервер игр' : net.kind === 'peer' ? 'Подключено напрямую' : net.kind === 'relay' ? 'Подключено через ретранслятор' : 'Подключено (вкладки этого браузера)');
       $('dkRoomCode').textContent = code; screen('dkRoom'); $('dkRoomInfo').textContent = 'Ждём, когда хозяин начнёт игру…';
     } catch (e) { note(e.message || 'Не удалось подключиться', 'lose'); }
     $('dkJoin').disabled = false;
@@ -72,7 +72,7 @@
     $('dkRoomInfo').textContent = host ? `${modeName(cfg.mode)} · ставка ${cfg.stake} ₽ · мест ${cfg.seats}. Отправьте друзьям код или ссылку.` : `${modeName(cfg.mode)} · ставка ${cfg.stake} ₽ · ждём, когда хозяин начнёт игру…`;
     const k = net && net.kinds;
     $('dkNetKind').textContent = !net ? '' : net.kind === 'local' ? '⚠️ Онлайн-сервисы недоступны: комната работает только между вкладками этого браузера. Проверьте интернет или попробуйте другую сеть/VPN.'
-      : k && !k.includes('peer') ? 'ℹ️ Прямое соединение недоступно — игра пойдёт через ретранслятор (это нормально)' : k && !k.includes('relay') ? 'ℹ️ Ретранслятор недоступен — только прямое соединение' : '';
+      : k && k.includes('yc') ? '✅ Сервер игр подключён — друзья смогут войти без VPN' : k && !k.includes('peer') ? 'ℹ️ Прямое соединение недоступно — игра пойдёт через ретранслятор (это нормально)' : k && !k.includes('relay') ? 'ℹ️ Ретранслятор недоступен — только прямое соединение' : '';
   }
   const modeName = m => m === 'perevodnoy' ? 'Переводной' : 'Подкидной';
   $('dkRoomList').onclick = e => { const b = e.target.closest('.dkkick'); if (!b || !isHost()) return; seats.splice(+b.dataset.i, 1); lobbyChanged(); };
