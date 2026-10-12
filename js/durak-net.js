@@ -1,6 +1,8 @@
-// Сеть для онлайн-игр (дурак, шахматы, нарды, морской бой): комнаты по коду.
-// 0) свой ретранслятор в Яндекс Облаке (WebSocket, работает в России без VPN) — если указан в js/net-config.js;
-// 1) PeerJS (WebRTC) — браузеры связываются напрямую;
+// Сеть для онлайн-игр (дурак, шахматы, нарды, морской бой).
+// 0) P2P по коду/QR/ссылке (js/p2p.js) — без каких-либо серверов, работает всегда; основной способ;
+//    кроме него, хозяин по желанию подключает «сервисные» каналы (в фоне, комната открывается сразу):
+// 1) сервер игр в Яндекс Облаке (WebSocket) — если указан в js/net-config.js;
+// 2) PeerJS (WebRTC) — браузеры связываются напрямую;
 // 2) запасной канал — публичный MQTT-брокер (сообщения идут через сервер, работает почти в любой сети);
 // 3) BroadcastChannel — только вкладки одного браузера (?net=local или если интернет-каналы недоступны).
 // Хозяин слушает все доступные каналы сразу, гость пробует их по очереди.
@@ -221,6 +223,43 @@ const DurakNet = (() => {
     };
   }
 
+  // ---------- P2P по коду приглашения (без серверов) ----------
+  // Хозяин: invite() создаёт приглашение; когда друг пришлёт ответ, accept(ответ) соединяет и вызывает h.onJoin.
+  function wireP2P(dc, onMsg, onGone) {                      // общий разбор канала: JSON, пульс, обрыв
+    let last = Date.now(), dead = false;
+    const gone = () => { if (!dead) { dead = true; clearInterval(hb); onGone(); } };
+    dc.onmessage = e => { last = Date.now(); let m; try { m = JSON.parse(e.data); } catch (x) { return; } if (m && m.__ping) return; if (m && m.__bye) return gone(); onMsg(m); };
+    dc.onclose = gone;
+    const hb = setInterval(() => { try { if (dc.readyState === 'open') dc.send('{"__ping":1}'); } catch (e) {} if (Date.now() - last > 20000) gone(); }, 5000);
+    return { send: msg => { try { if (dc.readyState === 'open') dc.send(JSON.stringify(msg)); } catch (e) {} }, stop: () => { dead = true; clearInterval(hb); try { dc.send('{"__bye":1}'); } catch (e) {} setTimeout(() => { try { dc.close(); } catch (e) {} }, 200); } };
+  }
+  function p2pHost(h) {
+    const conns = new Map(), pending = new Set();
+    return {
+      send: (id, msg) => { const c = conns.get(id); if (c) c.send(msg); },
+      close: () => { conns.forEach(c => c.stop()); pending.forEach(o => o.cancel()); },
+      async invite() {
+        const o = await P2P.createOffer(); pending.add(o);
+        return { code: o.code, cancel: () => { pending.delete(o); o.cancel(); },
+          async accept(answer) {
+            const dc = await o.accept(answer); pending.delete(o);
+            const id = 'r:' + uid(); let w = null;
+            w = wireP2P(dc, m => h.onData(id, m), () => { if (conns.delete(id)) h.onLeave(id); });
+            conns.set(id, w); h.onJoin(id);
+          } };
+      },
+    };
+  }
+  // Гость: по коду приглашения → { answerCode, ready (промис api), cancel }
+  async function joinInvite(offerCode, h) {
+    const a = await P2P.createAnswer(offerCode);
+    const ready = a.opened.then(dc => {
+      const w = wireP2P(dc, m => h.onData(m), () => h.onClose());
+      return { send: w.send, close: w.stop, kind: 'p2p' };
+    });
+    return { answerCode: a.code, ready, cancel: a.cancel };
+  }
+
   // ---------- BroadcastChannel (вкладки одного браузера) ----------
   function localHost(code, h) {
     const ch = new BroadcastChannel('durak-' + code), clients = new Set();
@@ -250,31 +289,28 @@ const DurakNet = (() => {
 
   // ---------- общий интерфейс ----------
   // Хозяин: поднимает все доступные каналы. kinds — какие каналы работают.
-  async function host(code, h) {
+  // opts.offline — только P2P и вкладки одного браузера (без запросов к сервисам). Иначе сервисные каналы
+  // подключаются в фоне, и по мере готовности вызывается api.onchange.
+  async function host(code, h, opts = {}) {
     const parts = [], kinds = []; let closed = false;
-    // запасные каналы: PeerJS и MQTT; busy — ошибка «Код занят» от любого из них
-    const extra = async () => {
-      const [okPeer, okMqtt] = await Promise.all([loadPeer(), loadMqtt()]);
-      const tries = await Promise.allSettled([okPeer ? peerHost(code, h) : Promise.reject(new Error('PeerJS не загрузился')), okMqtt ? mqttHost(code, h) : Promise.reject(new Error('MQTT не загрузился'))]);
-      tries.forEach((t, i) => {
-        if (t.status !== 'fulfilled') return;
-        if (closed) { try { t.value.close(); } catch (e) {} return; }      // комнату уже закрыли, пока канал подключался
-        parts.push(t.value); kinds.push(i ? 'relay' : 'peer');
-      });
-      const busy = tries.find(t => t.status === 'rejected' && /занят/.test(t.reason.message));
-      return busy && busy.reason;
-    };
-    if (!forceLocal()) {
-      if (relayUrl()) { try { parts.push(await ycHost(code, h)); kinds.push('yc'); } catch (e) { if (/занят/.test(e.message)) throw e; } }
-      if (kinds.includes('yc')) extra().catch(() => {});                  // сервер игр работает — запасные каналы подключаются в фоне
-      else { const busy = await extra(); if (busy && !parts.length) throw busy; }
-    }
-    parts.push(localHost(code, h)); kinds.push('local');
-    return {
-      kinds, kind: kinds.some(k => k !== 'local') ? 'online' : 'local',
+    const api = { kinds, kind: 'local', onchange: null, invite: null,
       send: (id, msg) => parts.forEach(p => p.send(id, msg)),   // каждый канал отправляет только «своим» id
-      close: () => { closed = true; parts.forEach(p => { try { p.close(); } catch (e) {} }); },
+      close: () => { closed = true; parts.forEach(p => { try { p.close(); } catch (e) {} }); } };
+    const add = (p, k) => {
+      if (closed) { try { p.close(); } catch (e) {} return; }
+      parts.push(p); kinds.push(k); if (k !== 'p2p' && k !== 'local') api.kind = 'online'; if (api.onchange) api.onchange();
     };
+    const p2p = p2pHost(h); api.invite = p2p.invite; add(p2p, 'p2p');
+    add(localHost(code, h), 'local');
+    if (!opts.offline && !forceLocal()) {
+      (async () => { if (relayUrl()) { try { add(await ycHost(code, h), 'yc'); } catch (e) {} } })();
+      (async () => {
+        const [okPeer, okMqtt] = await Promise.all([loadPeer(), loadMqtt()]);
+        const tries = await Promise.allSettled([okPeer ? peerHost(code, h) : Promise.reject(new Error('нет PeerJS')), okMqtt ? mqttHost(code, h) : Promise.reject(new Error('нет MQTT'))]);
+        tries.forEach((t, i) => { if (t.status === 'fulfilled') add(t.value, i ? 'relay' : 'peer'); });
+      })();
+    }
+    return api;
   }
   // Гость: сервер игр в Яндекс Облаке → прямое соединение (2 попытки) → MQTT-ретранслятор → вкладки этого браузера
   async function join(code, h, onStage = () => {}) {
@@ -297,5 +333,5 @@ const DurakNet = (() => {
     throw new Error(errs.includes('Комната не найдена') ? 'Комната не найдена — проверьте код и что хозяин не закрыл вкладку' : 'Не удалось подключиться: ' + [...new Set(errs)].join('; '));
   }
   const newCode = () => Array.from({ length: 5 }, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random() * 32)]).join('');
-  return { host, join, newCode, forceLocal };
+  return { host, join, joinInvite, newCode, forceLocal };
 })();

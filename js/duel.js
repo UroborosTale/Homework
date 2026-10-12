@@ -20,14 +20,16 @@ const Duel = (() => {
           <label>Сила бота <select class="d-level">${LEVELS.map(([v, l]) => `<option value="${v}"${v === 2 ? ' selected' : ''}>${l}</option>`).join('')}</select></label>
           <label>Ставка, ₽ <input type="number" class="d-stake" value="1000" min="0" step="100"></label>
         </div>
-        <div class="dkbtns"><button class="btn primary d-solo">🤖 Играть с ботом</button><button class="btn primary d-create">🌐 Создать онлайн-комнату</button></div>
-        <div class="dkjoin"><input class="d-code" maxlength="5" placeholder="КОД" autocomplete="off"><button class="btn d-join">Войти в комнату</button></div>
+        <div class="dkbtns"><button class="btn primary d-solo">🤖 Играть с ботом</button><button class="btn primary d-create-off">📱 Создать комнату (QR / код, без сервера)</button><button class="btn d-create">🌐 Через интернет-сервисы</button></div>
+        <details class="p2pdet d-p2pdet"><summary>📷 Войти по QR / коду приглашения</summary><div class="d-p2pjoin"></div></details>
+        <div class="dkjoin"><input class="d-code" maxlength="5" placeholder="КОД" autocomplete="off"><button class="btn d-join">Войти по коду комнаты</button></div>
         <div class="msg d-note"></div>
         <p class="dkhelp">${G.help} Ставка по желанию (можно 0): победитель забирает банк — обе ставки, при ничьей ставки возвращаются.</p>
       </div>
       <div class="dkpanel duel-room" style="display:none">
-        <div class="dkcode">Код комнаты: <b class="d-rcode">—</b> <button class="btn d-copy">📋 Скопировать ссылку</button></div>
+        <div class="dkcode d-coderow">Код комнаты: <b class="d-rcode">—</b> <button class="btn d-copy">📋 Скопировать ссылку</button></div>
         <div class="dknet d-netkind"></div>
+        <div class="d-p2phost"></div>
         <ul class="dkseats d-seats"></ul>
         <div class="dkinfo d-rinfo"></div>
         <div class="dkbtns"><button class="btn primary d-start">▶ Начать игру</button><button class="btn d-leave">Выйти</button></div>
@@ -70,18 +72,32 @@ const Duel = (() => {
       seats = [{ name: myName, kind: 'host' }, { name: '🤖 Бот ' + '★'.repeat(cfg.level), kind: 'bot' }];
       startGame();
     };
-    q('d-create').onclick = async () => {
+    let offlineRoom = false, hostPanel = null;
+    async function createRoom(offline) {
       readCfg(); if (cfg.stake > Casino.balance) return note('Недостаточно средств для ставки', 'lose');
-      note('Создаю комнату…'); q('d-create').disabled = true;
+      note('Создаю комнату…'); q('d-create').disabled = q('d-create-off').disabled = true;
       try {
-        for (let t = 0; t < 3; t++) {
-          code = DurakNet.newCode();
-          try { net = await DurakNet.host(code, { onJoin() {}, onData: onHostData, onLeave }); break; } catch (e) { if (t === 2) throw e; }
-        }
-        role = 'host'; seats = [{ name: myName, kind: 'host' }]; showRoom(); note('');
+        code = DurakNet.newCode(); offlineRoom = offline;
+        net = await DurakNet.host(code, { onJoin() {}, onData: onHostData, onLeave }, { offline });
+        net.onchange = () => { if (q('duel-room').style.display !== 'none') showRoom(); };        // сервисные каналы подключаются в фоне
+        role = 'host'; seats = [{ name: myName, kind: 'host' }];
+        hostPanel = P2P.hostPanel(q('d-p2phost'), { invite: () => net.invite(), game: G.title || G.id, hash: G.id });
+        showRoom(); note('');
       } catch (e) { note(e.message || 'Не удалось создать комнату', 'lose'); }
-      q('d-create').disabled = false;
-    };
+      q('d-create').disabled = q('d-create-off').disabled = false;
+    }
+    q('d-create-off').onclick = () => createRoom(true);
+    q('d-create').onclick = () => createRoom(false);
+    // вход по приглашению (QR / код / ссылка) — без сервера
+    const guestPanel = P2P.guestPanel(q('d-p2pjoin'), {
+      connect: offer => { readCfg(); return DurakNet.joinInvite(offer, { onData: onClientData, onClose: onHostGone }); },
+      onReady: api2 => {
+        net = api2; role = 'client'; code = ''; offlineRoom = true; net.send({ t: 'hello', name: myName, game: G.id }); note('');
+        SlotUI.toast('Подключено напрямую'); q('d-p2pdet').open = false;
+        q('d-rcode').textContent = '—'; screen('duel-room'); q('d-rinfo').textContent = 'Ждём, когда хозяин начнёт игру…';
+        q('d-start').style.display = 'none'; q('d-seats').innerHTML = ''; q('d-netkind').textContent = ''; q('d-coderow').style.display = 'none'; q('d-p2phost').style.display = 'none';
+      },
+    });
     q('d-join').onclick = () => joinRoom((q('d-code').value || '').toUpperCase().trim());
     async function joinRoom(c) {
       readCfg(); if (!/^[A-Z0-9]{5}$/.test(c)) return note('Введите код из 5 символов', 'lose');
@@ -99,12 +115,14 @@ const Duel = (() => {
     const optText = () => [...(G.opts || []).map(o => (o.values.find(([v]) => v === cfg[o.key]) || [, ''])[1]), `ставка ${fmt(cfg.stake)} ₽`].filter(Boolean).join(' · ');
     function showRoom() {
       screen('duel-room'); q('d-rcode').textContent = code || '—';
+      q('d-coderow').style.display = offlineRoom && !(net && net.kinds && net.kinds.some(k => k !== 'p2p' && k !== 'local')) ? 'none' : '';
+      q('d-p2phost').style.display = isHost() && net && net.invite ? '' : 'none';
       q('d-seats').innerHTML = seats.map(s => `<li>${s.kind === 'bot' ? '🤖' : '👤'} ${s.name}${s.kind === 'host' ? ' (хозяин)' : ''}</li>`).join('') + (seats.length < 2 ? '<li class="empty">— ждём соперника —</li>' : '');
       q('d-start').style.display = isHost() ? '' : 'none'; q('d-start').disabled = seats.length < 2;
-      q('d-rinfo').textContent = isHost() ? `${optText()}. Отправьте другу код или ссылку.` : `${optText()} · ждём, когда хозяин начнёт игру…`;
-      const k = net && net.kinds;
-      q('d-netkind').textContent = !net ? '' : net.kind === 'local' ? '⚠️ Онлайн-сервисы недоступны: комната работает только между вкладками этого браузера.'
-        : k && k.includes('yc') ? '✅ Сервер игр подключён — друзья смогут войти без VPN' : k && !k.includes('peer') ? 'ℹ️ Прямое соединение недоступно — игра пойдёт через ретранслятор (это нормально)' : '';
+      q('d-rinfo').textContent = isHost() ? `${optText()}. Пригласите друга по QR/коду.` : `${optText()} · ждём, когда хозяин начнёт игру…`;
+      const k = net && net.kinds, svc = k && k.filter(x => x !== 'p2p' && x !== 'local');
+      q('d-netkind').textContent = !net || !k || !isHost() || offlineRoom ? '' : svc.length ? `✅ Подключены сервисы (${svc.join(', ')}) — друга можно позвать и по коду комнаты. QR/код работает всегда.`
+        : 'ℹ️ Сервисы пока не ответили — используйте приглашение по QR/коду ниже (работает без сервера).';
     }
     q('d-copy').onclick = async () => { try { await navigator.clipboard.writeText(roomLink()); SlotUI.toast('Ссылка скопирована'); } catch (e) { prompt('Скопируйте ссылку:', roomLink()); } };
     q('d-leave').onclick = () => leave();
@@ -228,6 +246,7 @@ const Duel = (() => {
     }
     function reset() {
       clearTimeout(botTimer); if (net) try { net.close(); } catch (e) {}
+      guestPanel.reset(); hostPanel = null; offlineRoom = false;
       net = null; role = 'none'; st = null; V = null; seats = []; code = ''; q('duel-over').style.display = 'none';
       if (ui.reset) ui.reset();
       screen('duel-lobby');
@@ -238,6 +257,11 @@ const Duel = (() => {
     const m = /[?&]room=([A-Z0-9]{5})\b/.exec(location.search);
     screen('duel-lobby');
     if (m && location.hash === '#' + G.id) { q('d-code').value = m[1]; setTimeout(() => { Casino.openTab(G.id); joinRoom(m[1]); }, 300); }
+    // ссылка-приглашение ?p2p=КОД#игра от хозяина без сервера
+    if (location.hash === '#' + G.id && /[?&]p2p=/.test(location.search)) {
+      const off = P2P.pendingOffer();
+      setTimeout(() => { Casino.openTab(G.id); q('d-p2pdet').open = true; guestPanel.fill(off); }, 300);
+    }
     games[G.id] = api;
     return { api };
   }

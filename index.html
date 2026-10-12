@@ -493,16 +493,19 @@
     </div>
     <div class="dkbtns">
       <button class="btn primary" id="dkSolo">🤖 Играть с ботами</button>
-      <button class="btn primary" id="dkCreate">🌐 Создать онлайн-комнату</button>
+      <button class="btn primary" id="dkCreateOff">📱 Создать комнату (QR / код, без сервера)</button>
+      <button class="btn" id="dkCreate">🌐 Через интернет-сервисы</button>
     </div>
-    <div class="dkjoin"><input id="dkCode" maxlength="5" placeholder="КОД"><button class="btn" id="dkJoin">Войти в комнату</button></div>
+    <details class="p2pdet" id="dkP2PDet"><summary>📷 Войти по QR / коду приглашения</summary><div id="dkP2PJoin"></div></details>
+    <div class="dkjoin"><input id="dkCode" maxlength="5" placeholder="КОД"><button class="btn" id="dkJoin">Войти по коду комнаты</button></div>
     <div class="msg" id="dkNote"></div>
     <p class="dkhelp">Создайте комнату и отправьте друзьям код или ссылку — свободные места можно занять ботами. Все ставят одинаковую сумму; дурак теряет ставку, остальные делят банк. Колода 36 карт.</p>
   </div>
 
   <div id="dkRoom" class="dkpanel" style="display:none">
-    <div class="dkcode">Код комнаты: <b id="dkRoomCode">—</b> <button class="btn" id="dkCopy">📋 Скопировать ссылку</button></div>
+    <div class="dkcode" id="dkCodeRow">Код комнаты: <b id="dkRoomCode">—</b> <button class="btn" id="dkCopy">📋 Скопировать ссылку</button></div>
     <div class="dknet" id="dkNetKind"></div>
+    <div id="dkP2PHost"></div>
     <ul class="dkseats" id="dkRoomList"></ul>
     <div class="dkinfo" id="dkRoomInfo"></div>
     <div class="dkbtns">
@@ -659,6 +662,9 @@
 <script src="js/dice.js"></script>
 <script src="js/hilo.js"></script>
 <script src="js/durak-engine.js"></script>
+<script src="js/vendor/qrcode.js"></script>
+<script src="js/vendor/jsQR.js"></script>
+<script src="js/p2p.js"></script>
 <script src="js/net-config.js"></script>
 <script src="js/durak-net.js"></script>
 <script src="js/durak.js"></script>
