@@ -1204,3 +1204,18 @@
     .linesvg polyline { stroke-dashoffset: 0; }
   }
   .kit-drop .kitgrid { overflow: hidden; border-radius: 10px; }
+
+  /* ---------- P2P: приглашения по QR / коду ---------- */
+  .p2pbox { margin: 12px 0; padding: 12px; border-radius: 14px; background: #0005; border: 1px dashed #64b5f6; }
+  .p2phead { font-weight: 800; text-align: center; color: #90caf9; margin-bottom: 8px; }
+  .p2pdet { margin: 12px 0; padding: 8px 12px; border-radius: 12px; background: #ffffff0d; border: 1px solid #ffffff22; }
+  .p2pdet > summary { cursor: pointer; color: #90caf9; font-weight: 700; }
+  .p2pcard { margin: 10px 0; padding: 10px; border-radius: 12px; background: #ffffff12; border: 1px solid #ffffff22; }
+  .p2pstep { margin: 6px 0; font-size: 14px; }
+  .p2pqr { display: flex; justify-content: center; margin: 8px 0; }
+  .p2pqr svg { width: min(70vw, 240px); height: auto; background: #fff; border-radius: 10px; padding: 4px; }
+  .p2pbtns { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin: 6px 0; }
+  .p2pta { width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #2c4a6a; background: #0b1510; color: #fff; font: 13px monospace; resize: vertical; }
+  .p2pst { min-height: 20px; text-align: center; font-size: 14px; color: var(--muted); margin-top: 6px; }
+  .p2pst.ok { color: #69f0ae; font-weight: 700; } .p2pst.err { color: #ff8a80; font-weight: 700; }
+  .p2pscan video { width: 100%; max-height: 60vh; border-radius: 12px; background: #000; object-fit: cover; }

@@ -33,19 +33,33 @@
     seats = [{ name: myName, kind: 'host' }]; while (seats.length < cfg.seats) seats.push({ name: botName(), kind: 'bot' });
     startGame();
   };
-  $('dkCreate').onclick = async () => {
+  let offlineRoom = false;
+  async function createRoom(offline) {
     readCfg(); if (cfg.stake > Casino.balance) return note('Недостаточно средств для ставки', 'lose');
-    note('Создаю комнату…'); $('dkCreate').disabled = true;
+    note('Создаю комнату…'); $('dkCreate').disabled = $('dkCreateOff').disabled = true;
     try {
-      for (let tries = 0; tries < 3; tries++) {
-        code = DurakNet.newCode();
-        try { net = await DurakNet.host(code, { onJoin, onData: onHostData, onLeave }); break; } catch (e) { if (tries === 2) throw e; }
-      }
+      code = DurakNet.newCode(); offlineRoom = offline;
+      net = await DurakNet.host(code, { onJoin, onData: onHostData, onLeave }, { offline });
+      net.onchange = () => { if ($('dkRoom').style.display !== 'none') showRoom(); };          // сервисные каналы подключаются в фоне
       role = 'host'; seats = [{ name: myName, kind: 'host' }];
+      hostPanel = P2P.hostPanel($('dkP2PHost'), { invite: () => net.invite(), game: 'дурак', hash: 'durak' });
       showRoom(); note('');
     } catch (e) { note(e.message || 'Не удалось создать комнату', 'lose'); }
-    $('dkCreate').disabled = false;
-  };
+    $('dkCreate').disabled = $('dkCreateOff').disabled = false;
+  }
+  let hostPanel = null;
+  $('dkCreateOff').onclick = () => createRoom(true);
+  $('dkCreate').onclick = () => createRoom(false);
+  // вход по приглашению (QR / код / ссылка) — без сервера
+  const guestPanel = P2P.guestPanel($('dkP2PJoin'), {
+    prefill: '',
+    connect: offer => { readCfg(); return DurakNet.joinInvite(offer, { onData: onClientData, onClose: onHostGone }); },
+    onReady: api => {
+      net = api; role = 'client'; code = ''; offlineRoom = true; net.send({ t: 'hello', name: myName }); note('');
+      SlotUI.toast('Подключено напрямую');
+      $('dkP2PDet').open = false; screen('dkRoom'); showRoom(); $('dkRoomInfo').textContent = 'Ждём, когда хозяин начнёт игру…';
+    },
+  });
   $('dkJoin').onclick = () => joinRoom(($('dkCode').value || '').toUpperCase().trim());
   async function joinRoom(c) {
     readCfg(); if (!/^[A-Z0-9]{5}$/.test(c)) return note('Введите код из 5 символов', 'lose');
@@ -64,15 +78,17 @@
   function roomLink() { const u = new URL(location.href); u.hash = 'durak'; u.searchParams.set('room', code); return u.toString(); }
   function showRoom() {
     screen('dkRoom'); $('dkRoomCode').textContent = code || '—';
+    $('dkCodeRow').style.display = offlineRoom && !(net && net.kinds && net.kinds.some(k => k !== 'p2p' && k !== 'local')) ? 'none' : '';
+    $('dkP2PHost').style.display = isHost() && net && net.invite ? '' : 'none';
     $('dkRoomList').innerHTML = seats.map((s, i) => `<li class="${s.kind}">${i + 1}. ${s.kind === 'bot' ? '🤖' : '👤'} ${s.name}${s.kind === 'host' ? ' (хозяин)' : ''}${isHost() && s.kind === 'bot' ? ` <button class="btn dkkick" data-i="${i}">✕</button>` : ''}</li>`).join('') +
       Array.from({ length: Math.max(0, cfg.seats - seats.length) }, () => '<li class="empty">— свободное место —</li>').join('');
     const host = isHost();
     $('dkAddBot').style.display = $('dkStart').style.display = host ? '' : 'none';
     $('dkAddBot').disabled = seats.length >= cfg.seats; $('dkStart').disabled = seats.length < 2;
-    $('dkRoomInfo').textContent = host ? `${modeName(cfg.mode)} · ставка ${cfg.stake} ₽ · мест ${cfg.seats}. Отправьте друзьям код или ссылку.` : `${modeName(cfg.mode)} · ставка ${cfg.stake} ₽ · ждём, когда хозяин начнёт игру…`;
-    const k = net && net.kinds;
-    $('dkNetKind').textContent = !net ? '' : net.kind === 'local' ? '⚠️ Онлайн-сервисы недоступны: комната работает только между вкладками этого браузера. Проверьте интернет или попробуйте другую сеть/VPN.'
-      : k && k.includes('yc') ? '✅ Сервер игр подключён — друзья смогут войти без VPN' : k && !k.includes('peer') ? 'ℹ️ Прямое соединение недоступно — игра пойдёт через ретранслятор (это нормально)' : k && !k.includes('relay') ? 'ℹ️ Ретранслятор недоступен — только прямое соединение' : '';
+    $('dkRoomInfo').textContent = host ? `${modeName(cfg.mode)} · ставка ${cfg.stake} ₽ · мест ${cfg.seats}. ${offlineRoom && !(net && net.kinds && net.kinds.some(k => k !== 'p2p' && k !== 'local')) ? 'Пригласите друзей по QR/коду выше.' : 'Пригласите друзей по QR/коду выше или отправьте им код комнаты.'}` : `${modeName(cfg.mode)} · ставка ${cfg.stake} ₽ · ждём, когда хозяин начнёт игру…`;
+    const k = net && net.kinds, svc = k && k.filter(x => x !== 'p2p' && x !== 'local');
+    $('dkNetKind').textContent = !net || !k || !isHost() ? '' : offlineRoom ? '' : svc.length ? `✅ Подключены сервисы (${svc.join(', ')}) — друзья могут войти по коду комнаты. Приглашение по QR/коду работает всегда.`
+      : 'ℹ️ Сервисы пока не ответили — используйте приглашение по QR/коду ниже (работает без сервера).';
   }
   const modeName = m => m === 'perevodnoy' ? 'Переводной' : 'Подкидной';
   $('dkRoomList').onclick = e => { const b = e.target.closest('.dkkick'); if (!b || !isHost()) return; seats.splice(+b.dataset.i, 1); lobbyChanged(); };
@@ -273,6 +289,7 @@
   }
   function reset() {
     clearTimeout(botTimer); if (net) try { net.close(); } catch (e) {}
+    guestPanel.reset(); hostPanel = null; offlineRoom = false;
     net = null; role = 'none'; st = null; V = null; seats = []; code = ''; prevHand = new Set(); prevTable = 0; prevDef = new Set(); screen('dkLobby');
   }
 
@@ -285,4 +302,9 @@
   const m = /[?&]room=([A-Z0-9]{5})\b/.exec(location.search);
   screen('dkLobby');
   if (m && (!location.hash || location.hash === '#durak')) { $('dkCode').value = m[1]; setTimeout(() => { Casino.openTab('durak'); joinRoom(m[1]); }, 300); }
+  // ссылка-приглашение ?p2p=КОД#durak от хозяина без сервера
+  if (location.hash === '#durak' && /[?&]p2p=/.test(location.search)) {
+    const off = P2P.pendingOffer();
+    setTimeout(() => { Casino.openTab('durak'); $('dkP2PDet').open = true; guestPanel.fill(off); }, 300);
+  }
 })();
