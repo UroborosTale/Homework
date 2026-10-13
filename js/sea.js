@@ -15,8 +15,9 @@
     overDelay: 1600,
     mount(board, api) {
       board.innerHTML = `<div class="sewrap">
-        <div class="sefield mine"><div class="setitle">Ваш флот</div><div class="segrid"></div></div>
-        <div class="sefield opp"><div class="setitle">Поле соперника</div><div class="segrid"></div></div></div>`;
+        <div class="sefield mine"><div class="setitle">Ваш флот</div><div class="segrid"></div><div class="setrack mytrack"></div></div>
+        <div class="sefield opp"><div class="setitle">Поле соперника</div><div class="segrid"></div><div class="setrack opptrack"></div></div></div>`;
+      const MT = board.querySelector('.mytrack'), OT = board.querySelector('.opptrack');
       const MG = board.querySelector('.mine .segrid'), OG = board.querySelector('.opp .segrid'), OF = board.querySelector('.sefield.opp');
       const mk = (t, cls, fn) => { const b = document.createElement('button'); b.className = 'btn ' + cls; b.textContent = t; b.onclick = fn; return b; };
       const shuffle = mk('🔀 Случайно', 'se-shuffle', () => { selShip = -1; api.send({ type: 'shuffle' }); });
@@ -34,8 +35,26 @@
       // класс клетки с частью корабля: начало/конец для скруглений
       const part = (sh, x, y) => { const cs = E.cellsOf(sh), i = cs.findIndex(([a, b]) => a === x && b === y); return sh.len === 1 ? 'one' : i === 0 ? (sh.v ? 'top' : 'left') : i === sh.len - 1 ? (sh.v ? 'bot' : 'right') : (sh.v ? 'midv' : 'midh'); };
 
+      // Табло флота: по длинам кораблей; у своих видны попадания, у соперника — потопленные (остальные скрыты)
+      const NAMES = { 4: 'Линкор', 3: 'Крейсер', 2: 'Эсминец', 1: 'Катер' };
+      function tracker(ships) {                                     // ships: [{ len, sunk, hits }]
+        let h = '';
+        for (const len of [4, 3, 2, 1]) {
+          const list = ships.filter(s => s.len === len), alive = list.filter(s => !s.sunk).length;
+          h += `<div class="setr${alive ? '' : ' allsunk'}"><span class="setn">${NAMES[len]}</span><span class="setships">${list.map(s =>
+            `<b class="seship${s.sunk ? ' sunk' : ''}">${Array.from({ length: len }, (_, i) => `<i class="${s.sunk || i < (s.hits || 0) ? 'hit' : ''}"></i>`).join('')}</b>`).join('')}</span><span class="setc">${alive}/${list.length}</span></div>`;
+        }
+        return h;
+      }
       function render(v, info) {
         if (info.fresh) { selShip = -1; prevShots = ''; prevOpp = ''; }
+        // табло: свои корабли с числом попаданий; у соперника — потопленные и сколько осталось
+        const hitAt = (x, y) => v.oppShots.some(o => o.hit && o.x === x && o.y === y);
+        MT.innerHTML = tracker(v.myShips.map(s => ({ len: s.len, sunk: s.sunk, hits: E.cellsOf(s).filter(([x, y]) => hitAt(x, y)).length })));
+        const pool = [...E.FLEET], oppList = [];
+        v.oppShips.filter(s => s.sunk).forEach(s => { const k = pool.indexOf(s.len); if (k >= 0) pool.splice(k, 1); oppList.push({ len: s.len, sunk: true }); });
+        pool.forEach(len => oppList.push({ len, sunk: false }));
+        OT.innerHTML = tracker(oppList); OT.style.display = v.phase === 'setup' ? 'none' : '';
         const setup = v.phase === 'setup', canEdit = setup && !v.ready[v.me];
         if (!canEdit) selShip = -1;
         const myShotKey = v.myShots.length, oppShotKey = v.oppShots.length;
