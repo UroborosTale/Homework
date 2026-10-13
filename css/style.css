@@ -1219,3 +1219,17 @@
   .p2pst { min-height: 20px; text-align: center; font-size: 14px; color: var(--muted); margin-top: 6px; }
   .p2pst.ok { color: #69f0ae; font-weight: 700; } .p2pst.err { color: #ff8a80; font-weight: 700; }
   .p2pscan video { width: 100%; max-height: 60vh; border-radius: 12px; background: #000; object-fit: cover; }
+
+  /* морской бой: табло флота */
+  .setrack { margin-top: 8px; padding: 6px 8px; border-radius: 10px; background: #021a33; border: 1px solid #4fc3f733; display: grid; gap: 4px; }
+  .setr { display: grid; grid-template-columns: 76px 1fr auto; align-items: center; gap: 6px; font-size: 12px; color: #b3e5fc; }
+  .setn { font-weight: 700; white-space: nowrap; }
+  .setships { display: flex; gap: 8px; flex-wrap: wrap; }
+  .seship { display: inline-flex; gap: 1px; padding: 1px; border-radius: 4px; background: #546e7a55; }
+  .seship i { width: 11px; height: 11px; border-radius: 2px; background: linear-gradient(#cfd8dc, #78909c); }
+  .seship i.hit { background: radial-gradient(circle, #ff6d00, #b71c1c); }
+  .seship.sunk { opacity: .55; position: relative; }
+  .seship.sunk::after { content: ''; position: absolute; left: -2px; right: -2px; top: 50%; height: 2px; background: #ff1744; transform: rotate(-8deg); }
+  .setc { font-weight: 800; color: #fff; min-width: 28px; text-align: right; }
+  .setr.allsunk .setc { color: #ff8a80; }
+  @media (max-width: 600px) { .setr { grid-template-columns: 62px 1fr auto; font-size: 11px; } .seship i { width: 9px; height: 9px; } }
